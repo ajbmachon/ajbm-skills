@@ -1,0 +1,18 @@
+{
+  "name": "flowconai-skills-dev",
+  "description": "Development marketplace for FlowConAI skills",
+  "owner": {
+    "name": "Andre Machon"
+  },
+  "plugins": [
+    {
+      "name": "flowconai-skills",
+      "description": "Collection of Claude Code skills for multi-agent orchestration, knowledge graphs, documentation, and more.",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "Andre Machon"
+      }
+    }
+  ]
+}
