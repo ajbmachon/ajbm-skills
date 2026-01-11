@@ -7,6 +7,7 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 | Skill | Description |
 |-------|-------------|
 | **interview** | Transform rough ideas into implementation-ready specs through rigorous research and questioning. Evolves from Critical Challenger to Expert Partner. |
+| **setup-linter** | Auto-detect, install, and configure project-specific linting with a Stop hook. Supports JS/TS, Python, Rust, Go, Deno. |
 | **authoring-skills** | Complete guide for writing skills—covers SKILL.md best practices, plugin development, triggers, hooks, and Anthropic guidelines |
 | **prompt-craft** | Research-backed prompt engineering with 10 core techniques. Modes: Analyze, Craft, Teach, Quick Fix |
 | **hormozi-pitch** | Alex Hormozi's $100M Offers methodology for creating irresistible offers, pricing, guarantees, and value propositions |
@@ -91,6 +92,32 @@ Or invoke directly:
 - Surfaces contradictions between your claims and research findings
 - Captures Q&A in the spec so future Claude instances can implement without asking questions
 
+### Setup Linter Skill
+
+**Best for:** Setting up automatic code linting/formatting when Claude finishes writing code
+
+```
+Set up automatic linting for this project
+```
+
+Or invoke directly:
+```
+/setup-linter
+```
+
+**What it does:**
+1. Auto-detects your project type (JS/TS, Python, Rust, Go, Deno)
+2. Installs the appropriate linter if not present
+3. Creates config files with sensible defaults
+4. Sets up a Stop hook so linting runs automatically after every Claude response
+
+**Supported projects:**
+- JavaScript/TypeScript → ESLint (with React detection)
+- Python → Ruff
+- Rust → rustfmt + clippy
+- Go → golangci-lint
+- Deno → built-in lint/fmt
+
 ### Prompt Craft Skill
 
 **Best for:** Improving prompts, learning prompting techniques, writing prompts for LLMs
@@ -150,6 +177,25 @@ A rigorous interview system that produces implementation-ready specs:
 - Interview Record (Q&A that led to decisions)
 - Assumption Corrections (what user/Claude got wrong)
 - Edge Cases, Tradeoffs, Open Questions (when relevant)
+
+### setup-linter
+
+Automated linting setup with Stop hook integration:
+
+**Auto-detection:**
+| Project | Detection | Linter | Config Created |
+|---------|-----------|--------|----------------|
+| JavaScript/React | `package.json` | ESLint | `eslint.config.js` |
+| Python | `pyproject.toml`, `*.py` | Ruff | `ruff.toml` |
+| Rust | `Cargo.toml` | rustfmt + clippy | (built-in) |
+| Go | `go.mod` | golangci-lint | (optional) |
+| Deno | `deno.json` | deno lint/fmt | (built-in) |
+
+**Features:**
+- Detects package manager (yarn, pnpm, bun, npm)
+- Detects React projects and adds react-hooks plugin
+- Creates flat config format for ESLint
+- Hook runs `<linter> 2>&1 || true` (never blocks Claude)
 
 ### authoring-skills
 
