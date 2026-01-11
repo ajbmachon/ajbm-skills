@@ -1,12 +1,12 @@
 {
-  "name": "business",
+  "name": "ajbm-business",
   "description": "Claude Code skills for business and marketing: offer creation, pricing, copywriting, and social media. Includes hormozi-pitch ($100M Offers methodology) and x-post-writer (Twitter/X viral content).",
   "version": "1.0.0",
   "author": {
     "name": "Andre Machon",
     "url": "https://github.com/ajbmachon"
   },
-  "repository": "https://github.com/ajbmachon/general-skills",
+  "repository": "https://github.com/ajbmachon/ajbm-skills",
   "license": "MIT",
   "keywords": [
     "hormozi",

@@ -1,4 +1,4 @@
-# General Skills for Claude Code
+# AJBM Skills for Claude Code
 
 A collection of generally useful Claude Code skills that work across all Anthropic surfaces. These skills are not workflow-specific—they're universal productivity boosters for anyone using Claude Code.
 
@@ -11,7 +11,7 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 | **testing-anti-patterns** | Prevents common testing mistakes: testing mocks, test-only production methods, mocking without understanding dependencies. |
 | **setup-linter** | Auto-detect, install, and configure project-specific linting with a Stop hook. Supports JS/TS, Python, Rust, Go, Deno. |
 | **authoring-skills** | Complete guide for writing skills—covers SKILL.md best practices, plugin development, triggers, hooks, and Anthropic guidelines |
-| **prompt-craft** | Research-backed prompt engineering with 10 core techniques. Modes: Analyze, Craft, Teach, Quick Fix |
+| **prompt-craft** | 19 research-backed prompting techniques with model-specific guidance (Claude, GPT-4o, o1/o3, DeepSeek, Gemini, Kimi, Qwen, Grok). Modes: Analyze, Craft, Teach, Quick Fix |
 | **hormozi-pitch** | Alex Hormozi's $100M Offers methodology for creating irresistible offers, pricing, guarantees, and value propositions |
 | **x-post-writer** | Twitter/X copywriting system for high-engagement social media content with viral frameworks and examples |
 
@@ -31,13 +31,13 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 claude
 
 # Add the marketplace
-/plugin marketplace add ajbmachon/general-skills
+/plugin marketplace add ajbmachon/ajbm-skills
 
 # Install development skills (debugging, testing, specs, linting, prompts)
-/plugin install development@ajbmachon
+/plugin install ajbm-dev@ajbm
 
 # Install business skills (offers, copywriting) - optional
-/plugin install business@ajbmachon
+/plugin install ajbm-business@ajbm
 ```
 
 After installation, restart Claude Code to activate the skills.
@@ -46,17 +46,17 @@ After installation, restart Claude Code to activate the skills.
 
 ```bash
 # Clone the repository
-git clone https://github.com/ajbmachon/general-skills.git
+git clone https://github.com/ajbmachon/ajbm-skills.git
 
 # Start Claude Code
 claude
 
 # Add as local marketplace
-/plugin marketplace add ./general-skills
+/plugin marketplace add ./ajbm-skills
 
 # Install the plugins
-/plugin install development@ajbmachon
-/plugin install business@ajbmachon
+/plugin install ajbm-dev@ajbm
+/plugin install ajbm-business@ajbm
 ```
 
 ### Verify Installation
@@ -66,6 +66,22 @@ After restarting Claude Code:
 ```bash
 # Ask Claude about available skills
 What skills are available?
+```
+
+### Migrating from Previous Version
+
+If you installed the previous `development@ajbmachon` or `business@ajbmachon`:
+
+```bash
+# Remove old installation
+/plugin uninstall development@ajbmachon
+/plugin uninstall business@ajbmachon
+/plugin marketplace remove ajbmachon
+
+# Install new version
+/plugin marketplace add ajbmachon/ajbm-skills
+/plugin install ajbm-dev@ajbm
+/plugin install ajbm-business@ajbm
 ```
 
 ---
@@ -302,17 +318,16 @@ Complete guide for creating Claude Code skills and plugins:
 
 ### prompt-craft
 
-10 core prompting techniques with research-backed impact metrics:
-1. Chain-of-Thought (+40% accuracy)
-2. Structured Output (99%+ compliance)
-3. Few-Shot Examples (+15-30% specificity)
-4. Placement (+50% retrieval)
-5. Salience (+23-31% compliance)
-6. Roles (+10-20% domain accuracy)
-7. Positive Framing (+15-20% compliance)
-8. Reasoning-First (-20-30% hallucination)
-9. Verbalized Sampling (+1.6-2.1x diversity)
-10. Self-Reflection (+15-25% accuracy)
+**19 research-backed prompting techniques** (10 core + 9 extended) with measured impact metrics.
+
+**Core techniques:**
+Chain-of-Thought (+40%), Structured Output (99%+), Few-Shot Examples (+15-30%), Placement (+50%), Salience (+23-31%), Roles (+10-20%), Positive Framing (+15-20%), Reasoning-First (-20-30% hallucination), Verbalized Sampling (+1.6-2.1x), Self-Reflection (+15-25%)
+
+**Extended techniques:**
+Decomposition, Compression, Sufficiency, Scope, Format-Spec, Uncertainty, Chaining, Self-Consistency, Tree-of-Thoughts
+
+**Model-specific guidance:**
+Includes tailored prompting strategies for Claude, OpenAI (GPT-4o, o1/o3), DeepSeek R1, Gemini 3, Kimi K2, Qwen 2.5, and Grok.
 
 ### hormozi-pitch
 
@@ -336,21 +351,21 @@ Twitter/X copywriting expertise:
 
 ```bash
 # Disable without uninstalling
-/plugin disable development@ajbmachon
-/plugin disable business@ajbmachon
+/plugin disable ajbm-dev@ajbm
+/plugin disable ajbm-business@ajbm
 
 # Re-enable
-/plugin enable development@ajbmachon
-/plugin enable business@ajbmachon
+/plugin enable ajbm-dev@ajbm
+/plugin enable ajbm-business@ajbm
 
 # Completely remove
-/plugin uninstall development@ajbmachon
-/plugin uninstall business@ajbmachon
+/plugin uninstall ajbm-dev@ajbm
+/plugin uninstall ajbm-business@ajbm
 
 # Update to latest version
 /plugin marketplace update ajbmachon
-/plugin uninstall development@ajbmachon
-/plugin install development@ajbmachon
+/plugin uninstall ajbm-dev@ajbm
+/plugin install ajbm-dev@ajbm
 ```
 
 ---

@@ -25,6 +25,7 @@ Prompting techniques that work on one model may fail on another. This guide summ
   - [DeepSeek](#deepseek)
   - [Kimi (Moonshot)](#kimi-moonshot)
   - [Qwen (Alibaba)](#qwen-alibaba)
+  - [xAI (Grok)](#xai-grok)
 - [Quick reference](#quick-reference)
 
 ---
@@ -248,6 +249,21 @@ General guidance:
 - Strong multilingual + structured output compliance.
 - Use explicit schemas and examples for tricky formatting.
 - For code, include test cases and edge constraints.
+
+## xAI (Grok)
+
+**What it's best at**
+- Agentic workflows and tool-calling tasks
+- Long-context tasks (Grok 4.1 Fast supports a 2M context window)
+
+**Prompting style that works**
+- Use a **detailed system prompt** with explicit task goals and edge cases.
+- Provide **structured context** using XML tags or Markdown headings.
+- Keep **prompt history stable** across tool loops to maximize cache hits and speed.
+
+**Tool-calling guidance**
+- In streaming mode, **function calls are returned in a single chunk**, not interleaved.
+- If tool calls are required, instruct the model to **use tools via the tool interface only** (never emit tool-call markup in normal text).
 
 ---
 

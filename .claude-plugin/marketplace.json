@@ -1,12 +1,12 @@
 {
-  "name": "ajbmachon",
+  "name": "ajbm",
   "description": "Claude Code skills by Andre Machon - development and business",
   "owner": {
     "name": "Andre Machon"
   },
   "plugins": [
     {
-      "name": "development",
+      "name": "ajbm-dev",
       "description": "Skills for software development: debugging, testing, spec writing, linting, prompt engineering, and skill authoring.",
       "version": "1.0.0",
       "source": "./plugins/development-skills",
@@ -15,7 +15,7 @@
       }
     },
     {
-      "name": "business",
+      "name": "ajbm-business",
       "description": "Skills for business and marketing: offer creation (Hormozi methodology), pricing, copywriting, and Twitter/X content.",
       "version": "1.0.0",
       "source": "./plugins/business-skills",

@@ -1,6 +1,9 @@
-# General Skills for Claude Code
+# AJBM Skills for Claude Code
 
 A collection of generally useful Claude Code skills that work across all Anthropic surfaces.
+
+**Plugin names:** `ajbm-dev`, `ajbm-business`
+**Install:** `/plugin install ajbm-dev@ajbm`
 
 ## Quick Reference
 
@@ -47,17 +50,12 @@ Use when writing, analyzing, or improving prompts for LLMs.
 - **C. Teach**: Deep dive on a specific technique
 - **D. Quick Fix**: Fast 3-improvement pass
 
-**10 Core Techniques:**
-1. Chain-of-Thought (+40% accuracy)
-2. Structured Output (99%+ compliance)
-3. Few-Shot Examples (+15-30% specificity)
-4. Placement (+50% retrieval)
-5. Salience (+23-31% compliance)
-6. Roles (+10-20% domain accuracy)
-7. Positive Framing (+15-20% compliance)
-8. Reasoning-First (-20-30% hallucination)
-9. Verbalized Sampling (+1.6-2.1x diversity)
-10. Self-Reflection (+15-25% accuracy)
+**19 Research-Backed Techniques:**
+- **10 Core**: Chain-of-Thought, Structured Output, Few-Shot, Placement, Salience, Roles, Positive Framing, Reasoning-First, Verbalized Sampling, Self-Reflection
+- **9 Extended**: Decomposition, Compression, Sufficiency, Scope, Format-Spec, Uncertainty, Chaining, Self-Consistency, Tree-of-Thoughts
+
+**Model-Specific Guidance:**
+Claude, OpenAI (GPT-4o, o1/o3), DeepSeek R1, Gemini 3, Kimi K2, Qwen 2.5, Grok
 
 ### skill-developer
 
