@@ -1,4 +1,4 @@
-# FlowConAI General Skills
+# General Skills for Claude Code
 
 A collection of generally useful Claude Code skills that work across all Anthropic surfaces.
 

@@ -1,11 +1,25 @@
 ---
 name: authoring-skills
-description: Use when writing or reviewing SKILL.md files - covers conciseness principles, description writing, progressive disclosure, degrees of freedom, naming conventions, workflows, and the quality checklist. Complements TDD-focused testing in superpowers:writing-skills.
+description: Use when creating skills, plugins, or hooks for Claude Code - covers writing SKILL.md files, plugin structure, distribution via marketplaces, hook configuration, trigger patterns, and troubleshooting. Complete guide from authoring to distribution. Note - slash commands were removed from Claude Code, only skills remain.
 ---
 
-# Authoring Skills
+# Authoring Skills for Claude Code
 
-Condensed best practices from Anthropic's official guide. For TDD testing methodology, use `superpowers:writing-skills`.
+> **Note:** Slash commands were removed from Claude Code. Skills are now the only extension mechanism for providing guidance and workflows.
+
+## Quick Reference
+
+| Task | Resource |
+|------|----------|
+| Write a SKILL.md | [Core Principles](#core-principles) |
+| Create a plugin | [references/plugin-development.md](references/plugin-development.md) |
+| Configure triggers | [references/skill-triggers.md](references/skill-triggers.md) |
+| Set up hooks | [references/hook-architecture.md](references/hook-architecture.md) |
+| Debug skill/plugin issues | [references/skill-troubleshooting.md](references/skill-troubleshooting.md) |
+| Find patterns | [references/patterns-library.md](references/patterns-library.md) |
+| Official docs | [references/official-docs.md](references/official-docs.md) |
+
+---
 
 ## Core Principles
 
@@ -22,13 +36,10 @@ Context window is shared. Every token competes with conversation history.
 
 ```markdown
 # BAD (~150 tokens)
-PDF (Portable Document Format) files are a common file format that contains
-text, images, and other content. To extract text from a PDF, you'll need to
-use a library. There are many libraries available...
+PDF (Portable Document Format) files are a common file format...
 
 # GOOD (~50 tokens)
 Use pdfplumber for text extraction:
-```python
 import pdfplumber
 with pdfplumber.open("file.pdf") as pdf:
     text = pdf.pages[0].extract_text()
@@ -40,9 +51,9 @@ Match specificity to task fragility:
 
 | Freedom | When | Example |
 |---------|------|---------|
-| **High** | Multiple valid approaches, context-dependent | Code review process |
-| **Medium** | Preferred pattern exists, some variation OK | Report template with parameters |
-| **Low** | Fragile operations, consistency critical | Database migration script |
+| **High** | Multiple valid approaches | Code review process |
+| **Medium** | Preferred pattern exists | Report template |
+| **Low** | Fragile operations, consistency critical | Database migration |
 
 **Analogy:**
 - **Narrow bridge + cliffs** = Low freedom (exact instructions)
@@ -56,7 +67,7 @@ Match specificity to task fragility:
 | **Sonnet** | Clear and efficient? |
 | **Opus** | Avoiding over-explanation? |
 
-What works for Opus may need more detail for Haiku.
+---
 
 ## YAML Frontmatter
 
@@ -83,19 +94,20 @@ description: Extract text...   # max 1024 chars, third person
 ```yaml
 # BAD
 description: I can help you process Excel files
-description: You can use this to process Excel files
 
 # GOOD
-description: Extract text and tables from PDF files, fill forms, merge documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction.
+description: Extract text and tables from PDF files. Use when working with PDFs or document extraction.
 ```
 
 **Include both:**
 1. What the skill does
 2. When to use it (triggers/contexts)
 
+---
+
 ## Progressive Disclosure
 
-SKILL.md = overview pointing to details. Keep under **500 lines**.
+SKILL.md = overview pointing to details. **Keep under 500 lines.**
 
 ### Directory Structure
 
@@ -138,6 +150,8 @@ bigquery-skill/
 2. **TOC for 100+ lines** - Add table of contents to long reference files
 3. **Descriptive names** - `form_validation_rules.md` not `doc2.md`
 
+---
+
 ## Workflows
 
 ### Checklists for Complex Tasks
@@ -164,6 +178,8 @@ Copy and track:
 4. **Only proceed when validation passes**
 ```
 
+---
+
 ## Content Guidelines
 
 ### Avoid Time-Sensitive Info
@@ -189,6 +205,8 @@ Pick one term, use throughout:
 - Always "API endpoint" (not "URL", "route", "path")
 - Always "field" (not "box", "element", "control")
 
+---
+
 ## Common Patterns
 
 ### Template Pattern
@@ -213,6 +231,8 @@ feat(auth): implement JWT-based authentication
 **Creating new content?** → Creation workflow below
 **Editing existing?** → Editing workflow below
 ```
+
+---
 
 ## Scripts in Skills
 
@@ -261,6 +281,8 @@ Use BigQuery:bigquery_schema to retrieve schemas.
 Use GitHub:create_issue to create issues.
 ```
 
+---
+
 ## Anti-Patterns
 
 | Anti-Pattern | Problem |
@@ -271,6 +293,49 @@ Use GitHub:create_issue to create issues.
 | Deeply nested refs | Keep one level deep |
 | Vague descriptions | Be specific with triggers |
 | Time-sensitive info | Use "old patterns" section |
+
+---
+
+## Plugin Development (Overview)
+
+Skills can be distributed via plugins. See [references/plugin-development.md](references/plugin-development.md) for complete guide.
+
+**Key concepts:**
+- Plugin directory structure (`.claude-plugin/`, `plugin.json` manifest)
+- Component types: Skills, Commands, Hooks, MCP Servers, Agents
+- Distribution: GitHub, Marketplace, Private/Team
+- Use `${CLAUDE_PLUGIN_ROOT}` for portable paths
+
+**Common patterns:**
+- Simple plugin with one skill
+- MCP plugin with skill (tools + guidance)
+- Command collection
+- Hook-enhanced workflow
+
+---
+
+## Skill Activation System (Overview)
+
+Skills can auto-activate based on triggers. See [references/skill-triggers.md](references/skill-triggers.md) for configuration.
+
+**Two skill types:**
+- **Guardrail** (blocking) - Enforce critical practices
+- **Domain** (advisory) - Provide guidance
+
+**Trigger types:**
+- Keywords (explicit topic matching)
+- Intent patterns (implicit action detection via regex)
+- File paths (glob patterns)
+- Content patterns (regex in files)
+
+**Enforcement levels:**
+- `BLOCK` - Prevents tool execution until skill used
+- `SUGGEST` - Advisory injection into context
+- `WARN` - Low priority suggestion
+
+**Configuration:** `.claude/skills/skill-rules.json`
+
+---
 
 ## Testing (Quick Reference)
 
@@ -288,7 +353,20 @@ Use GitHub:create_issue to create issues.
 - Overreliance on certain sections
 - Ignored bundled files
 
-## Checklist
+**Test hooks manually:**
+```bash
+# UserPromptSubmit
+echo '{"prompt":"test"}' | npx tsx .claude/hooks/skill-activation-prompt.ts
+
+# PreToolUse
+cat <<'EOF' | npx tsx .claude/hooks/skill-verification-guard.ts
+{"tool_name":"Edit","tool_input":{"file_path":"test.ts"}}
+EOF
+```
+
+---
+
+## Quality Checklist
 
 ### Core Quality
 - [ ] Description specific with triggers (max 1024 chars)
@@ -308,7 +386,12 @@ Use GitHub:create_issue to create issues.
 - [ ] Required packages listed
 - [ ] Forward slashes only
 - [ ] Validation/verification steps
-- [ ] Feedback loops for quality
+
+### Plugins (if applicable)
+- [ ] `.claude-plugin/` contains only manifests
+- [ ] `${CLAUDE_PLUGIN_ROOT}` used for paths
+- [ ] Scripts are executable (`chmod +x`)
+- [ ] hooks.json not duplicated in plugin.json
 
 ### Testing
 - [ ] 3+ evaluation scenarios
@@ -318,5 +401,5 @@ Use GitHub:create_issue to create issues.
 
 ---
 
-**Line count:** ~250 (within 500-line budget)
-**Complements:** `superpowers:writing-skills` (TDD), `skill-developer` (hooks/triggers)
+**Line count:** ~450 (within 500-line budget)
+**Complements:** `superpowers:writing-skills` (TDD testing methodology)

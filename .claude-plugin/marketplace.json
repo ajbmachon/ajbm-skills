@@ -1,15 +1,24 @@
 {
-  "name": "flowconai-skills-dev",
-  "description": "Development marketplace for FlowConAI skills",
+  "name": "ajbmachon",
+  "description": "Claude Code skills by Andre Machon - development and business",
   "owner": {
     "name": "Andre Machon"
   },
   "plugins": [
     {
-      "name": "flowconai-skills",
-      "description": "Collection of Claude Code skills for multi-agent orchestration, knowledge graphs, documentation, and more.",
+      "name": "development",
+      "description": "Skills for software development: debugging, testing, spec writing, linting, prompt engineering, and skill authoring.",
       "version": "1.0.0",
-      "source": "./",
+      "source": "./plugins/development-skills",
+      "author": {
+        "name": "Andre Machon"
+      }
+    },
+    {
+      "name": "business",
+      "description": "Skills for business and marketing: offer creation (Hormozi methodology), pricing, copywriting, and Twitter/X content.",
+      "version": "1.0.0",
+      "source": "./plugins/business-skills",
       "author": {
         "name": "Andre Machon"
       }

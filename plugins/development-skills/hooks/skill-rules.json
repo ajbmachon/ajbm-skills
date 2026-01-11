@@ -1,0 +1,146 @@
+{
+  "version": "1.0",
+  "skills": {
+    "authoring-skills": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "skill.md",
+          "skills.md",
+          "write a skill",
+          "create a skill",
+          "plugin structure",
+          "marketplace",
+          "hook configuration",
+          "trigger patterns",
+          "claude code plugin",
+          "authoring skill"
+        ],
+        "intentPatterns": [
+          "(create|write|build|make).*?skill",
+          "(create|write|build|make).*?plugin",
+          "how (to|do I).*?(write|create).*?skill"
+        ]
+      }
+    },
+    "interview": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "spec",
+          "specification",
+          "requirements",
+          "interview me",
+          "flesh out idea",
+          "planning a feature",
+          "gather requirements",
+          "crystallize idea",
+          "actionable spec"
+        ],
+        "intentPatterns": [
+          "(help|want).*?(spec|requirements|plan).*?feature",
+          "flesh.*?out.*?idea",
+          "interview.*?(me|user)"
+        ]
+      }
+    },
+    "prompt-craft": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "improve prompt",
+          "write prompt",
+          "prompt engineering",
+          "better prompt",
+          "craft prompt",
+          "prompt for llm",
+          "prompt for subagent",
+          "system prompt"
+        ],
+        "intentPatterns": [
+          "(improve|write|craft|create|fix).*?prompt",
+          "prompt.*?(engineering|technique|better)"
+        ]
+      }
+    },
+    "setup-linter": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "low",
+      "promptTriggers": {
+        "keywords": [
+          "linter hook",
+          "automatic linting",
+          "code formatting",
+          "setup linter",
+          "lint on completion",
+          "eslint hook",
+          "prettier hook"
+        ],
+        "intentPatterns": [
+          "(setup|configure|add).*?lint",
+          "lint.*?(hook|automatic)"
+        ]
+      }
+    },
+    "systematic-debugging": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "debug",
+          "debugging",
+          "bug",
+          "test failure",
+          "unexpected behavior",
+          "not working",
+          "broken",
+          "failing test"
+        ],
+        "intentPatterns": [
+          "(debug|fix|investigate).*?(bug|error|issue|failure)",
+          "(test|tests).*?(fail|failing|broken)",
+          "why.*?(not working|broken|failing)"
+        ]
+      }
+    },
+    "testing-anti-patterns": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "test",
+          "tests",
+          "testing",
+          "spec",
+          "specs",
+          "unit test",
+          "integration test",
+          "e2e test",
+          "mock",
+          "mocking",
+          "jest",
+          "vitest",
+          "pytest",
+          "mocha",
+          "test coverage"
+        ],
+        "intentPatterns": [
+          "(write|create|add|implement).*?test",
+          "(review|check|fix).*?test",
+          "test.*?(for|this|the|my)",
+          "(add|create|write).*?spec",
+          "(add|create|write).*?mock"
+        ]
+      }
+    }
+  }
+}

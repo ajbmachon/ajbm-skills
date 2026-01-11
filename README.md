@@ -33,8 +33,11 @@ claude
 # Add the marketplace
 /plugin marketplace add ajbmachon/general-skills
 
-# Install the plugin
-/plugin install ajbmachon@general-skills
+# Install development skills (debugging, testing, specs, linting, prompts)
+/plugin install development@ajbmachon
+
+# Install business skills (offers, copywriting) - optional
+/plugin install business@ajbmachon
 ```
 
 After installation, restart Claude Code to activate the skills.
@@ -51,8 +54,9 @@ claude
 # Add as local marketplace
 /plugin marketplace add ./general-skills
 
-# Install the plugin
-/plugin install ajbmachon@general-skills
+# Install the plugins
+/plugin install development@ajbmachon
+/plugin install business@ajbmachon
 ```
 
 ### Verify Installation
@@ -328,22 +332,25 @@ Twitter/X copywriting expertise:
 
 ---
 
-## Managing the Plugin
+## Managing Plugins
 
 ```bash
 # Disable without uninstalling
-/plugin disable ajbmachon@general-skills
+/plugin disable development@ajbmachon
+/plugin disable business@ajbmachon
 
 # Re-enable
-/plugin enable ajbmachon@general-skills
+/plugin enable development@ajbmachon
+/plugin enable business@ajbmachon
 
 # Completely remove
-/plugin uninstall ajbmachon@general-skills
+/plugin uninstall development@ajbmachon
+/plugin uninstall business@ajbmachon
 
 # Update to latest version
-/plugin marketplace update general-skills
-/plugin uninstall ajbmachon@general-skills
-/plugin install ajbmachon@general-skills
+/plugin marketplace update ajbmachon
+/plugin uninstall development@ajbmachon
+/plugin install development@ajbmachon
 ```
 
 ---

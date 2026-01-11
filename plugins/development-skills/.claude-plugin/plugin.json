@@ -1,0 +1,22 @@
+{
+  "name": "development",
+  "description": "Claude Code skills for software development: debugging, testing, spec writing, linting, and skill authoring. Includes systematic-debugging, testing-anti-patterns, interview, setup-linter, prompt-craft, and authoring-skills.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andre Machon",
+    "url": "https://github.com/ajbmachon"
+  },
+  "repository": "https://github.com/ajbmachon/general-skills",
+  "license": "MIT",
+  "keywords": [
+    "debugging",
+    "testing",
+    "tdd",
+    "interview",
+    "spec",
+    "linting",
+    "prompt-engineering",
+    "skills",
+    "authoring"
+  ]
+}

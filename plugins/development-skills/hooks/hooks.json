@@ -1,0 +1,8 @@
+{
+  "hooks": [
+    {
+      "event": "UserPromptSubmit",
+      "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/skill-activation-prompt.py\""
+    }
+  ]
+}

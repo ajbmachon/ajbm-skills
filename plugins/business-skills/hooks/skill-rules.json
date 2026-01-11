@@ -1,0 +1,52 @@
+{
+  "version": "1.0",
+  "skills": {
+    "hormozi-pitch": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "hormozi",
+          "offer",
+          "pricing",
+          "guarantee",
+          "value proposition",
+          "value stack",
+          "grand slam offer",
+          "100m offers",
+          "irresistible offer",
+          "magic naming"
+        ],
+        "intentPatterns": [
+          "(create|write|build|make).*?(offer|pitch|pricing)",
+          "(improve|craft).*?(offer|value proposition)",
+          "how (to|do I).*?(price|guarantee|offer)"
+        ]
+      }
+    },
+    "x-post-writer": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "promptTriggers": {
+        "keywords": [
+          "tweet",
+          "twitter",
+          "x post",
+          "thread",
+          "viral content",
+          "social media copy",
+          "hook",
+          "engagement",
+          "twitter thread"
+        ],
+        "intentPatterns": [
+          "(write|create|craft).*?(tweet|thread|post)",
+          "(twitter|x).*?(content|copy|post)",
+          "viral.*?(hook|content|tweet)"
+        ]
+      }
+    }
+  }
+}
