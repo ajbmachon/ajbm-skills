@@ -86,6 +86,54 @@ If you installed the previous `development@ajbmachon` or `business@ajbmachon`:
 
 ---
 
+## Automatic Skill Suggestions
+
+The ajbm-dev plugin includes **smart hooks** that automatically suggest relevant skills based on context:
+
+### Prompt-Based Suggestions (UserPromptSubmit)
+
+When you type a prompt, the hook analyzes it and suggests skills:
+
+```
+You: "help me plan this authentication feature"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 SKILL ACTIVATION CHECK
+📚 RECOMMENDED SKILLS:
+  ⚡ interview (score: 41)
+ACTION: Use Skill tool BEFORE responding
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+| Trigger Keywords | Suggested Skill |
+|------------------|-----------------|
+| "plan", "idea", "spec", "design", "scope" | interview |
+| "test", "mock", "coverage", "TDD" | testing-anti-patterns |
+| "debug", "bug", "fix", "error", "broken" | systematic-debugging |
+| "prompt", "llm", "system prompt" | prompt-craft |
+| "skill", "hook", "plugin", "SKILL.md" | authoring-skills |
+
+### Error Detection (PostToolUse)
+
+When a command fails (tests, builds, servers), the hook detects it and warns Claude:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  ERROR DETECTED IN OUTPUT
+Detected: Test failure
+
+📚 RECOMMENDED SKILLS:
+  ⚡ systematic-debugging (investigate root cause FIRST)
+  ⚡ testing-anti-patterns (avoid common testing mistakes)
+
+⛔ DO NOT attempt quick fixes without investigation!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+This prevents Claude from jumping straight to fixes without understanding the root cause.
+
+---
+
 ## Usage Guide
 
 Skills are **model-invoked**—Claude automatically uses them based on context. You can also invoke them explicitly using `/skill-name` or by asking Claude to use a specific skill.
