@@ -1,146 +1,240 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "skills": {
     "authoring-skills": {
       "type": "domain",
       "enforcement": "suggest",
       "priority": "high",
-      "promptTriggers": {
-        "keywords": [
-          "skill.md",
-          "skills.md",
-          "write a skill",
-          "create a skill",
-          "plugin structure",
-          "marketplace",
-          "hook configuration",
-          "trigger patterns",
-          "claude code plugin",
-          "authoring skill"
-        ],
-        "intentPatterns": [
-          "(create|write|build|make).*?skill",
-          "(create|write|build|make).*?plugin",
-          "how (to|do I).*?(write|create).*?skill"
-        ]
-      }
+      "threshold": 8,
+      "strongPhrases": [
+        "create a skill",
+        "write a skill",
+        "skill file",
+        "plugin hook",
+        "claude code plugin",
+        "skill.md file"
+      ],
+      "exactKeywords": [
+        "SKILL.md",
+        "skill.md",
+        "hook",
+        "hooks",
+        "trigger",
+        "triggers",
+        "plugin"
+      ],
+      "containsKeywords": [
+        "marketplace",
+        "hook configuration"
+      ],
+      "intentPatterns": [
+        "(create|write|build|make).*?skill",
+        "(create|write|build|make).*?plugin",
+        "how.*(write|create).*?skill"
+      ],
+      "excludePatterns": []
     },
     "interview": {
       "type": "domain",
       "enforcement": "suggest",
       "priority": "high",
-      "promptTriggers": {
-        "keywords": [
-          "spec",
-          "specification",
-          "requirements",
-          "interview me",
-          "flesh out idea",
-          "planning a feature",
-          "gather requirements",
-          "crystallize idea",
-          "actionable spec"
-        ],
-        "intentPatterns": [
-          "(help|want).*?(spec|requirements|plan).*?feature",
-          "flesh.*?out.*?idea",
-          "interview.*?(me|user)"
-        ]
-      }
+      "threshold": 8,
+      "strongPhrases": [
+        "help me plan",
+        "help me figure out",
+        "think through",
+        "flesh out",
+        "gather requirements",
+        "design this",
+        "scope this",
+        "interview me",
+        "write a spec",
+        "create a spec",
+        "planning a feature"
+      ],
+      "exactKeywords": [
+        "spec",
+        "specification",
+        "requirements",
+        "idea",
+        "plan",
+        "planning",
+        "design",
+        "scope",
+        "brainstorm",
+        "approach",
+        "strategy"
+      ],
+      "containsKeywords": [
+        "actionable spec"
+      ],
+      "intentPatterns": [
+        "help.*?(plan|design|figure|think|scope)",
+        "(have|got|new).*?idea",
+        "what.*?(approach|strategy)",
+        "how.*?should.*?(implement|build|design|create)",
+        "(plan|design|scope).*?(feature|system|project)"
+      ],
+      "excludePatterns": []
     },
     "prompt-craft": {
       "type": "domain",
       "enforcement": "suggest",
       "priority": "high",
-      "promptTriggers": {
-        "keywords": [
-          "improve prompt",
-          "write prompt",
-          "prompt engineering",
-          "better prompt",
-          "craft prompt",
-          "prompt for llm",
-          "prompt for subagent",
-          "system prompt"
-        ],
-        "intentPatterns": [
-          "(improve|write|craft|create|fix).*?prompt",
-          "prompt.*?(engineering|technique|better)"
-        ]
-      }
+      "threshold": 8,
+      "strongPhrases": [
+        "improve this prompt",
+        "write a prompt",
+        "prompt for claude",
+        "prompt for gpt",
+        "system prompt",
+        "prompt engineering",
+        "better prompt",
+        "craft a prompt"
+      ],
+      "exactKeywords": [
+        "prompt",
+        "prompting",
+        "llm"
+      ],
+      "containsKeywords": [
+        "subagent",
+        "chatgpt"
+      ],
+      "intentPatterns": [
+        "(improve|write|craft|create|fix).*?prompt",
+        "prompt.*?(engineering|technique|better)"
+      ],
+      "excludePatterns": []
     },
     "setup-linter": {
       "type": "domain",
       "enforcement": "suggest",
       "priority": "low",
-      "promptTriggers": {
-        "keywords": [
-          "linter hook",
-          "automatic linting",
-          "code formatting",
-          "setup linter",
-          "lint on completion",
-          "eslint hook",
-          "prettier hook"
-        ],
-        "intentPatterns": [
-          "(setup|configure|add).*?lint",
-          "lint.*?(hook|automatic)"
-        ]
-      }
+      "threshold": 10,
+      "strongPhrases": [
+        "setup linter",
+        "add linting",
+        "configure eslint",
+        "configure prettier",
+        "linter hook",
+        "automatic linting",
+        "lint on completion"
+      ],
+      "exactKeywords": [
+        "linter",
+        "linting",
+        "eslint",
+        "prettier"
+      ],
+      "containsKeywords": [
+        "code formatting"
+      ],
+      "intentPatterns": [
+        "(setup|configure|add).*?lint",
+        "lint.*?(hook|automatic)"
+      ],
+      "excludePatterns": []
     },
     "systematic-debugging": {
       "type": "domain",
       "enforcement": "suggest",
       "priority": "high",
-      "promptTriggers": {
-        "keywords": [
-          "debug",
-          "debugging",
-          "bug",
-          "test failure",
-          "unexpected behavior",
-          "not working",
-          "broken",
-          "failing test"
-        ],
-        "intentPatterns": [
-          "(debug|fix|investigate).*?(bug|error|issue|failure)",
-          "(test|tests).*?(fail|failing|broken)",
-          "why.*?(not working|broken|failing)"
-        ]
-      }
+      "threshold": 8,
+      "strongPhrases": [
+        "fix this bug",
+        "debug this",
+        "not working",
+        "investigate this",
+        "find the issue",
+        "test failure",
+        "failing test",
+        "unexpected behavior"
+      ],
+      "exactKeywords": [
+        "debug",
+        "debugging",
+        "bug",
+        "fix",
+        "error",
+        "errors",
+        "issue",
+        "issues",
+        "problem",
+        "problems",
+        "crash",
+        "exception",
+        "traceback",
+        "wrong",
+        "unexpected",
+        "broken"
+      ],
+      "containsKeywords": [
+        "stack trace"
+      ],
+      "intentPatterns": [
+        "(debug|fix|investigate).*?(bug|error|issue|failure)",
+        "(test|tests).*?(fail|failing|broken)",
+        "why.*?(not|isn't|doesn't|won't)",
+        "what.*?(wrong|happened|causing)",
+        "how.*?fix"
+      ],
+      "excludePatterns": []
     },
     "testing-anti-patterns": {
       "type": "domain",
       "enforcement": "suggest",
       "priority": "high",
-      "promptTriggers": {
-        "keywords": [
-          "test",
-          "tests",
-          "testing",
-          "spec",
-          "specs",
-          "unit test",
-          "integration test",
-          "e2e test",
-          "mock",
-          "mocking",
-          "jest",
-          "vitest",
-          "pytest",
-          "mocha",
-          "test coverage"
-        ],
-        "intentPatterns": [
-          "(write|create|add|implement).*?test",
-          "(review|check|fix).*?test",
-          "test.*?(for|this|the|my)",
-          "(add|create|write).*?spec",
-          "(add|create|write).*?mock"
-        ]
-      }
+      "threshold": 8,
+      "strongPhrases": [
+        "write tests",
+        "add tests",
+        "create tests",
+        "fix tests",
+        "test this",
+        "unit tests",
+        "integration tests",
+        "e2e tests",
+        "test coverage",
+        "add unit test",
+        "write unit test"
+      ],
+      "exactKeywords": [
+        "test",
+        "tests",
+        "testing",
+        "TDD",
+        "coverage",
+        "mock",
+        "mocking"
+      ],
+      "containsKeywords": [
+        "jest",
+        "vitest",
+        "pytest",
+        "mocha",
+        "chai",
+        "stub",
+        "spy",
+        "fixture",
+        "beforeEach",
+        "afterEach",
+        "describe(",
+        "it(",
+        "expect("
+      ],
+      "intentPatterns": [
+        "(write|create|add|implement|fix)\\s+\\w*\\s*tests?",
+        "test.*?(for|this|the|my)",
+        "how.*?test",
+        "should.*?test",
+        "(add|create|write).*?spec",
+        "(add|create|write).*?mock"
+      ],
+      "excludePatterns": [
+        "\\b(contest|attest|protest|detest|fastest|latest|greatest)\\b",
+        "test.*?(idea|theory|hypothesis)"
+      ]
     }
   }
 }
