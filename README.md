@@ -7,6 +7,8 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 | Skill | Description |
 |-------|-------------|
 | **interview** | Transform rough ideas into implementation-ready specs through rigorous research and questioning. Evolves from Critical Challenger to Expert Partner. |
+| **systematic-debugging** | Four-phase debugging framework: root cause → pattern analysis → hypothesis → implementation. No fixes without understanding. |
+| **testing-anti-patterns** | Prevents common testing mistakes: testing mocks, test-only production methods, mocking without understanding dependencies. |
 | **setup-linter** | Auto-detect, install, and configure project-specific linting with a Stop hook. Supports JS/TS, Python, Rust, Go, Deno. |
 | **authoring-skills** | Complete guide for writing skills—covers SKILL.md best practices, plugin development, triggers, hooks, and Anthropic guidelines |
 | **prompt-craft** | Research-backed prompt engineering with 10 core techniques. Modes: Analyze, Craft, Teach, Quick Fix |
@@ -91,6 +93,56 @@ Or invoke directly:
 - Always verifies technology assumptions against current docs (training data may be stale)
 - Surfaces contradictions between your claims and research findings
 - Captures Q&A in the spec so future Claude instances can implement without asking questions
+
+### Systematic Debugging Skill
+
+**Best for:** Any bug, test failure, or unexpected behavior - BEFORE attempting fixes
+
+```
+This test is failing and I don't know why
+```
+
+Or when you've already tried fixes:
+```
+I've tried 3 fixes and nothing is working
+```
+
+**The Iron Law:** No fixes without root cause investigation first.
+
+**Four phases:**
+1. **Root Cause Investigation** — Read errors, reproduce, trace data flow
+2. **Pattern Analysis** — Find working examples, compare differences
+3. **Hypothesis Testing** — Single hypothesis, minimal change, verify
+4. **Implementation** — Failing test first, single fix, verify
+
+**Key features:**
+- Stops "quick fix" instinct that causes thrashing
+- After 3+ failed fixes, questions architecture instead of attempting more fixes
+- Integrates with test-driven-development and root-cause-tracing skills
+
+### Testing Anti-Patterns Skill
+
+**Best for:** Writing tests, adding mocks, or when tempted to add test-only methods
+
+```
+I need to write tests for this component
+```
+
+Or when tests are getting complex:
+```
+My test mocks are getting really complicated
+```
+
+**The Iron Laws:**
+1. NEVER test mock behavior
+2. NEVER add test-only methods to production classes
+3. NEVER mock without understanding dependencies
+
+**Catches common mistakes:**
+- Asserting on mock elements instead of real behavior
+- Adding `destroy()` methods only used in tests
+- Over-mocking that breaks test logic
+- Incomplete mocks that hide bugs
 
 ### Setup Linter Skill
 
@@ -177,6 +229,44 @@ A rigorous interview system that produces implementation-ready specs:
 - Interview Record (Q&A that led to decisions)
 - Assumption Corrections (what user/Claude got wrong)
 - Edge Cases, Tradeoffs, Open Questions (when relevant)
+
+### systematic-debugging
+
+Four-phase framework that ensures understanding before fixes:
+
+**The Four Phases:**
+| Phase | Key Activities | Success Criteria |
+|-------|---------------|------------------|
+| **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |
+| **2. Pattern** | Find working examples, compare | Identify differences |
+| **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
+| **4. Implementation** | Create test, fix, verify | Bug resolved, tests pass |
+
+**Key rules:**
+- No fixes without completing Phase 1
+- One variable at a time in Phase 3
+- If 3+ fixes failed → question architecture, don't attempt fix #4
+- 95% of "no root cause" cases are incomplete investigation
+
+**Red flags that trigger this skill:**
+- "Quick fix for now, investigate later"
+- "Just try changing X and see if it works"
+- Each fix reveals new problem in different place
+
+### testing-anti-patterns
+
+Prevents common testing mistakes that cause false confidence:
+
+**Anti-patterns caught:**
+| Anti-Pattern | What's Wrong | Fix |
+|--------------|--------------|-----|
+| Testing mock behavior | Verifies mock exists, not real behavior | Test real component or unmock |
+| Test-only production methods | Pollutes production with test code | Move to test utilities |
+| Mocking without understanding | Over-mocking breaks test logic | Understand dependencies first |
+| Incomplete mocks | Partial mocks hide structural assumptions | Mirror real API completely |
+| Tests as afterthought | Can't claim complete without tests | TDD - tests first |
+
+**Gate functions:** Each anti-pattern has a "gate function" - questions to ask BEFORE taking action that would introduce the anti-pattern.
 
 ### setup-linter
 
@@ -265,6 +355,12 @@ Twitter/X copywriting expertise:
 - **Defend your ideas** — When Claude challenges, explain your reasoning. Ideas that survive become stronger specs
 - **Trust the research** — If Claude says "I found library X that does this," consider it seriously
 - **Review the spec** — The Interview Record should capture your key decisions. If something's missing, ask to add it
+
+### Debugging & Testing Skills
+- **Use systematic-debugging BEFORE attempting fixes** — Even if the fix seems obvious, the process is fast and prevents thrashing
+- **If 3+ fixes failed, stop** — This signals an architectural problem, not a bug. Question the pattern.
+- **Run tests with real implementations first** — Before mocking, see what actually needs to happen
+- **Gate functions prevent mistakes** — Ask the questions before adding mocks or test methods
 
 ### General
 - **Let skills activate naturally** — You don't need to explicitly invoke skills; Claude uses them based on context
