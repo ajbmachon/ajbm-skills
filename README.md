@@ -68,22 +68,6 @@ After restarting Claude Code:
 What skills are available?
 ```
 
-### Migrating from Previous Version
-
-If you installed the previous `development@ajbmachon` or `business@ajbmachon`:
-
-```bash
-# Remove old installation
-/plugin uninstall development@ajbmachon
-/plugin uninstall business@ajbmachon
-/plugin marketplace remove ajbmachon
-
-# Install new version
-/plugin marketplace add ajbmachon/ajbm-skills
-/plugin install ajbm-dev@ajbm
-/plugin install ajbm-business@ajbm
-```
-
 ---
 
 ## Automatic Skill Suggestions
