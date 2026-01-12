@@ -1,52 +1,71 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "skills": {
     "hormozi-pitch": {
       "type": "domain",
       "enforcement": "suggest",
       "priority": "high",
-      "promptTriggers": {
-        "keywords": [
-          "hormozi",
-          "offer",
-          "pricing",
-          "guarantee",
-          "value proposition",
-          "value stack",
-          "grand slam offer",
-          "100m offers",
-          "irresistible offer",
-          "magic naming"
-        ],
-        "intentPatterns": [
-          "(create|write|build|make).*?(offer|pitch|pricing)",
-          "(improve|craft).*?(offer|value proposition)",
-          "how (to|do I).*?(price|guarantee|offer)"
-        ]
-      }
+      "threshold": 8,
+      "strongPhrases": [
+        "grand slam offer",
+        "100m offers",
+        "irresistible offer",
+        "value proposition",
+        "value stack",
+        "magic naming",
+        "create an offer",
+        "write a pitch",
+        "build an offer"
+      ],
+      "exactKeywords": [
+        "hormozi",
+        "offer",
+        "pitch",
+        "pricing",
+        "guarantee",
+        "bonuses",
+        "scarcity",
+        "urgency"
+      ],
+      "containsKeywords": [],
+      "intentPatterns": [
+        "(create|write|build|make).*?(offer|pitch|pricing)",
+        "(improve|craft).*?(offer|value proposition)",
+        "how (to|do I).*?(price|guarantee|offer)"
+      ],
+      "excludePatterns": []
     },
     "x-post-writer": {
       "type": "domain",
       "enforcement": "suggest",
       "priority": "high",
-      "promptTriggers": {
-        "keywords": [
-          "tweet",
-          "twitter",
-          "x post",
-          "thread",
-          "viral content",
-          "social media copy",
-          "hook",
-          "engagement",
-          "twitter thread"
-        ],
-        "intentPatterns": [
-          "(write|create|craft).*?(tweet|thread|post)",
-          "(twitter|x).*?(content|copy|post)",
-          "viral.*?(hook|content|tweet)"
-        ]
-      }
+      "threshold": 8,
+      "strongPhrases": [
+        "twitter post",
+        "x post",
+        "viral content",
+        "social media copy",
+        "twitter thread",
+        "write a tweet",
+        "create a thread"
+      ],
+      "exactKeywords": [
+        "tweet",
+        "twitter",
+        "thread",
+        "viral",
+        "hook",
+        "engagement"
+      ],
+      "containsKeywords": [
+        "social media"
+      ],
+      "intentPatterns": [
+        "(write|create|craft).*?(tweet|thread|post)",
+        "(twitter|x).*?(content|copy|post)",
+        "viral.*?(hook|content|tweet)"
+      ],
+      "excludePatterns": []
     }
   }
 }
