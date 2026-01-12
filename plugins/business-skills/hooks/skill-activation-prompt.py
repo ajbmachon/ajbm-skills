@@ -38,7 +38,7 @@ SCORE_CONTAINS_KEYWORD = 5
 SCORE_EXCLUDE_PENALTY = -20
 
 # Default threshold (skills need strong signal to trigger)
-DEFAULT_THRESHOLD = 15
+DEFAULT_THRESHOLD = 12
 
 
 def load_rules() -> dict:
