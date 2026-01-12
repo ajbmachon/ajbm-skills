@@ -2,6 +2,19 @@
 """
 UserPromptSubmit hook for skill auto-suggestion.
 Reads user prompt from stdin, matches against skill-rules.json, outputs suggestions.
+
+v2.1 - Forced acknowledgment pattern for reliable skill activation:
+  - Claude MUST respond with either skill invocation or "[SKILL NOT NEEDED]"
+  - Direct skill name mention (+20) always triggers suggestion
+  - Higher default threshold (15) reduces false positives
+
+Scoring system:
+  - directMention: Skill name in prompt (+20)
+  - strongPhrases: Multi-word exact matches (+15)
+  - exactKeywords: Word boundary matching (+10)
+  - containsKeywords: Substring matching (+5)
+  - intentPatterns: Regex patterns (+8)
+  - excludePatterns: Negative patterns (-20)
 """
 
 import json
@@ -16,38 +29,96 @@ RULES_FILE = SCRIPT_DIR / "skill-rules.json"
 # Priority ordering for output
 PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
+# Scoring weights
+SCORE_DIRECT_MENTION = 20  # Direct mention of skill name (always triggers)
+SCORE_STRONG_PHRASE = 15
+SCORE_EXACT_KEYWORD = 10
+SCORE_INTENT_PATTERN = 8
+SCORE_CONTAINS_KEYWORD = 5
+SCORE_EXCLUDE_PENALTY = -20
+
+# Default threshold (skills need strong signal to trigger)
+DEFAULT_THRESHOLD = 15
+
 
 def load_rules() -> dict:
     """Load skill-rules.json configuration."""
     if not RULES_FILE.exists():
-        return {"version": "1.0", "skills": {}}
+        return {"version": "2.0", "skills": {}}
 
     with open(RULES_FILE, "r") as f:
         return json.load(f)
 
 
-def match_keywords(prompt: str, keywords: list[str]) -> bool:
-    """Check if any keyword appears in the prompt (case-insensitive)."""
+def score_skill(prompt: str, skill_config: dict, skill_name: str) -> float:
+    """
+    Calculate a confidence score for how well the prompt matches this skill.
+    Higher score = stronger match.
+    """
+    score = 0.0
     prompt_lower = prompt.lower()
-    return any(kw.lower() in prompt_lower for kw in keywords)
 
+    # Direct mention of skill name (highest priority - always triggers)
+    skill_name_lower = skill_name.lower().replace("-", " ").replace("_", " ")
+    if skill_name_lower in prompt_lower or skill_name.lower() in prompt_lower:
+        score += SCORE_DIRECT_MENTION
 
-def match_patterns(prompt: str, patterns: list[str]) -> bool:
-    """Check if any regex pattern matches the prompt (case-insensitive)."""
-    for pattern in patterns:
+    # Strong phrases (high value) - multi-word exact matches
+    for phrase in skill_config.get("strongPhrases", []):
+        if phrase.lower() in prompt_lower:
+            score += SCORE_STRONG_PHRASE
+
+    # Exact keywords (word boundary matching)
+    for kw in skill_config.get("exactKeywords", []):
+        try:
+            pattern = r'\b' + re.escape(kw) + r'\b'
+            if re.search(pattern, prompt, re.IGNORECASE):
+                score += SCORE_EXACT_KEYWORD
+        except re.error:
+            continue
+
+    # Contains keywords (substring matching - legacy support)
+    for kw in skill_config.get("containsKeywords", []):
+        if kw.lower() in prompt_lower:
+            score += SCORE_CONTAINS_KEYWORD
+
+    # Legacy support: check old "promptTriggers.keywords" format
+    triggers = skill_config.get("promptTriggers", {})
+    for kw in triggers.get("keywords", []):
+        if kw.lower() in prompt_lower:
+            score += SCORE_CONTAINS_KEYWORD
+
+    # Intent patterns (regex)
+    for pattern in skill_config.get("intentPatterns", []):
         try:
             if re.search(pattern, prompt, re.IGNORECASE):
-                return True
+                score += SCORE_INTENT_PATTERN
         except re.error:
-            # Skip invalid regex patterns
             continue
-    return False
+
+    # Legacy support: check old "promptTriggers.intentPatterns" format
+    for pattern in triggers.get("intentPatterns", []):
+        try:
+            if re.search(pattern, prompt, re.IGNORECASE):
+                score += SCORE_INTENT_PATTERN
+        except re.error:
+            continue
+
+    # Exclude patterns (negative - prevent false positives)
+    for pattern in skill_config.get("excludePatterns", []):
+        try:
+            if re.search(pattern, prompt, re.IGNORECASE):
+                score += SCORE_EXCLUDE_PENALTY
+        except re.error:
+            continue
+
+    return max(0, score)
 
 
-def find_matching_skills(prompt: str, rules: dict) -> list[tuple[str, str]]:
+def find_matching_skills(prompt: str, rules: dict) -> list[tuple[str, str, float]]:
     """
-    Find all skills that match the prompt.
-    Returns list of (skill_name, priority) tuples.
+    Find all skills that match the prompt above their threshold.
+    Returns list of (skill_name, priority, score) tuples, sorted by score descending.
     """
     matches = []
 
@@ -56,42 +127,50 @@ def find_matching_skills(prompt: str, rules: dict) -> list[tuple[str, str]]:
         if skill_config.get("enforcement") != "suggest":
             continue
 
-        triggers = skill_config.get("promptTriggers", {})
-        keywords = triggers.get("keywords", [])
-        patterns = triggers.get("intentPatterns", [])
+        # Calculate score
+        score = score_skill(prompt, skill_config, skill_name)
 
-        # Check for matches
-        if match_keywords(prompt, keywords) or match_patterns(prompt, patterns):
+        # Check against threshold
+        threshold = skill_config.get("threshold", DEFAULT_THRESHOLD)
+        if score >= threshold:
             priority = skill_config.get("priority", "medium")
-            matches.append((skill_name, priority))
+            matches.append((skill_name, priority, score))
+
+    # Sort by score (descending), then by priority
+    matches.sort(key=lambda x: (-x[2], PRIORITY_ORDER.get(x[1], 99)))
 
     return matches
 
 
-def format_output(matches: list[tuple[str, str]]) -> str:
+def format_output(matches: list[tuple[str, str, float]]) -> str:
     """Format matched skills for output to stdout."""
     if not matches:
         return ""
 
-    # Sort by priority
-    matches.sort(key=lambda x: PRIORITY_ORDER.get(x[1], 99))
+    # Get the highest scoring skill
+    top_skill = matches[0][0] if matches else ""
 
     lines = [
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-        "🎯 SKILL ACTIVATION CHECK",
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "🎯 SKILL SUGGESTION - Consider before proceeding",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
         "",
-        "📚 RECOMMENDED SKILLS:",
     ]
 
-    for skill_name, priority in matches:
-        priority_indicator = "⚡" if priority in ("critical", "high") else "→"
-        lines.append(f"  {priority_indicator} {skill_name}")
+    # List matching skills (no scores shown)
+    for match in matches:
+        skill_name = match[0]
+        indicator = "▶" if skill_name == top_skill else " "
+        lines.append(f"  {indicator} {skill_name}")
 
     lines.extend([
         "",
-        "ACTION: Use Skill tool BEFORE responding",
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "REQUIRED: You must respond to this suggestion.",
+        "",
+        f"→ Use skill: Invoke Skill tool with \"{top_skill}\"",
+        "→ Skip skill: Say \"[SKILL NOT NEEDED]\" in your response",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
     ])
 
     return "\n".join(lines)

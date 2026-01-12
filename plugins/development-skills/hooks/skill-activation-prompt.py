@@ -3,7 +3,13 @@
 UserPromptSubmit hook for skill auto-suggestion.
 Reads user prompt from stdin, matches against skill-rules.json, outputs suggestions.
 
-v2.0 - Scoring system with multiple match types:
+v2.1 - Forced acknowledgment pattern for reliable skill activation:
+  - Claude MUST respond with either skill invocation or "[SKILL NOT NEEDED]"
+  - Direct skill name mention (+20) always triggers suggestion
+  - Higher default threshold (15) reduces false positives
+
+Scoring system:
+  - directMention: Skill name in prompt (+20)
   - strongPhrases: Multi-word exact matches (+15)
   - exactKeywords: Word boundary matching (+10)
   - containsKeywords: Substring matching (+5)
@@ -24,14 +30,15 @@ RULES_FILE = SCRIPT_DIR / "skill-rules.json"
 PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
 # Scoring weights
+SCORE_DIRECT_MENTION = 20  # Direct mention of skill name (always triggers)
 SCORE_STRONG_PHRASE = 15
 SCORE_EXACT_KEYWORD = 10
 SCORE_INTENT_PATTERN = 8
 SCORE_CONTAINS_KEYWORD = 5
 SCORE_EXCLUDE_PENALTY = -20
 
-# Default threshold
-DEFAULT_THRESHOLD = 8
+# Default threshold (skills need strong signal to trigger)
+DEFAULT_THRESHOLD = 15
 
 
 def load_rules() -> dict:
@@ -43,7 +50,7 @@ def load_rules() -> dict:
         return json.load(f)
 
 
-def score_skill(prompt: str, skill_config: dict) -> float:
+def score_skill(prompt: str, skill_config: dict, skill_name: str) -> float:
     """
     Calculate a confidence score for how well the prompt matches this skill.
     Higher score = stronger match.
@@ -51,7 +58,12 @@ def score_skill(prompt: str, skill_config: dict) -> float:
     score = 0.0
     prompt_lower = prompt.lower()
 
-    # Strong phrases (highest value) - multi-word exact matches
+    # Direct mention of skill name (highest priority - always triggers)
+    skill_name_lower = skill_name.lower().replace("-", " ").replace("_", " ")
+    if skill_name_lower in prompt_lower or skill_name.lower() in prompt_lower:
+        score += SCORE_DIRECT_MENTION
+
+    # Strong phrases (high value) - multi-word exact matches
     for phrase in skill_config.get("strongPhrases", []):
         if phrase.lower() in prompt_lower:
             score += SCORE_STRONG_PHRASE
@@ -116,7 +128,7 @@ def find_matching_skills(prompt: str, rules: dict) -> list[tuple[str, str, float
             continue
 
         # Calculate score
-        score = score_skill(prompt, skill_config)
+        score = score_skill(prompt, skill_config, skill_name)
 
         # Check against threshold
         threshold = skill_config.get("threshold", DEFAULT_THRESHOLD)
@@ -135,22 +147,30 @@ def format_output(matches: list[tuple[str, str, float]]) -> str:
     if not matches:
         return ""
 
+    # Get the highest scoring skill
+    top_skill = matches[0][0] if matches else ""
+
     lines = [
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-        "🎯 SKILL ACTIVATION CHECK",
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "🎯 SKILL SUGGESTION - Consider before proceeding",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
         "",
-        "📚 RECOMMENDED SKILLS:",
     ]
 
-    for skill_name, priority, score in matches:
-        priority_indicator = "⚡" if priority in ("critical", "high") else "→"
-        lines.append(f"  {priority_indicator} {skill_name} (score: {int(score)})")
+    # List matching skills (no scores shown)
+    for match in matches:
+        skill_name = match[0]
+        indicator = "▶" if skill_name == top_skill else " "
+        lines.append(f"  {indicator} {skill_name}")
 
     lines.extend([
         "",
-        "ACTION: Use Skill tool BEFORE responding",
-        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        "REQUIRED: You must respond to this suggestion.",
+        "",
+        f"→ Use skill: Invoke Skill tool with \"{top_skill}\"",
+        "→ Skip skill: Say \"[SKILL NOT NEEDED]\" in your response",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
     ])
 
     return "\n".join(lines)
