@@ -1,0 +1,12 @@
+{
+  "name": "ajbm-security",
+  "version": "1.0.0",
+  "description": "Security guardrails for Claude Code. Blocks dangerous bash commands and sensitive file access. Enable/disable via plugin settings.",
+  "author": {
+    "name": "Andre Machon"
+  },
+  "homepage": "https://github.com/ajbmachon/ajbm-skills",
+  "repository": "https://github.com/ajbmachon/ajbm-skills",
+  "license": "MIT",
+  "keywords": ["security", "guardrails", "protection", "smart-guard"]
+}

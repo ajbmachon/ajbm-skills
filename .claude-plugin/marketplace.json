@@ -1,6 +1,6 @@
 {
   "name": "ajbm",
-  "description": "Claude Code skills by Andre Machon - development and business",
+  "description": "Claude Code skills by Andre Machon - development, business, and security",
   "owner": {
     "name": "Andre Machon"
   },
@@ -19,6 +19,15 @@
       "description": "Skills for business and marketing: offer creation (Hormozi methodology), pricing, copywriting, and Twitter/X content.",
       "version": "1.0.0",
       "source": "./plugins/business-skills",
+      "author": {
+        "name": "Andre Machon"
+      }
+    },
+    {
+      "name": "ajbm-security",
+      "description": "Security guardrails for Claude Code. Blocks dangerous bash commands and sensitive file access. Enable/disable via plugin settings.",
+      "version": "1.0.0",
+      "source": "./plugins/security",
       "author": {
         "name": "Andre Machon"
       }

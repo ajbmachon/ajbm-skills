@@ -38,6 +38,9 @@ claude
 
 # Install business skills (offers, copywriting) - optional
 /plugin install ajbm-business@ajbm
+
+# Install security guardrails (blocks dangerous commands/file access) - optional
+/plugin install ajbm-security@ajbm
 ```
 
 After installation, restart Claude Code to activate the skills.
@@ -57,6 +60,7 @@ claude
 # Install the plugins
 /plugin install ajbm-dev@ajbm
 /plugin install ajbm-business@ajbm
+/plugin install ajbm-security@ajbm
 ```
 
 ### Verify Installation
@@ -385,14 +389,17 @@ Twitter/X copywriting expertise:
 # Disable without uninstalling
 /plugin disable ajbm-dev@ajbm
 /plugin disable ajbm-business@ajbm
+/plugin disable ajbm-security@ajbm  # Turn off security guardrails
 
 # Re-enable
 /plugin enable ajbm-dev@ajbm
 /plugin enable ajbm-business@ajbm
+/plugin enable ajbm-security@ajbm
 
 # Completely remove
 /plugin uninstall ajbm-dev@ajbm
 /plugin uninstall ajbm-business@ajbm
+/plugin uninstall ajbm-security@ajbm
 
 # Update to latest version
 /plugin marketplace update ajbmachon
