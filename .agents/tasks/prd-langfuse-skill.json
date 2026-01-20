@@ -177,7 +177,7 @@
     {
       "id": "US-002",
       "title": "Create shared utilities module",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [
         "US-001"
       ],
@@ -194,13 +194,13 @@
         "ISC reference: rows 53-59"
       ],
       "startedAt": "2026-01-20T15:16:06.506549+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-20T15:16:06.506867+00:00"
+      "completedAt": "2026-01-20T15:23:03.223675+00:00",
+      "updatedAt": "2026-01-20T15:23:03.223516+00:00"
     },
     {
       "id": "US-003",
       "title": "Create SKILL.md routing table",
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [
         "US-001"
       ],
@@ -214,7 +214,10 @@
         "Example: User says 'analyze my langfuse traces' -> skill activates",
         "Negative case: User says 'analyze my logs' without langfuse context -> skill does NOT activate",
         "ISC reference: rows 1-6"
-      ]
+      ],
+      "startedAt": "2026-01-20T15:23:05.322392+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-20T15:23:05.322748+00:00"
     },
     {
       "id": "US-004",
