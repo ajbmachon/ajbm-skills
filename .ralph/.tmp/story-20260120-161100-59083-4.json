@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "total": 16,
+  "remaining": 13,
+  "quality_gates": [
+    "ruff check .",
+    "pytest tests/ -v"
+  ],
+  "id": "US-004",
+  "title": "Create single entry point with subcommand routing"
+}

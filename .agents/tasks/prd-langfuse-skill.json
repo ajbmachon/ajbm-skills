@@ -200,7 +200,7 @@
     {
       "id": "US-003",
       "title": "Create SKILL.md routing table",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [
         "US-001"
       ],
@@ -216,13 +216,13 @@
         "ISC reference: rows 1-6"
       ],
       "startedAt": "2026-01-20T15:23:05.322392+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-20T15:23:05.322748+00:00"
+      "completedAt": "2026-01-20T15:26:39.493852+00:00",
+      "updatedAt": "2026-01-20T15:26:39.493360+00:00"
     },
     {
       "id": "US-004",
       "title": "Create single entry point with subcommand routing",
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [
         "US-002"
       ],
@@ -237,7 +237,10 @@
         "Example: 'python scripts/langfuse.py trace list' -> shows help for trace subcommand",
         "Negative case: 'python scripts/langfuse.py unknown' -> clear error about valid subcommands",
         "ISC reference: rows 7-13"
-      ]
+      ],
+      "startedAt": "2026-01-20T15:26:41.637959+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-20T15:26:41.638234+00:00"
     },
     {
       "id": "US-005",
