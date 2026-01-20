@@ -147,3 +147,39 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Argparse nested subparsers require setting defaults(func=...) on each parser for routing
   - Use noqa: E402 comment for imports after sys.path manipulation
 ---
+
+## 2026-01-20 16:40 - US-005: Implement setup subcommand
+Thread:
+Run: 20260120-161100-59083 (iteration 5-6)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-5.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-5.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 5845194 feat(langfuse): implement setup subcommand with diagnose and guide (US-005)
+- Post-commit status: clean (after iteration 6)
+- Verification:
+  - Command: ruff check . -> PASS
+  - Command: uv run python -m pytest tests/ -v -> PASS (84 tests)
+- Files changed:
+  - .claude/skills/langfuse/lib/langfuse_utils.py (extended)
+  - .claude/skills/langfuse/scripts/langfuse.py (extended)
+  - tests/test_langfuse_cli.py (extended)
+  - tests/test_langfuse_utils.py (extended)
+- What was implemented:
+  - 'setup check' verifies auth and connection to Langfuse with retry logic (ISC row 35)
+  - 'setup diagnose' detects common issues: wrong region (EU vs US), expired keys, invalid keys (ISC rows 36-39)
+  - 'setup guide' walks through setup step-by-step with all regions and key formats (ISC row 37)
+  - Clear next steps provided on any failure (ISC row 40)
+  - Region mismatch detection: "Your keys appear to be for EU cloud, but LANGFUSE_BASE_URL points to US"
+  - Valid setup shows: "Connected to Langfuse at [url]" with checkmarks
+  - Network timeout retries 3x with exponential backoff, then clear error
+  - Added new error codes: AUTH_EXPIRED, NETWORK_TIMEOUT, REGION_MISMATCH
+  - Added DiagnosisIssue and DiagnosisResult dataclasses for structured diagnosis output
+  - 21 additional tests for setup subcommand functionality
+- **Learnings for future iterations:**
+  - ISC rows 35-40 fully addressed by this implementation
+  - DiagnosisResult provides healthy, summary, issues, and next_steps for comprehensive feedback
+  - Region detection from URL is straightforward (check for "us.cloud.langfuse.com")
+  - Key format validation checks prefixes (sk-lf-, pk-lf-) before attempting connection
+  - Retry logic should NOT retry on auth errors (401) - they won't change without new credentials
+---

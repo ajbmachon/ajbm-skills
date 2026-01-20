@@ -260,9 +260,9 @@
         "Negative case: Network timeout -> retry 3x with backoff, then clear error",
         "ISC reference: rows 35-40"
       ],
-      "startedAt": "2026-01-20T15:32:32.006685+00:00",
+      "startedAt": "2026-01-20T15:40:11.478374+00:00",
       "completedAt": null,
-      "updatedAt": "2026-01-20T15:32:32.006872+00:00"
+      "updatedAt": "2026-01-20T15:40:11.478607+00:00"
     },
     {
       "id": "US-006",
