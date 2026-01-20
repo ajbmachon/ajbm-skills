@@ -13,7 +13,7 @@ from typing import Any
 
 # Files that should NEVER be read or modified
 SENSITIVE_FILES = [
-    r"(^|/)\.env(\.[^/]*)?$",  # .env files (must be actual filename) 
+    r"(^|/)\.env(\.[^/]*)?$",  # .env files (must be actual filename)
     r"(^|/)\devcontainer.local(\.[^/]*)?$",  # devcontainer secrets file (must be actual filename)
     r"(^|/)\.ssh(/|$)",  # SSH directory
     r"\.(pem|key|crt|cer|pfx|p12)$",  # Private keys and certificates

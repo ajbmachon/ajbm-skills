@@ -46,7 +46,7 @@ def load_rules() -> dict:
     if not RULES_FILE.exists():
         return {"version": "2.0", "skills": {}}
 
-    with open(RULES_FILE, "r") as f:
+    with open(RULES_FILE) as f:
         return json.load(f)
 
 
