@@ -528,6 +528,19 @@ class LangfuseClient:
                     traces=[],
                 )
 
+            # Network/timeout errors
+            is_network_error = any(
+                term in error_str
+                for term in ["timeout", "timed out", "connection", "network", "dns"]
+            )
+            if is_network_error:
+                return TraceListResult(
+                    ok=False,
+                    code=NETWORK_TIMEOUT,
+                    message=f"Network error fetching traces: {e}",
+                    traces=[],
+                )
+
             # Generic API error
             return TraceListResult(
                 ok=False,
@@ -535,6 +548,12 @@ class LangfuseClient:
                 message=f"Failed to fetch traces: {e}",
                 traces=[],
             )
+
+    def _safe_get(self, obj, attr: str, default=None):
+        """Safely get attribute from object (handles both dict and object access)."""
+        if isinstance(obj, dict):
+            return obj.get(attr, default)
+        return getattr(obj, attr, default)
 
     def fetch_trace(self, trace_id: str) -> TraceGetResult:
         """Fetch a single trace with all observations (ISC rows 15, 20).
@@ -552,30 +571,36 @@ class LangfuseClient:
             # Fetch the trace first
             trace = self.langfuse.api.trace.get(trace_id)
 
+            # Get trace ID safely (handles both dict and object responses)
+            actual_trace_id = self._safe_get(trace, "id", trace_id) or trace_id
+
             # Format timestamp
             timestamp = ""
-            if hasattr(trace, "timestamp") and trace.timestamp:
+            trace_ts = self._safe_get(trace, "timestamp")
+            if trace_ts:
                 timestamp = (
-                    trace.timestamp.isoformat()
-                    if hasattr(trace.timestamp, "isoformat")
-                    else str(trace.timestamp)
+                    trace_ts.isoformat()
+                    if hasattr(trace_ts, "isoformat")
+                    else str(trace_ts)
                 )
 
             # Format input/output for display (truncate if too long)
             trace_input = None
-            if hasattr(trace, "input") and trace.input:
+            raw_input = self._safe_get(trace, "input")
+            if raw_input:
                 trace_input = (
-                    str(trace.input)[:500] + "..."
-                    if len(str(trace.input)) > 500
-                    else str(trace.input)
+                    str(raw_input)[:500] + "..."
+                    if len(str(raw_input)) > 500
+                    else str(raw_input)
                 )
 
             trace_output = None
-            if hasattr(trace, "output") and trace.output:
+            raw_output = self._safe_get(trace, "output")
+            if raw_output:
                 trace_output = (
-                    str(trace.output)[:500] + "..."
-                    if len(str(trace.output)) > 500
-                    else str(trace.output)
+                    str(raw_output)[:500] + "..."
+                    if len(str(raw_output)) > 500
+                    else str(raw_output)
                 )
 
             # Fetch observations for this trace using v2 API
@@ -598,25 +623,28 @@ class LangfuseClient:
                     start_time_str = ""
                     end_time_str = None
 
-                    if hasattr(obs, "start_time") and obs.start_time:
+                    obs_start_time = self._safe_get(obs, "start_time")
+                    obs_end_time = self._safe_get(obs, "end_time")
+
+                    if obs_start_time:
                         start_time_str = (
-                            obs.start_time.isoformat()
-                            if hasattr(obs.start_time, "isoformat")
-                            else str(obs.start_time)
+                            obs_start_time.isoformat()
+                            if hasattr(obs_start_time, "isoformat")
+                            else str(obs_start_time)
                         )
 
-                    if hasattr(obs, "end_time") and obs.end_time:
+                    if obs_end_time:
                         end_time_str = (
-                            obs.end_time.isoformat()
-                            if hasattr(obs.end_time, "isoformat")
-                            else str(obs.end_time)
+                            obs_end_time.isoformat()
+                            if hasattr(obs_end_time, "isoformat")
+                            else str(obs_end_time)
                         )
 
                         # Calculate duration in ms
-                        if hasattr(obs, "start_time") and obs.start_time:
+                        if obs_start_time:
                             try:
                                 duration_s = (
-                                    obs.end_time - obs.start_time
+                                    obs_end_time - obs_start_time
                                 ).total_seconds()
                                 duration_ms = duration_s * 1000
                             except (TypeError, AttributeError):
@@ -624,19 +652,21 @@ class LangfuseClient:
 
                     # Format input/output
                     obs_input = None
-                    if hasattr(obs, "input") and obs.input:
+                    raw_obs_input = self._safe_get(obs, "input")
+                    if raw_obs_input:
                         obs_input = (
-                            str(obs.input)[:300] + "..."
-                            if len(str(obs.input)) > 300
-                            else str(obs.input)
+                            str(raw_obs_input)[:300] + "..."
+                            if len(str(raw_obs_input)) > 300
+                            else str(raw_obs_input)
                         )
 
                     obs_output = None
-                    if hasattr(obs, "output") and obs.output:
+                    raw_obs_output = self._safe_get(obs, "output")
+                    if raw_obs_output:
                         obs_output = (
-                            str(obs.output)[:300] + "..."
-                            if len(str(obs.output)) > 300
-                            else str(obs.output)
+                            str(raw_obs_output)[:300] + "..."
+                            if len(str(raw_obs_output)) > 300
+                            else str(raw_obs_output)
                         )
 
                     # Extract usage/cost data
@@ -645,31 +675,33 @@ class LangfuseClient:
                     total_tokens = None
                     cost = None
 
-                    if hasattr(obs, "usage") and obs.usage:
-                        input_tokens = getattr(obs.usage, "input", None)
-                        output_tokens = getattr(obs.usage, "output", None)
-                        total_tokens = getattr(obs.usage, "total", None)
+                    obs_usage = self._safe_get(obs, "usage")
+                    if obs_usage:
+                        input_tokens = self._safe_get(obs_usage, "input")
+                        output_tokens = self._safe_get(obs_usage, "output")
+                        total_tokens = self._safe_get(obs_usage, "total")
 
-                    if hasattr(obs, "calculated_total_cost") and obs.calculated_total_cost:
-                        cost = obs.calculated_total_cost
+                    obs_cost = self._safe_get(obs, "calculated_total_cost")
+                    if obs_cost:
+                        cost = obs_cost
 
                     obs_info = ObservationInfo(
-                        id=obs.id,
-                        type=getattr(obs, "type", "UNKNOWN"),
-                        name=getattr(obs, "name", None),
+                        id=str(self._safe_get(obs, "id", "")),
+                        type=str(self._safe_get(obs, "type", "UNKNOWN")),
+                        name=self._safe_get(obs, "name"),
                         start_time=start_time_str,
                         end_time=end_time_str,
                         duration_ms=duration_ms,
-                        level=getattr(obs, "level", None),
-                        status_message=getattr(obs, "status_message", None),
-                        model=getattr(obs, "model", None),
+                        level=self._safe_get(obs, "level"),
+                        status_message=self._safe_get(obs, "status_message"),
+                        model=self._safe_get(obs, "model"),
                         input=obs_input,
                         output=obs_output,
                         input_tokens=input_tokens,
                         output_tokens=output_tokens,
                         total_tokens=total_tokens,
                         cost=cost,
-                        parent_observation_id=getattr(obs, "parent_observation_id", None),
+                        parent_observation_id=self._safe_get(obs, "parent_observation_id"),
                     )
                     observations.append(obs_info)
 
@@ -683,15 +715,15 @@ class LangfuseClient:
 
             # Build trace detail
             trace_detail = TraceDetail(
-                id=trace.id,
-                name=getattr(trace, "name", None),
+                id=actual_trace_id,
+                name=self._safe_get(trace, "name"),
                 timestamp=timestamp,
-                session_id=getattr(trace, "session_id", None),
-                user_id=getattr(trace, "user_id", None),
+                session_id=self._safe_get(trace, "session_id"),
+                user_id=self._safe_get(trace, "user_id"),
                 input=trace_input,
                 output=trace_output,
-                metadata=getattr(trace, "metadata", None),
-                tags=getattr(trace, "tags", None),
+                metadata=self._safe_get(trace, "metadata"),
+                tags=self._safe_get(trace, "tags"),
                 observations=observations,
             )
 
@@ -912,14 +944,14 @@ class LangfuseClient:
             ),
         )
 
-    def _parse_time_range(self, time_range: str) -> tuple[str | None, str]:
-        """Parse time range string like '24h', '7d' into ISO timestamp.
+    def _parse_time_range(self, time_range: str):
+        """Parse time range string like '24h', '7d' into datetime object.
 
         Args:
             time_range: Time range string (e.g., '24h', '7d', '1h')
 
         Returns:
-            Tuple of (ISO timestamp for from_timestamp, human-readable time range)
+            Tuple of (datetime for from_timestamp, human-readable time range)
         """
         from datetime import UTC, datetime, timedelta
 
@@ -943,7 +975,8 @@ class LangfuseClient:
             from_time = now - timedelta(hours=24)
             human_range = "last 24 hours"
 
-        return from_time.isoformat(), human_range
+        # Return datetime object, not ISO string - API expects datetime
+        return from_time, human_range
 
     def fetch_errors(
         self,
@@ -984,38 +1017,41 @@ class LangfuseClient:
 
                 for obs in obs_response.data:
                     # Check for error level
-                    level = getattr(obs, "level", None)
+                    level = self._safe_get(obs, "level")
                     if level not in ("ERROR", "FATAL", "CRITICAL"):
                         continue
 
-                    trace_id = getattr(obs, "trace_id", None)
+                    trace_id = self._safe_get(obs, "trace_id")
                     if not trace_id:
                         continue
 
+                    obs_id = self._safe_get(obs, "id", "")
+
                     # Dedupe
-                    key = (trace_id, obs.id)
+                    key = (trace_id, obs_id)
                     if key in seen_trace_obs:
                         continue
                     seen_trace_obs.add(key)
 
                     # Format timestamp
                     timestamp = ""
-                    if hasattr(obs, "start_time") and obs.start_time:
+                    obs_start_time = self._safe_get(obs, "start_time")
+                    if obs_start_time:
                         timestamp = (
-                            obs.start_time.isoformat()
-                            if hasattr(obs.start_time, "isoformat")
-                            else str(obs.start_time)
+                            obs_start_time.isoformat()
+                            if hasattr(obs_start_time, "isoformat")
+                            else str(obs_start_time)
                         )
 
                     error_info = TraceErrorInfo(
-                        trace_id=trace_id,
+                        trace_id=str(trace_id),
                         trace_name=None,  # Will be populated if we fetch trace details
                         trace_timestamp=timestamp,
-                        observation_id=obs.id,
-                        observation_name=getattr(obs, "name", None),
-                        observation_type=getattr(obs, "type", "UNKNOWN"),
-                        error_message=getattr(obs, "status_message", None),
-                        error_level=level,
+                        observation_id=str(obs_id),
+                        observation_name=self._safe_get(obs, "name"),
+                        observation_type=str(self._safe_get(obs, "type", "UNKNOWN")),
+                        error_message=self._safe_get(obs, "status_message"),
+                        error_level=str(level),
                     )
                     errors.append(error_info)
 
@@ -1123,14 +1159,14 @@ class LangfuseClient:
 
                 for obs in obs_response.data:
                     # Get cost
-                    cost = getattr(obs, "calculated_total_cost", None)
+                    cost = self._safe_get(obs, "calculated_total_cost")
                     if cost is None or cost == 0:
                         continue
 
                     total_cost += cost
 
                     # Aggregate by model
-                    model = getattr(obs, "model", None) or "unknown"
+                    model = self._safe_get(obs, "model") or "unknown"
                     existing_model = cost_by_model[model]
                     cost_by_model[model] = (
                         existing_model[0] + cost,
@@ -1138,7 +1174,7 @@ class LangfuseClient:
                     )
 
                     # Aggregate by trace
-                    trace_id = getattr(obs, "trace_id", None)
+                    trace_id = self._safe_get(obs, "trace_id")
                     if trace_id:
                         existing_trace = cost_by_trace[trace_id]
                         cost_by_trace[trace_id] = (
@@ -1148,7 +1184,7 @@ class LangfuseClient:
                         )
 
                     # Aggregate by day
-                    start_time = getattr(obs, "start_time", None)
+                    start_time = self._safe_get(obs, "start_time")
                     if start_time:
                         if hasattr(start_time, "date"):
                             day_str = start_time.date().isoformat()
@@ -1446,8 +1482,9 @@ class LangfuseClient:
             if name:
                 kwargs["name"] = name
 
-            # Fetch scores using the SDK API
-            response = self.langfuse.api.score.list(**kwargs)
+            # Fetch scores using the SDK API v2
+            # The Langfuse API uses score_v_2.get for listing scores
+            response = self.langfuse.api.score_v_2.get(**kwargs)
 
             # Process scores into ScoreInfo objects
             scores: list[ScoreInfo] = []

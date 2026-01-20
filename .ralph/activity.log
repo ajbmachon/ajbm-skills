@@ -1,6 +1,8 @@
 # Activity Log
 
 ## Run Summary
+- 2026-01-20 17:56:25 | run=20260120-173752-17085 | iter=3 | mode=build | story=US-015 | duration=531s | status=error
+- 2026-01-20 17:47:32 | run=20260120-173752-17085 | iter=2 | mode=build | story=US-013 | duration=391s | status=success
 - 2026-01-20 17:40:59 | run=20260120-173752-17085 | iter=1 | mode=build | story=US-012 | duration=187s | status=success
 - 2026-01-20 17:37:26 | run=20260120-161100-59083 | iter=21 | mode=build | story=US-011 | duration=156s | status=error
 - 2026-01-20 17:34:48 | run=20260120-161100-59083 | iter=20 | mode=build | story=US-011 | duration=139s | status=error
@@ -77,3 +79,8 @@
 [2026-01-20 17:37:52] ITERATION 1 start (mode=build story=US-012)
 [2026-01-20 17:40:59] ITERATION 1 end (duration=187s)
 [2026-01-20 17:41:01] ITERATION 2 start (mode=build story=US-013)
+[2026-01-20 17:47:32] ITERATION 2 end (duration=391s)
+[2026-01-20 17:47:34] ITERATION 3 start (mode=build story=US-015)
+[2026-01-20 17:56:25] ITERATION 3 end (duration=531s)
+[2026-01-20 17:56:27] ITERATION 4 start (mode=build story=US-015)
+[2026-01-20 18:01:55] Fixed langfuse_utils.py to use _safe_get consistently for observation handling, improved retry logic in integration tests
