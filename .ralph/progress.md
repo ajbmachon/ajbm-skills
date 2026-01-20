@@ -109,3 +109,41 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Description should be in third person and include both what skill does and trigger keywords
   - Frontmatter format: name (lowercase, hyphens) and description (max 1024 chars)
 ---
+
+## 2026-01-20 16:34 - US-004: Create single entry point with subcommand routing
+Thread:
+Run: 20260120-161100-59083 (iteration 4)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-4.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 047f10f feat(langfuse): add CLI entry point with subcommand routing (US-004)
+- Post-commit status: clean
+- Verification:
+  - Command: uv run ruff check . -> PASS
+  - Command: uv run pytest tests/ -v -> PASS (63 tests)
+- Files changed:
+  - .claude/skills/langfuse/scripts/langfuse.py (created)
+  - tests/test_langfuse_cli.py (created)
+- What was implemented:
+  - Created scripts/langfuse.py as single entry point for Langfuse operations (ISC row 7)
+  - Uses Python only (no JS/TS) (ISC row 8)
+  - Subcommands implemented: trace, evaluate, experiment, setup (ISC row 9)
+  - Auth loaded from .env via LangfuseClient (ISC row 10)
+  - Auth validation before any operation using _require_auth() (ISC row 11)
+  - Trace subcommand actions: list, get, analyze, errors, costs (ISC rows 14-18)
+  - Evaluate subcommand actions: design, score, scores (ISC rows 22-24)
+  - Experiment subcommand actions: create-dataset, add-item, run, compare (ISC rows 29-32)
+  - Setup subcommand actions: check, diagnose, guide (ISC rows 35-37)
+  - Uses argparse for CLI parsing with nested subparsers
+  - Commands print implementation status and accepted arguments
+  - setup check validates connection (example from acceptance criteria)
+  - Unknown command shows clear error (negative case from acceptance criteria)
+  - 25 unit tests covering CLI structure, subcommands, auth validation, help messages
+- **Learnings for future iterations:**
+  - ISC rows 7-13 fully addressed by this implementation
+  - When testing a script named langfuse.py, use importlib.util to avoid conflict with langfuse SDK package
+  - Use patch.object(module, "Class") when patching imported classes in dynamically loaded modules
+  - Argparse nested subparsers require setting defaults(func=...) on each parser for routing
+  - Use noqa: E402 comment for imports after sys.path manipulation
+---
