@@ -416,3 +416,60 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Quick reference tables provide scannable information for returning users
   - Links to deep-dive content allow progressive learning without cluttering intro
 ---
+
+## 2026-01-20 17:55 - US-013: Create domain reference files
+Thread:
+Run: 20260120-173752-17085 (iteration 2)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-2.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-2.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: f4788f1 docs(langfuse): add domain reference files (US-013)
+- Post-commit status: clean
+- Verification:
+  - Command: `ruff check .` -> PASS (All checks passed!)
+  - Command: `uv run pytest tests/ -v` -> PASS (171 tests passed)
+- Files changed:
+  - .claude/skills/langfuse/references/traces.md (created, 410 lines)
+  - .claude/skills/langfuse/references/evals.md (created, 424 lines)
+  - .claude/skills/langfuse/references/datasets.md (created, 549 lines)
+- What was implemented:
+  - Created references/traces.md with trace domain deep-dive (ISC rows 44-46)
+    - Table of Contents for navigation (ISC row 45)
+    - Data model: Sessions, Traces, Observations hierarchy
+    - 10 observation types with use cases and icons
+    - Token & cost tracking: ingestion, inference, usage fields
+    - Metadata, tags & user tracking with constraints
+    - Querying traces: listing, filtering, pagination
+    - Analyzing traces: latency, error detection, cost breakdown
+    - Analogies for non-experts (receipts, threads, line items)
+  - Created references/evals.md with evaluation deep-dive (ISC rows 47-49)
+    - Table of Contents for navigation (ISC row 48)
+    - Evaluation loop diagram (offline/online/feedback)
+    - Score types: Numeric, Categorical, Boolean with examples
+    - Score attachment targets: trace, observation, session, dataset run
+    - Score Configs for schema enforcement
+    - LLM-as-a-Judge setup and debugging (ISC row 49)
+    - Annotation Queues workflow and API (ISC row 49)
+    - Score Analytics for comparison metrics
+    - Analogies: unit tests, peer review, grading rubrics
+  - Created references/datasets.md with dataset/experiment deep-dive (ISC rows 50-52)
+    - Table of Contents for navigation (ISC row 51)
+    - Data model: Datasets, Items, Experiment Runs
+    - Creating datasets via skill and SDK
+    - Managing dataset items: adding, archiving
+    - run_experiment() API with concurrent execution (ISC row 52)
+    - Manual experiment workflow alternative
+    - Golden datasets: creation, population, best practices (ISC row 52)
+    - Comparing experiment runs
+    - Linking traces to dataset items (ISC row 52)
+    - JSON Schema enforcement
+    - Analogies: test suites, test cases, pytest
+- **Learnings for future iterations:**
+  - ISC rows 44-52 fully addressed by this implementation
+  - Reference files should be >100 lines with TOC for navigation
+  - Analogies help non-experts understand complex concepts quickly
+  - Cross-linking between reference files creates cohesive documentation
+  - Including both SDK examples and skill commands shows multiple paths
+  - "Common Patterns" sections provide actionable templates
+---
