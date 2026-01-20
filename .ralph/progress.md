@@ -183,3 +183,41 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Key format validation checks prefixes (sk-lf-, pk-lf-) before attempting connection
   - Retry logic should NOT retry on auth errors (401) - they won't change without new credentials
 ---
+
+## 2026-01-20 16:55 - US-006: Implement trace list command
+Thread:
+Run: 20260120-161100-59083 (iteration 8)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-8.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-8.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 3c52738 feat(langfuse): implement trace list command with filters and pagination (US-006)
+- Post-commit status: clean
+- Verification:
+  - Command: ruff check . -> PASS
+  - Command: uv run pytest tests/ -v -> PASS (107 tests)
+- Files changed:
+  - .claude/skills/langfuse/lib/langfuse_utils.py (extended with fetch_traces, TraceInfo, TraceListResult)
+  - .claude/skills/langfuse/scripts/langfuse.py (implemented _trace_list with progress indicator)
+  - tests/test_langfuse_cli.py (added trace list tests)
+  - tests/test_langfuse_utils.py (added fetch_traces tests)
+- What was implemented:
+  - 'trace list' fetches recent traces with optional filters (ISC row 14)
+  - Supports filters: --limit, --name, --user-id, --session-id
+  - Uses v2 Observations API with cursor-based pagination (ISC row 19)
+  - Output shows: trace ID, name, timestamp, status (success/error) in table format
+  - Progress indicator for fetches >5 seconds using threaded spinner (ISC row 68)
+  - Example: 'trace list --limit 10' returns 10 most recent traces
+  - Example: 'trace list --name chatbot' filters by trace name
+  - Negative case: No traces found -> 'No traces found matching your criteria'
+  - Added NOT_FOUND and API_ERROR error codes with human-readable messages
+  - TraceInfo dataclass with id, name, timestamp, status, user_id, session_id fields
+  - TraceListResult dataclass with ok, code, message, traces, has_more, cursor fields
+  - 23 additional tests covering filters, pagination, error handling
+- **Learnings for future iterations:**
+  - ISC rows 14, 19 fully addressed by this implementation
+  - Thread progress indicator uses daemon=True and Event.wait(5.0) for delayed start
+  - Langfuse SDK uses self.langfuse.api.trace.list() for trace queries
+  - Trace status determined by checking trace.level for "ERROR" since traces don't have explicit status
+  - Pagination uses response.meta.cursor when available
+---
