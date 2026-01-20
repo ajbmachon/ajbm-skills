@@ -76,3 +76,36 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Inject mock Langfuse client via _langfuse attribute rather than patching lazy import
   - ISC rows 53-59 fully addressed by this implementation
 ---
+
+## 2026-01-20 16:25 - US-003: Create SKILL.md routing table
+Thread:
+Run: 20260120-161100-59083 (iteration 3)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-3.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-3.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e1ab1c7 feat(langfuse): add SKILL.md routing table with workflows
+- Post-commit status: clean
+- Verification:
+  - Command: ruff check . -> PASS
+  - Command: pytest tests/ -v -> PASS (38 tests)
+- Files changed:
+  - .claude/skills/langfuse/SKILL.md (replaced placeholder with routing table)
+- What was implemented:
+  - SKILL.md routing table under 200 lines (134 lines actual) (ISC row 2)
+  - YAML frontmatter with name and description under 1024 chars (359 chars) (ISC row 3)
+  - Description includes trigger keywords: langfuse, traces, spans, generations, evals, scores, datasets, experiments (ISC row 4)
+  - Quick Reference table routing all subcommands to scripts/langfuse.py (ISC rows 7-34)
+  - Reference file links for deep-dive documentation (ISC rows 41-52)
+  - Three workflows documented: Debug (find latency/errors), Evaluate (design scoring), Experiment (A/B test prompts)
+  - Setup section with prerequisites and verify connection
+  - Error handling table with codes and actions
+  - Architecture diagram showing directory structure
+  - Activation rules section specifying trigger keywords and non-trigger cases
+  - Progressive loading architecture: SKILL.md is router, references loaded on demand (ISC row 84)
+- **Learnings for future iterations:**
+  - ISC rows 1-6 fully addressed by this implementation
+  - SKILL.md acts as routing table pointing to scripts for actions and references for documentation
+  - Description should be in third person and include both what skill does and trigger keywords
+  - Frontmatter format: name (lowercase, hyphens) and description (max 1024 chars)
+---
