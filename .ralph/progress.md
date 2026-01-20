@@ -262,3 +262,46 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Duration calculated from (end_time - start_time) when both present
   - Langfuse v2 API pagination uses cursor from response.meta
 ---
+
+## 2026-01-20 17:10 - US-008: Implement trace analyze command
+Thread:
+Run: 20260120-161100-59083 (iteration 10-11)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-11.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-11.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 99ff516 feat(langfuse): implement trace analyze command with bottleneck detection (US-008)
+- Commit: ee86277 docs(ralph): add progress logs for US-008 completion verification
+- Post-commit status: clean
+- Verification:
+  - Command: ruff check . -> PASS
+  - Command: pytest tests/ -v -> PASS (145 tests)
+- Files changed:
+  - .claude/skills/langfuse/lib/langfuse_utils.py (extended with analyze_trace, BottleneckInfo, ErrorInfo, LatencyStats, TraceAnalysis, TraceAnalyzeResult)
+  - .claude/skills/langfuse/scripts/langfuse.py (implemented _trace_analyze with insight-first output)
+  - tests/test_langfuse_cli.py (added trace analyze tests)
+  - tests/test_langfuse_utils.py (added analyze_trace and dataclass tests)
+- What was implemented:
+  - 'trace analyze <id>' analyzes latency and finds bottlenecks (ISC row 16)
+  - Output is insight-first: key findings before supporting data (ISC rows 21, 69)
+  - Identifies slowest observations and their contribution to total time
+  - Calculates p50, p95, p99 percentiles when sufficient data points (ISC row 21)
+  - Example summary: 'Total latency: 3200ms, slowest: embedding-lookup (2800ms, 88%)'
+  - Trace with errors -> highlights error observations first in ERRORS section
+  - Negative case: Trace has no timing data -> 'Cannot analyze: no timing data available'
+  - BottleneckInfo dataclass with observation_id, name, type, duration_ms, percentage_of_total, model
+  - ErrorInfo dataclass with observation_id, name, type, level, status_message, timestamp
+  - LatencyStats dataclass with total_ms, p50_ms, p95_ms, p99_ms, observation_count
+  - TraceAnalysis dataclass with summary, latency, bottlenecks, errors, cost breakdown
+  - TraceAnalyzeResult dataclass for consistent error handling with NO_TIMING_DATA code
+  - LangfuseClient.analyze_trace() method that fetches trace and computes analysis
+  - Progress indicator for long-running analysis operations
+  - 19 additional tests covering bottleneck detection, percentiles, errors, cost breakdown
+- **Learnings for future iterations:**
+  - ISC rows 16, 21, 69 fully addressed by this implementation
+  - Percentile calculation needs at least 3 data points to be meaningful
+  - Insight-first output means KEY FINDINGS section appears before detailed data
+  - Errors should be highlighted before latency analysis when present
+  - Cost breakdown groups by model name when available
+  - NO_TIMING_DATA error code allows graceful handling of traces without timing info
+---
