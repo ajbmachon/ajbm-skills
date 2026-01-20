@@ -231,7 +231,7 @@ setup_hook() {
 
     mkdir -p "$SETTINGS_DIR"
 
-    local full_cmd="$linter_cmd 2>&1 || true"
+    local full_cmd="$linter_cmd > /dev/null 2>&1 || true"
 
     local hook_json=$(cat <<EOF
 {
