@@ -20,6 +20,8 @@ from __future__ import annotations
 
 import argparse
 import sys
+import threading
+import time
 from pathlib import Path
 
 # Add lib directory to path for imports
@@ -32,7 +34,25 @@ from langfuse_utils import (  # noqa: E402
     LANGFUSE_REGIONS,
     LangfuseClient,
     LangfuseError,
+    TraceListResult,
 )
+
+
+def _show_progress_indicator(message: str, stop_event: threading.Event) -> None:
+    """Show a progress indicator for long-running operations (ISC row 68).
+
+    Args:
+        message: Message to display with the spinner
+        stop_event: Event to signal when to stop the indicator
+    """
+    spinner_chars = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+    idx = 0
+    while not stop_event.is_set():
+        print(f"\r{spinner_chars[idx % len(spinner_chars)]} {message}", end="", flush=True)
+        idx += 1
+        time.sleep(0.1)
+    # Clear the progress line
+    print("\r" + " " * (len(message) + 3) + "\r", end="", flush=True)
 
 
 def _require_auth() -> LangfuseClient | None:
@@ -156,19 +176,88 @@ def _trace_help(args: argparse.Namespace) -> int:
 
 
 def _trace_list(args: argparse.Namespace) -> int:
-    """List recent traces."""
+    """List recent traces (ISC row 14).
+
+    Fetches recent traces with optional filters and displays them
+    with trace ID, name, timestamp, and status.
+
+    Acceptance criteria:
+    - 'trace list' fetches recent traces with optional filters
+    - Supports filters: --limit, --name, --user-id, --session-id
+    - Output shows: trace ID, name, timestamp, status (success/error)
+    - Progress indicator for fetches >5 seconds
+    - Example: 'trace list --limit 10' -> shows 10 most recent traces
+    - Negative case: No traces found -> 'No traces found matching your criteria'
+    """
     client = _require_auth()
     if client is None:
         return 1
 
-    print("trace list: Command implementation pending (US-006)")
-    print(f"  --limit: {args.limit}")
-    if args.name:
-        print(f"  --name: {args.name}")
-    if args.user_id:
-        print(f"  --user-id: {args.user_id}")
-    if args.session_id:
-        print(f"  --session-id: {args.session_id}")
+    # Set up progress indicator for long operations (ISC row 68)
+    # The progress indicator is started before the fetch and shows a spinner
+    # if the operation takes longer than 5 seconds.
+    stop_event = threading.Event()
+    progress_started = threading.Event()
+
+    def delayed_progress_start() -> None:
+        """Start progress indicator after 5 second delay."""
+        if not stop_event.wait(5.0):  # Returns True if stopped early
+            progress_started.set()
+            _show_progress_indicator("Fetching traces...", stop_event)
+
+    # Start background thread that will show progress after 5 seconds
+    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+    progress_thread.start()
+
+    try:
+        result: TraceListResult = client.fetch_traces(
+            limit=args.limit,
+            name=args.name,
+            user_id=args.user_id,
+            session_id=args.session_id,
+        )
+    finally:
+        # Stop progress indicator
+        stop_event.set()
+        progress_thread.join(timeout=1.0)
+
+    # Handle errors
+    if not result.ok:
+        print(f"Error: {result.message}", file=sys.stderr)
+        client.flush()
+        return 1
+
+    # Handle no traces found (negative case)
+    if not result.traces:
+        print("No traces found matching your criteria.")
+        client.flush()
+        return 0
+
+    # Display traces (ISC row 14: ID, name, timestamp, status)
+    print(f"Found {len(result.traces)} trace(s):\n")
+
+    # Table header
+    print(f"{'ID':<36} {'Name':<25} {'Timestamp':<25} {'Status':<8}")
+    print("-" * 96)
+
+    for trace in result.traces:
+        # Truncate long names
+        name = trace.name or "(unnamed)"
+        if len(name) > 24:
+            name = name[:21] + "..."
+
+        # Format timestamp for display (take first 25 chars)
+        timestamp = trace.timestamp[:25] if trace.timestamp else "(no timestamp)"
+
+        # Status indicator
+        status_icon = "✓" if trace.status == "success" else "✗"
+        status_display = f"{status_icon} {trace.status}"
+
+        print(f"{trace.id:<36} {name:<25} {timestamp:<25} {status_display:<8}")
+
+    # Pagination info
+    if result.has_more:
+        print("\n(More traces available. Use --limit to fetch more.)")
 
     client.flush()
     return 0

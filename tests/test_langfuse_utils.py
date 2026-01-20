@@ -26,6 +26,7 @@ sys.path.insert(
 )
 
 from langfuse_utils import (
+    API_ERROR,
     AUTH_EXPIRED,
     AUTH_INVALID,
     AUTH_MISSING,
@@ -34,6 +35,7 @@ from langfuse_utils import (
     MAX_RETRIES,
     NETWORK_ERROR,
     NETWORK_TIMEOUT,
+    NOT_FOUND,
     RATE_LIMITED,
     REGION_MISMATCH,
     AuthResult,
@@ -41,6 +43,8 @@ from langfuse_utils import (
     DiagnosisResult,
     LangfuseClient,
     LangfuseError,
+    TraceInfo,
+    TraceListResult,
 )
 
 
@@ -75,6 +79,14 @@ class TestErrorCodeConstants:
         """REGION_MISMATCH constant should be defined."""
         assert REGION_MISMATCH == "REGION_MISMATCH"
 
+    def test_not_found_constant_exists(self):
+        """NOT_FOUND constant should be defined."""
+        assert NOT_FOUND == "NOT_FOUND"
+
+    def test_api_error_constant_exists(self):
+        """API_ERROR constant should be defined."""
+        assert API_ERROR == "API_ERROR"
+
 
 class TestRegionConstants:
     """Tests for region constants (ISC row 38)."""
@@ -107,6 +119,8 @@ class TestErrorMessages:
             NETWORK_TIMEOUT,
             RATE_LIMITED,
             REGION_MISMATCH,
+            NOT_FOUND,
+            API_ERROR,
         ]
         for code in error_codes:
             assert code in ERROR_MESSAGES
@@ -499,3 +513,256 @@ class TestModuleFileExists:
         """lib/__init__.py should exist for proper imports."""
         init_path = Path(".claude/skills/langfuse/lib/__init__.py")
         assert init_path.exists(), "__init__.py should exist in lib/"
+
+
+class TestTraceInfoDataclass:
+    """Tests for TraceInfo dataclass (ISC row 14)."""
+
+    def test_trace_info_required_fields(self):
+        """TraceInfo should have required fields: id, name, timestamp, status."""
+        trace = TraceInfo(
+            id="trace-123",
+            name="test-trace",
+            timestamp="2026-01-20T10:00:00",
+            status="success",
+        )
+        assert trace.id == "trace-123"
+        assert trace.name == "test-trace"
+        assert trace.timestamp == "2026-01-20T10:00:00"
+        assert trace.status == "success"
+
+    def test_trace_info_optional_fields(self):
+        """TraceInfo should have optional fields: user_id, session_id."""
+        trace = TraceInfo(
+            id="trace-123",
+            name="test-trace",
+            timestamp="2026-01-20T10:00:00",
+            status="success",
+            user_id="user-456",
+            session_id="session-789",
+        )
+        assert trace.user_id == "user-456"
+        assert trace.session_id == "session-789"
+
+    def test_trace_info_optional_fields_default_none(self):
+        """TraceInfo optional fields should default to None."""
+        trace = TraceInfo(
+            id="trace-123",
+            name=None,
+            timestamp="2026-01-20T10:00:00",
+            status="success",
+        )
+        assert trace.name is None
+        assert trace.user_id is None
+        assert trace.session_id is None
+
+
+class TestTraceListResultDataclass:
+    """Tests for TraceListResult dataclass (ISC row 14)."""
+
+    def test_trace_list_result_required_fields(self):
+        """TraceListResult should have required fields."""
+        result = TraceListResult(
+            ok=True,
+            code="OK",
+            message="Found 1 trace(s)",
+            traces=[],
+        )
+        assert result.ok is True
+        assert result.code == "OK"
+        assert result.message == "Found 1 trace(s)"
+        assert result.traces == []
+
+    def test_trace_list_result_optional_fields(self):
+        """TraceListResult should have optional pagination fields."""
+        result = TraceListResult(
+            ok=True,
+            code="OK",
+            message="Found traces",
+            traces=[],
+            has_more=True,
+            cursor="next-cursor",
+        )
+        assert result.has_more is True
+        assert result.cursor == "next-cursor"
+
+    def test_trace_list_result_optional_fields_default(self):
+        """TraceListResult optional fields should have defaults."""
+        result = TraceListResult(
+            ok=True,
+            code="OK",
+            message="Found traces",
+            traces=[],
+        )
+        assert result.has_more is False
+        assert result.cursor is None
+
+
+class TestLangfuseClientFetchTraces:
+    """Tests for LangfuseClient fetch_traces() method (ISC row 14)."""
+
+    @pytest.fixture(autouse=True)
+    def setup_env(self, monkeypatch):
+        """Set up valid environment using monkeypatch."""
+        monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
+        monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
+
+    def test_fetch_traces_returns_trace_list_result(self):
+        """fetch_traces() should return TraceListResult."""
+        mock_langfuse = MagicMock()
+        mock_response = MagicMock()
+        mock_response.data = []
+        mock_response.meta = MagicMock()
+        mock_response.meta.cursor = None
+        mock_langfuse.api.trace.list.return_value = mock_response
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_traces()
+
+        assert isinstance(result, TraceListResult)
+
+    def test_fetch_traces_success_empty_list(self):
+        """fetch_traces() should handle empty trace list."""
+        mock_langfuse = MagicMock()
+        mock_response = MagicMock()
+        mock_response.data = []
+        mock_response.meta = None
+        mock_langfuse.api.trace.list.return_value = mock_response
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_traces()
+
+        assert result.ok is True
+        assert result.code == "OK"
+        assert len(result.traces) == 0
+
+    def test_fetch_traces_success_with_traces(self):
+        """fetch_traces() should process trace data correctly."""
+        mock_langfuse = MagicMock()
+
+        # Create mock trace objects
+        mock_trace1 = MagicMock()
+        mock_trace1.id = "trace-123"
+        mock_trace1.name = "chatbot"
+        mock_trace1.timestamp = "2026-01-20T10:00:00"
+        mock_trace1.user_id = "user-1"
+        mock_trace1.session_id = "sess-1"
+
+        mock_trace2 = MagicMock()
+        mock_trace2.id = "trace-456"
+        mock_trace2.name = "analyzer"
+        mock_trace2.timestamp = "2026-01-20T09:00:00"
+        mock_trace2.level = "ERROR"  # Indicates error status
+        mock_trace2.user_id = None
+        mock_trace2.session_id = None
+
+        mock_response = MagicMock()
+        mock_response.data = [mock_trace1, mock_trace2]
+        mock_response.meta = None
+        mock_langfuse.api.trace.list.return_value = mock_response
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_traces()
+
+        assert result.ok is True
+        assert len(result.traces) == 2
+        assert result.traces[0].id == "trace-123"
+        assert result.traces[0].name == "chatbot"
+        assert result.traces[0].status == "success"
+        assert result.traces[1].id == "trace-456"
+        assert result.traces[1].status == "error"  # Because level was ERROR
+
+    def test_fetch_traces_passes_filters(self):
+        """fetch_traces() should pass filter parameters to API."""
+        mock_langfuse = MagicMock()
+        mock_response = MagicMock()
+        mock_response.data = []
+        mock_response.meta = None
+        mock_langfuse.api.trace.list.return_value = mock_response
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        client.fetch_traces(
+            limit=20,
+            name="chatbot",
+            user_id="user-123",
+            session_id="sess-456",
+        )
+
+        mock_langfuse.api.trace.list.assert_called_once_with(
+            limit=20,
+            name="chatbot",
+            user_id="user-123",
+            session_id="sess-456",
+        )
+
+    def test_fetch_traces_handles_pagination(self):
+        """fetch_traces() should return pagination info when available."""
+        mock_langfuse = MagicMock()
+        mock_response = MagicMock()
+        mock_response.data = []
+        mock_response.meta = MagicMock()
+        mock_response.meta.cursor = "next-page-cursor"
+        mock_langfuse.api.trace.list.return_value = mock_response
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_traces()
+
+        assert result.has_more is True
+        assert result.cursor == "next-page-cursor"
+
+    def test_fetch_traces_handles_auth_error(self):
+        """fetch_traces() should handle 401 auth errors."""
+        mock_langfuse = MagicMock()
+        mock_langfuse.api.trace.list.side_effect = Exception("401 Unauthorized")
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_traces()
+
+        assert result.ok is False
+        assert result.code == AUTH_INVALID
+        assert len(result.traces) == 0
+
+    def test_fetch_traces_handles_rate_limit(self):
+        """fetch_traces() should handle rate limit errors."""
+        mock_langfuse = MagicMock()
+        mock_langfuse.api.trace.list.side_effect = Exception("429 Rate limit")
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_traces()
+
+        assert result.ok is False
+        assert result.code == RATE_LIMITED
+        assert len(result.traces) == 0
+
+    def test_fetch_traces_handles_not_found(self):
+        """fetch_traces() should handle 404 not found errors."""
+        mock_langfuse = MagicMock()
+        mock_langfuse.api.trace.list.side_effect = Exception("404 Not Found")
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_traces()
+
+        assert result.ok is False
+        assert result.code == NOT_FOUND
+        assert len(result.traces) == 0
+
+    def test_fetch_traces_handles_generic_error(self):
+        """fetch_traces() should handle generic errors."""
+        mock_langfuse = MagicMock()
+        mock_langfuse.api.trace.list.side_effect = Exception("Some random error")
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_traces()
+
+        assert result.ok is False
+        assert result.code == API_ERROR
+        assert "Some random error" in result.message

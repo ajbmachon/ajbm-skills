@@ -35,6 +35,8 @@ NETWORK_ERROR = "NETWORK_ERROR"
 NETWORK_TIMEOUT = "NETWORK_TIMEOUT"
 RATE_LIMITED = "RATE_LIMITED"
 REGION_MISMATCH = "REGION_MISMATCH"
+NOT_FOUND = "NOT_FOUND"
+API_ERROR = "API_ERROR"
 
 # -----------------------------------------------------------------------------
 # Region Constants (ISC row 38)
@@ -91,6 +93,10 @@ ERROR_MESSAGES: dict[str, str] = {
         "Your API keys appear to be for a different region than your configured "
         "LANGFUSE_BASE_URL. EU keys work with https://cloud.langfuse.com, "
         "US keys work with https://us.cloud.langfuse.com."
+    ),
+    NOT_FOUND: ("The requested resource was not found in Langfuse."),
+    API_ERROR: (
+        "Langfuse API returned an error. Check the error details for more information."
     ),
 }
 
@@ -422,6 +428,114 @@ class LangfuseClient:
         # This is a placeholder for future enhancement if Langfuse adds region encoding
         return None
 
+    def fetch_traces(
+        self,
+        limit: int = 10,
+        name: str | None = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+    ) -> TraceListResult:
+        """Fetch recent traces with optional filters (ISC row 14).
+
+        Uses the Langfuse API to fetch traces with cursor-based pagination.
+        Supports filtering by name, user_id, and session_id.
+
+        Args:
+            limit: Maximum number of traces to return (default: 10)
+            name: Filter traces by name
+            user_id: Filter traces by user ID
+            session_id: Filter traces by session ID
+
+        Returns:
+            TraceListResult with traces and status information.
+        """
+        try:
+            # Build kwargs for trace list API call
+            kwargs: dict = {"limit": limit}
+            if name:
+                kwargs["name"] = name
+            if user_id:
+                kwargs["user_id"] = user_id
+            if session_id:
+                kwargs["session_id"] = session_id
+
+            # Fetch traces using the SDK API
+            response = self.langfuse.api.trace.list(**kwargs)
+
+            # Process traces into TraceInfo objects
+            traces: list[TraceInfo] = []
+            for trace in response.data:
+                # Determine status based on observation errors or level
+                # Traces don't have direct status, so we check for errors in metadata
+                status = "success"
+                if hasattr(trace, "level") and trace.level == "ERROR":
+                    status = "error"
+
+                # Format timestamp for display
+                timestamp = ""
+                if hasattr(trace, "timestamp") and trace.timestamp:
+                    timestamp = trace.timestamp.isoformat() if hasattr(trace.timestamp, "isoformat") else str(trace.timestamp)
+
+                trace_info = TraceInfo(
+                    id=trace.id,
+                    name=trace.name,
+                    timestamp=timestamp,
+                    status=status,
+                    user_id=getattr(trace, "user_id", None),
+                    session_id=getattr(trace, "session_id", None),
+                )
+                traces.append(trace_info)
+
+            # Check for pagination cursor
+            has_more = False
+            cursor = None
+            if hasattr(response, "meta") and response.meta:
+                cursor = getattr(response.meta, "cursor", None)
+                has_more = cursor is not None
+
+            return TraceListResult(
+                ok=True,
+                code="OK",
+                message=f"Found {len(traces)} trace(s)",
+                traces=traces,
+                has_more=has_more,
+                cursor=cursor,
+            )
+
+        except Exception as e:
+            error_str = str(e).lower()
+
+            # Determine error type
+            if "401" in error_str or "unauthorized" in error_str:
+                return TraceListResult(
+                    ok=False,
+                    code=AUTH_INVALID,
+                    message=ERROR_MESSAGES[AUTH_INVALID],
+                    traces=[],
+                )
+            if "404" in error_str or "not found" in error_str:
+                return TraceListResult(
+                    ok=False,
+                    code=NOT_FOUND,
+                    message=ERROR_MESSAGES[NOT_FOUND],
+                    traces=[],
+                )
+            if "429" in error_str or "rate" in error_str:
+                return TraceListResult(
+                    ok=False,
+                    code=RATE_LIMITED,
+                    message=ERROR_MESSAGES[RATE_LIMITED],
+                    traces=[],
+                )
+
+            # Generic API error
+            return TraceListResult(
+                ok=False,
+                code=API_ERROR,
+                message=f"Failed to fetch traces: {e}",
+                traces=[],
+            )
+
 
 @dataclass
 class AuthResult:
@@ -454,3 +568,33 @@ class DiagnosisResult:
     summary: str
     issues: list[DiagnosisIssue]
     next_steps: list[str]
+
+
+@dataclass
+class TraceInfo:
+    """Information about a single trace (ISC row 14).
+
+    Represents the essential information displayed in trace list output.
+    """
+
+    id: str
+    name: str | None
+    timestamp: str
+    status: str  # "success" or "error"
+    user_id: str | None = None
+    session_id: str | None = None
+
+
+@dataclass
+class TraceListResult:
+    """Result of fetching traces (ISC row 14).
+
+    Contains traces and metadata about the fetch operation.
+    """
+
+    ok: bool
+    code: str
+    message: str
+    traces: list[TraceInfo]
+    has_more: bool = False
+    cursor: str | None = None

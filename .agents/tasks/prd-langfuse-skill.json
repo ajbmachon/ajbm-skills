@@ -245,7 +245,7 @@
     {
       "id": "US-005",
       "title": "Implement setup subcommand",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [
         "US-004"
       ],
@@ -261,13 +261,13 @@
         "ISC reference: rows 35-40"
       ],
       "startedAt": "2026-01-20T15:40:11.478374+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-20T15:40:11.478607+00:00"
+      "completedAt": "2026-01-20T15:43:30.869360+00:00",
+      "updatedAt": "2026-01-20T15:43:30.869101+00:00"
     },
     {
       "id": "US-006",
       "title": "Implement trace list command",
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [
         "US-004"
       ],
@@ -282,7 +282,10 @@
         "Example: 'trace list --name chatbot' -> filters by trace name",
         "Negative case: No traces found -> 'No traces found matching your criteria'",
         "ISC reference: rows 14, 19"
-      ]
+      ],
+      "startedAt": "2026-01-20T15:48:53.032710+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-20T15:48:53.032955+00:00"
     },
     {
       "id": "US-007",

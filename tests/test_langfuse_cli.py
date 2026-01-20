@@ -287,32 +287,245 @@ class TestTraceSubcommandActions:
     def test_trace_list_action_exists(self, capsys):
         """'trace list' action should exist.
 
-        Acceptance criteria: 'python scripts/langfuse.py trace list' -> shows help
+        Acceptance criteria: 'python scripts/langfuse.py trace list' -> fetches traces
         """
+        # Import TraceListResult from langfuse_utils
+        from langfuse_utils import TraceListResult
+
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
             mock_instance.auth_check.return_value = MagicMock(ok=True)
             mock_instance.flush.return_value = None
+            # Mock fetch_traces to return empty list (valid response)
+            mock_instance.fetch_traces.return_value = TraceListResult(
+                ok=True,
+                code="OK",
+                message="Found 0 trace(s)",
+                traces=[],
+                has_more=False,
+                cursor=None,
+            )
 
             exit_code = main(["trace", "list"])
 
             assert exit_code == 0
             captured = capsys.readouterr()
-            # Should show that command was recognized
-            assert "list" in captured.out.lower() or "trace" in captured.out.lower()
+            # Should show "no traces found" message for empty result
+            assert "no traces found" in captured.out.lower()
 
-    def test_trace_list_accepts_limit(self, capsys):
-        """'trace list --limit 5' should accept limit parameter."""
+    def test_trace_list_shows_traces(self, capsys):
+        """'trace list' should display traces in table format (ISC row 14)."""
+        from langfuse_utils import TraceInfo, TraceListResult
+
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
             mock_instance.auth_check.return_value = MagicMock(ok=True)
             mock_instance.flush.return_value = None
+            mock_instance.fetch_traces.return_value = TraceListResult(
+                ok=True,
+                code="OK",
+                message="Found 2 trace(s)",
+                traces=[
+                    TraceInfo(
+                        id="trace-id-123",
+                        name="chatbot",
+                        timestamp="2026-01-20T10:00:00",
+                        status="success",
+                    ),
+                    TraceInfo(
+                        id="trace-id-456",
+                        name="analyzer",
+                        timestamp="2026-01-20T09:00:00",
+                        status="error",
+                    ),
+                ],
+                has_more=False,
+                cursor=None,
+            )
+
+            exit_code = main(["trace", "list"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show trace IDs
+            assert "trace-id-123" in captured.out
+            assert "trace-id-456" in captured.out
+            # Should show trace names
+            assert "chatbot" in captured.out
+            assert "analyzer" in captured.out
+            # Should show status indicators
+            assert "✓" in captured.out  # Success indicator
+            assert "✗" in captured.out  # Error indicator
+
+    def test_trace_list_accepts_limit(self, capsys):
+        """'trace list --limit 5' should pass limit to fetch_traces."""
+        from langfuse_utils import TraceListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_traces.return_value = TraceListResult(
+                ok=True,
+                code="OK",
+                message="Found 0 trace(s)",
+                traces=[],
+                has_more=False,
+                cursor=None,
+            )
 
             exit_code = main(["trace", "list", "--limit", "5"])
 
             assert exit_code == 0
+            # Verify fetch_traces was called with limit=5
+            mock_instance.fetch_traces.assert_called_once_with(
+                limit=5,
+                name=None,
+                user_id=None,
+                session_id=None,
+            )
+
+    def test_trace_list_accepts_name_filter(self, capsys):
+        """'trace list --name chatbot' should filter by name (ISC row 14)."""
+        from langfuse_utils import TraceInfo, TraceListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_traces.return_value = TraceListResult(
+                ok=True,
+                code="OK",
+                message="Found 1 trace(s)",
+                traces=[
+                    TraceInfo(
+                        id="trace-chatbot",
+                        name="chatbot",
+                        timestamp="2026-01-20T10:00:00",
+                        status="success",
+                    ),
+                ],
+                has_more=False,
+                cursor=None,
+            )
+
+            exit_code = main(["trace", "list", "--name", "chatbot"])
+
+            assert exit_code == 0
+            # Verify fetch_traces was called with name filter
+            mock_instance.fetch_traces.assert_called_once_with(
+                limit=10,
+                name="chatbot",
+                user_id=None,
+                session_id=None,
+            )
+
+    def test_trace_list_accepts_user_id_filter(self, capsys):
+        """'trace list --user-id user123' should filter by user ID (ISC row 14)."""
+        from langfuse_utils import TraceListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_traces.return_value = TraceListResult(
+                ok=True,
+                code="OK",
+                message="Found 0 trace(s)",
+                traces=[],
+                has_more=False,
+                cursor=None,
+            )
+
+            exit_code = main(["trace", "list", "--user-id", "user123"])
+
+            assert exit_code == 0
+            mock_instance.fetch_traces.assert_called_once_with(
+                limit=10,
+                name=None,
+                user_id="user123",
+                session_id=None,
+            )
+
+    def test_trace_list_accepts_session_id_filter(self, capsys):
+        """'trace list --session-id sess123' should filter by session ID (ISC row 14)."""
+        from langfuse_utils import TraceListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_traces.return_value = TraceListResult(
+                ok=True,
+                code="OK",
+                message="Found 0 trace(s)",
+                traces=[],
+                has_more=False,
+                cursor=None,
+            )
+
+            exit_code = main(["trace", "list", "--session-id", "sess123"])
+
+            assert exit_code == 0
+            mock_instance.fetch_traces.assert_called_once_with(
+                limit=10,
+                name=None,
+                user_id=None,
+                session_id="sess123",
+            )
+
+    def test_trace_list_handles_api_error(self, capsys):
+        """'trace list' should handle API errors gracefully."""
+        from langfuse_utils import TraceListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_traces.return_value = TraceListResult(
+                ok=False,
+                code="API_ERROR",
+                message="Failed to fetch traces: Connection timeout",
+                traces=[],
+            )
+
+            exit_code = main(["trace", "list"])
+
+            assert exit_code == 1
             captured = capsys.readouterr()
-            assert "5" in captured.out
+            assert "error" in captured.err.lower()
+
+    def test_trace_list_shows_pagination_hint(self, capsys):
+        """'trace list' should indicate when more traces are available."""
+        from langfuse_utils import TraceInfo, TraceListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_traces.return_value = TraceListResult(
+                ok=True,
+                code="OK",
+                message="Found 10 trace(s)",
+                traces=[
+                    TraceInfo(
+                        id=f"trace-{i}",
+                        name=f"trace-name-{i}",
+                        timestamp="2026-01-20T10:00:00",
+                        status="success",
+                    )
+                    for i in range(10)
+                ],
+                has_more=True,
+                cursor="next-page-cursor",
+            )
+
+            exit_code = main(["trace", "list"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show hint about more traces
+            assert "more" in captured.out.lower()
 
     def test_trace_get_requires_trace_id(self, capsys):
         """'trace get' should require trace_id argument."""
