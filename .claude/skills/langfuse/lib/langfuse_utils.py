@@ -536,6 +536,210 @@ class LangfuseClient:
                 traces=[],
             )
 
+    def fetch_trace(self, trace_id: str) -> TraceGetResult:
+        """Fetch a single trace with all observations (ISC rows 15, 20).
+
+        Retrieves the trace and all associated observations, building a hierarchy
+        suitable for display: Session -> Trace -> Observations.
+
+        Args:
+            trace_id: The ID of the trace to fetch.
+
+        Returns:
+            TraceGetResult with trace details and observations.
+        """
+        try:
+            # Fetch the trace first
+            trace = self.langfuse.api.trace.get(trace_id)
+
+            # Format timestamp
+            timestamp = ""
+            if hasattr(trace, "timestamp") and trace.timestamp:
+                timestamp = (
+                    trace.timestamp.isoformat()
+                    if hasattr(trace.timestamp, "isoformat")
+                    else str(trace.timestamp)
+                )
+
+            # Format input/output for display (truncate if too long)
+            trace_input = None
+            if hasattr(trace, "input") and trace.input:
+                trace_input = (
+                    str(trace.input)[:500] + "..."
+                    if len(str(trace.input)) > 500
+                    else str(trace.input)
+                )
+
+            trace_output = None
+            if hasattr(trace, "output") and trace.output:
+                trace_output = (
+                    str(trace.output)[:500] + "..."
+                    if len(str(trace.output)) > 500
+                    else str(trace.output)
+                )
+
+            # Fetch observations for this trace using v2 API
+            observations: list[ObservationInfo] = []
+            cursor = None
+
+            while True:
+                obs_kwargs: dict = {
+                    "trace_id": trace_id,
+                    "limit": 100,
+                }
+                if cursor:
+                    obs_kwargs["cursor"] = cursor
+
+                obs_response = self.langfuse.api.observations_v_2.get_many(**obs_kwargs)
+
+                for obs in obs_response.data:
+                    # Calculate duration if start/end times available
+                    duration_ms = None
+                    start_time_str = ""
+                    end_time_str = None
+
+                    if hasattr(obs, "start_time") and obs.start_time:
+                        start_time_str = (
+                            obs.start_time.isoformat()
+                            if hasattr(obs.start_time, "isoformat")
+                            else str(obs.start_time)
+                        )
+
+                    if hasattr(obs, "end_time") and obs.end_time:
+                        end_time_str = (
+                            obs.end_time.isoformat()
+                            if hasattr(obs.end_time, "isoformat")
+                            else str(obs.end_time)
+                        )
+
+                        # Calculate duration in ms
+                        if hasattr(obs, "start_time") and obs.start_time:
+                            try:
+                                duration_s = (
+                                    obs.end_time - obs.start_time
+                                ).total_seconds()
+                                duration_ms = duration_s * 1000
+                            except (TypeError, AttributeError):
+                                pass
+
+                    # Format input/output
+                    obs_input = None
+                    if hasattr(obs, "input") and obs.input:
+                        obs_input = (
+                            str(obs.input)[:300] + "..."
+                            if len(str(obs.input)) > 300
+                            else str(obs.input)
+                        )
+
+                    obs_output = None
+                    if hasattr(obs, "output") and obs.output:
+                        obs_output = (
+                            str(obs.output)[:300] + "..."
+                            if len(str(obs.output)) > 300
+                            else str(obs.output)
+                        )
+
+                    # Extract usage/cost data
+                    input_tokens = None
+                    output_tokens = None
+                    total_tokens = None
+                    cost = None
+
+                    if hasattr(obs, "usage") and obs.usage:
+                        input_tokens = getattr(obs.usage, "input", None)
+                        output_tokens = getattr(obs.usage, "output", None)
+                        total_tokens = getattr(obs.usage, "total", None)
+
+                    if hasattr(obs, "calculated_total_cost") and obs.calculated_total_cost:
+                        cost = obs.calculated_total_cost
+
+                    obs_info = ObservationInfo(
+                        id=obs.id,
+                        type=getattr(obs, "type", "UNKNOWN"),
+                        name=getattr(obs, "name", None),
+                        start_time=start_time_str,
+                        end_time=end_time_str,
+                        duration_ms=duration_ms,
+                        level=getattr(obs, "level", None),
+                        status_message=getattr(obs, "status_message", None),
+                        model=getattr(obs, "model", None),
+                        input=obs_input,
+                        output=obs_output,
+                        input_tokens=input_tokens,
+                        output_tokens=output_tokens,
+                        total_tokens=total_tokens,
+                        cost=cost,
+                        parent_observation_id=getattr(obs, "parent_observation_id", None),
+                    )
+                    observations.append(obs_info)
+
+                # Check for more pages
+                cursor = None
+                if hasattr(obs_response, "meta") and obs_response.meta:
+                    cursor = getattr(obs_response.meta, "cursor", None)
+
+                if not cursor:
+                    break
+
+            # Build trace detail
+            trace_detail = TraceDetail(
+                id=trace.id,
+                name=getattr(trace, "name", None),
+                timestamp=timestamp,
+                session_id=getattr(trace, "session_id", None),
+                user_id=getattr(trace, "user_id", None),
+                input=trace_input,
+                output=trace_output,
+                metadata=getattr(trace, "metadata", None),
+                tags=getattr(trace, "tags", None),
+                observations=observations,
+            )
+
+            return TraceGetResult(
+                ok=True,
+                code="OK",
+                message=f"Found trace with {len(observations)} observation(s)",
+                trace=trace_detail,
+            )
+
+        except Exception as e:
+            error_str = str(e).lower()
+
+            # Check for not found error
+            if "404" in error_str or "not found" in error_str:
+                return TraceGetResult(
+                    ok=False,
+                    code=NOT_FOUND,
+                    message=f"Trace not found: {trace_id}",
+                    trace=None,
+                )
+
+            # Auth errors
+            if "401" in error_str or "unauthorized" in error_str:
+                return TraceGetResult(
+                    ok=False,
+                    code=AUTH_INVALID,
+                    message=ERROR_MESSAGES[AUTH_INVALID],
+                    trace=None,
+                )
+
+            # Rate limiting
+            if "429" in error_str or "rate" in error_str:
+                return TraceGetResult(
+                    ok=False,
+                    code=RATE_LIMITED,
+                    message=ERROR_MESSAGES[RATE_LIMITED],
+                    trace=None,
+                )
+
+            # Generic API error
+            return TraceGetResult(
+                ok=False,
+                code=API_ERROR,
+                message=f"Failed to fetch trace: {e}",
+                trace=None,
+            )
+
 
 @dataclass
 class AuthResult:
@@ -598,3 +802,60 @@ class TraceListResult:
     traces: list[TraceInfo]
     has_more: bool = False
     cursor: str | None = None
+
+
+@dataclass
+class ObservationInfo:
+    """Information about a single observation (ISC rows 15, 20).
+
+    Represents detailed observation data for trace hierarchy display.
+    """
+
+    id: str
+    type: str  # "GENERATION", "SPAN", "EVENT"
+    name: str | None
+    start_time: str
+    end_time: str | None
+    duration_ms: float | None  # Calculated from start/end
+    level: str | None  # Log level
+    status_message: str | None
+    model: str | None
+    input: str | None
+    output: str | None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    total_tokens: int | None = None
+    cost: float | None = None
+    parent_observation_id: str | None = None
+
+
+@dataclass
+class TraceDetail:
+    """Detailed trace information with observations (ISC rows 15, 20).
+
+    Contains full trace data including all child observations for hierarchy display.
+    """
+
+    id: str
+    name: str | None
+    timestamp: str
+    session_id: str | None
+    user_id: str | None
+    input: str | None
+    output: str | None
+    metadata: dict | None
+    tags: list[str] | None
+    observations: list[ObservationInfo]
+
+
+@dataclass
+class TraceGetResult:
+    """Result of fetching a single trace (ISC row 15).
+
+    Contains the trace details or error information.
+    """
+
+    ok: bool
+    code: str
+    message: str
+    trace: TraceDetail | None = None

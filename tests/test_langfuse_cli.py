@@ -538,16 +538,209 @@ class TestTraceSubcommandActions:
 
     def test_trace_get_accepts_trace_id(self, capsys):
         """'trace get <id>' should accept trace ID."""
+        from langfuse_utils import TraceDetail, TraceGetResult
+
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
             mock_instance.auth_check.return_value = MagicMock(ok=True)
             mock_instance.flush.return_value = None
+            mock_instance.fetch_trace.return_value = TraceGetResult(
+                ok=True,
+                code="OK",
+                message="Found trace with 0 observation(s)",
+                trace=TraceDetail(
+                    id="test-trace-123",
+                    name="test-trace",
+                    timestamp="2026-01-20T10:00:00",
+                    session_id=None,
+                    user_id=None,
+                    input=None,
+                    output=None,
+                    metadata=None,
+                    tags=None,
+                    observations=[],
+                ),
+            )
 
             exit_code = main(["trace", "get", "test-trace-123"])
 
             assert exit_code == 0
             captured = capsys.readouterr()
             assert "test-trace-123" in captured.out
+
+    def test_trace_get_displays_observations(self, capsys):
+        """'trace get <id>' should display observations with hierarchy (ISC row 20)."""
+        from langfuse_utils import ObservationInfo, TraceDetail, TraceGetResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_trace.return_value = TraceGetResult(
+                ok=True,
+                code="OK",
+                message="Found trace with 2 observation(s)",
+                trace=TraceDetail(
+                    id="trace-with-obs",
+                    name="chatbot",
+                    timestamp="2026-01-20T10:00:00",
+                    session_id="session-123",
+                    user_id="user-456",
+                    input="Hello",
+                    output="World",
+                    metadata=None,
+                    tags=["production"],
+                    observations=[
+                        ObservationInfo(
+                            id="obs-gen-1",
+                            type="GENERATION",
+                            name="llm-call",
+                            start_time="2026-01-20T10:00:01",
+                            end_time="2026-01-20T10:00:02",
+                            duration_ms=1000.0,
+                            level=None,
+                            status_message=None,
+                            model="gpt-4",
+                            input="Hello there",
+                            output="Hi!",
+                            input_tokens=10,
+                            output_tokens=5,
+                            total_tokens=15,
+                            cost=0.0001,
+                            parent_observation_id=None,
+                        ),
+                        ObservationInfo(
+                            id="obs-span-1",
+                            type="SPAN",
+                            name="process-response",
+                            start_time="2026-01-20T10:00:02",
+                            end_time="2026-01-20T10:00:03",
+                            duration_ms=500.0,
+                            level=None,
+                            status_message=None,
+                            model=None,
+                            input=None,
+                            output=None,
+                            parent_observation_id="obs-gen-1",
+                        ),
+                    ],
+                ),
+            )
+
+            exit_code = main(["trace", "get", "trace-with-obs"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show trace ID
+            assert "trace-with-obs" in captured.out
+            # Should show session ID (hierarchy)
+            assert "session-123" in captured.out
+            # Should show observation types
+            assert "[GEN]" in captured.out
+            assert "[SPAN]" in captured.out
+            # Should show observation names
+            assert "llm-call" in captured.out
+            assert "process-response" in captured.out
+            # Should show model
+            assert "gpt-4" in captured.out
+            # Should show cost
+            assert "0.0001" in captured.out
+            # Should show tokens
+            assert "in: 10" in captured.out
+            assert "out: 5" in captured.out
+
+    def test_trace_get_invalid_id_returns_not_found(self, capsys):
+        """'trace get <invalid-id>' should return 'Trace not found' (negative case)."""
+        from langfuse_utils import TraceGetResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_trace.return_value = TraceGetResult(
+                ok=False,
+                code="NOT_FOUND",
+                message="Trace not found: invalid-trace-id",
+                trace=None,
+            )
+
+            exit_code = main(["trace", "get", "invalid-trace-id"])
+
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            # Should show not found error message
+            assert "trace not found" in captured.err.lower()
+            assert "invalid-trace-id" in captured.err
+
+    def test_trace_get_handles_api_error(self, capsys):
+        """'trace get' should handle API errors gracefully."""
+        from langfuse_utils import TraceGetResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_trace.return_value = TraceGetResult(
+                ok=False,
+                code="API_ERROR",
+                message="Failed to fetch trace: Connection timeout",
+                trace=None,
+            )
+
+            exit_code = main(["trace", "get", "some-trace-id"])
+
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            assert "error" in captured.err.lower()
+
+    def test_trace_get_shows_event_observations(self, capsys):
+        """'trace get' should display EVENT type observations."""
+        from langfuse_utils import ObservationInfo, TraceDetail, TraceGetResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_trace.return_value = TraceGetResult(
+                ok=True,
+                code="OK",
+                message="Found trace with 1 observation(s)",
+                trace=TraceDetail(
+                    id="trace-event",
+                    name="event-trace",
+                    timestamp="2026-01-20T10:00:00",
+                    session_id=None,
+                    user_id=None,
+                    input=None,
+                    output=None,
+                    metadata=None,
+                    tags=None,
+                    observations=[
+                        ObservationInfo(
+                            id="obs-event-1",
+                            type="EVENT",
+                            name="user-feedback",
+                            start_time="2026-01-20T10:00:01",
+                            end_time=None,
+                            duration_ms=None,
+                            level="INFO",
+                            status_message="User provided positive feedback",
+                            model=None,
+                            input=None,
+                            output=None,
+                            parent_observation_id=None,
+                        ),
+                    ],
+                ),
+            )
+
+            exit_code = main(["trace", "get", "trace-event"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show EVENT type
+            assert "[EVENT]" in captured.out
+            assert "user-feedback" in captured.out
 
     def test_trace_analyze_accepts_trace_id(self, capsys):
         """'trace analyze <id>' should accept trace ID."""

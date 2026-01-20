@@ -43,6 +43,9 @@ from langfuse_utils import (
     DiagnosisResult,
     LangfuseClient,
     LangfuseError,
+    ObservationInfo,
+    TraceDetail,
+    TraceGetResult,
     TraceInfo,
     TraceListResult,
 )
@@ -766,3 +769,403 @@ class TestLangfuseClientFetchTraces:
         assert result.ok is False
         assert result.code == API_ERROR
         assert "Some random error" in result.message
+
+
+class TestObservationInfoDataclass:
+    """Tests for ObservationInfo dataclass (ISC rows 15, 20)."""
+
+    def test_observation_info_required_fields(self):
+        """ObservationInfo should have required fields."""
+        obs = ObservationInfo(
+            id="obs-123",
+            type="GENERATION",
+            name="llm-call",
+            start_time="2026-01-20T10:00:00",
+            end_time="2026-01-20T10:00:01",
+            duration_ms=1000.0,
+            level=None,
+            status_message=None,
+            model="gpt-4",
+            input="Hello",
+            output="Hi there",
+        )
+        assert obs.id == "obs-123"
+        assert obs.type == "GENERATION"
+        assert obs.name == "llm-call"
+        assert obs.model == "gpt-4"
+
+    def test_observation_info_token_fields(self):
+        """ObservationInfo should have optional token fields."""
+        obs = ObservationInfo(
+            id="obs-123",
+            type="GENERATION",
+            name="llm-call",
+            start_time="2026-01-20T10:00:00",
+            end_time=None,
+            duration_ms=None,
+            level=None,
+            status_message=None,
+            model="gpt-4",
+            input=None,
+            output=None,
+            input_tokens=100,
+            output_tokens=50,
+            total_tokens=150,
+            cost=0.001,
+        )
+        assert obs.input_tokens == 100
+        assert obs.output_tokens == 50
+        assert obs.total_tokens == 150
+        assert obs.cost == 0.001
+
+    def test_observation_info_parent_field(self):
+        """ObservationInfo should have parent_observation_id for hierarchy."""
+        obs = ObservationInfo(
+            id="obs-child",
+            type="SPAN",
+            name="child-span",
+            start_time="2026-01-20T10:00:00",
+            end_time=None,
+            duration_ms=None,
+            level=None,
+            status_message=None,
+            model=None,
+            input=None,
+            output=None,
+            parent_observation_id="obs-parent",
+        )
+        assert obs.parent_observation_id == "obs-parent"
+
+
+class TestTraceDetailDataclass:
+    """Tests for TraceDetail dataclass (ISC rows 15, 20)."""
+
+    def test_trace_detail_required_fields(self):
+        """TraceDetail should have required fields."""
+        detail = TraceDetail(
+            id="trace-123",
+            name="my-trace",
+            timestamp="2026-01-20T10:00:00",
+            session_id="sess-1",
+            user_id="user-1",
+            input="Hello",
+            output="World",
+            metadata={"key": "value"},
+            tags=["prod"],
+            observations=[],
+        )
+        assert detail.id == "trace-123"
+        assert detail.name == "my-trace"
+        assert detail.session_id == "sess-1"
+        assert detail.user_id == "user-1"
+        assert detail.tags == ["prod"]
+        assert detail.observations == []
+
+    def test_trace_detail_with_observations(self):
+        """TraceDetail should contain observations list."""
+        obs = ObservationInfo(
+            id="obs-1",
+            type="GENERATION",
+            name="gen-1",
+            start_time="2026-01-20T10:00:00",
+            end_time=None,
+            duration_ms=None,
+            level=None,
+            status_message=None,
+            model="gpt-4",
+            input=None,
+            output=None,
+        )
+        detail = TraceDetail(
+            id="trace-123",
+            name="my-trace",
+            timestamp="2026-01-20T10:00:00",
+            session_id=None,
+            user_id=None,
+            input=None,
+            output=None,
+            metadata=None,
+            tags=None,
+            observations=[obs],
+        )
+        assert len(detail.observations) == 1
+        assert detail.observations[0].id == "obs-1"
+
+
+class TestTraceGetResultDataclass:
+    """Tests for TraceGetResult dataclass (ISC row 15)."""
+
+    def test_trace_get_result_success(self):
+        """TraceGetResult should represent successful fetch."""
+        detail = TraceDetail(
+            id="trace-123",
+            name="my-trace",
+            timestamp="2026-01-20T10:00:00",
+            session_id=None,
+            user_id=None,
+            input=None,
+            output=None,
+            metadata=None,
+            tags=None,
+            observations=[],
+        )
+        result = TraceGetResult(
+            ok=True,
+            code="OK",
+            message="Found trace",
+            trace=detail,
+        )
+        assert result.ok is True
+        assert result.code == "OK"
+        assert result.trace is not None
+        assert result.trace.id == "trace-123"
+
+    def test_trace_get_result_not_found(self):
+        """TraceGetResult should represent not found case."""
+        result = TraceGetResult(
+            ok=False,
+            code=NOT_FOUND,
+            message="Trace not found: invalid-id",
+            trace=None,
+        )
+        assert result.ok is False
+        assert result.code == NOT_FOUND
+        assert result.trace is None
+
+
+class TestLangfuseClientFetchTrace:
+    """Tests for LangfuseClient fetch_trace() method (ISC rows 15, 20)."""
+
+    @pytest.fixture(autouse=True)
+    def setup_env(self, monkeypatch):
+        """Set up valid environment using monkeypatch."""
+        monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
+        monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
+
+    def test_fetch_trace_returns_trace_get_result(self):
+        """fetch_trace() should return TraceGetResult."""
+        mock_langfuse = MagicMock()
+
+        # Mock trace.get response
+        mock_trace = MagicMock()
+        mock_trace.id = "trace-123"
+        mock_trace.name = "test-trace"
+        mock_trace.timestamp = "2026-01-20T10:00:00"
+        mock_trace.session_id = None
+        mock_trace.user_id = None
+        mock_trace.input = None
+        mock_trace.output = None
+        mock_trace.metadata = None
+        mock_trace.tags = None
+        mock_langfuse.api.trace.get.return_value = mock_trace
+
+        # Mock observations response
+        mock_obs_response = MagicMock()
+        mock_obs_response.data = []
+        mock_obs_response.meta = None
+        mock_langfuse.api.observations_v_2.get_many.return_value = mock_obs_response
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_trace("trace-123")
+
+        assert isinstance(result, TraceGetResult)
+
+    def test_fetch_trace_success_basic(self):
+        """fetch_trace() should fetch trace with basic info."""
+        mock_langfuse = MagicMock()
+
+        mock_trace = MagicMock()
+        mock_trace.id = "trace-abc"
+        mock_trace.name = "chatbot"
+        mock_trace.timestamp = "2026-01-20T10:00:00"
+        mock_trace.session_id = "sess-1"
+        mock_trace.user_id = "user-1"
+        mock_trace.input = "Hello"
+        mock_trace.output = "World"
+        mock_trace.metadata = {"key": "val"}
+        mock_trace.tags = ["prod"]
+        mock_langfuse.api.trace.get.return_value = mock_trace
+
+        mock_obs_response = MagicMock()
+        mock_obs_response.data = []
+        mock_obs_response.meta = None
+        mock_langfuse.api.observations_v_2.get_many.return_value = mock_obs_response
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_trace("trace-abc")
+
+        assert result.ok is True
+        assert result.trace is not None
+        assert result.trace.id == "trace-abc"
+        assert result.trace.name == "chatbot"
+        assert result.trace.session_id == "sess-1"
+        assert result.trace.tags == ["prod"]
+
+    def test_fetch_trace_with_observations(self):
+        """fetch_trace() should fetch trace with observations (ISC row 20)."""
+        mock_langfuse = MagicMock()
+
+        mock_trace = MagicMock()
+        mock_trace.id = "trace-123"
+        mock_trace.name = "test"
+        mock_trace.timestamp = "2026-01-20T10:00:00"
+        mock_trace.session_id = None
+        mock_trace.user_id = None
+        mock_trace.input = None
+        mock_trace.output = None
+        mock_trace.metadata = None
+        mock_trace.tags = None
+        mock_langfuse.api.trace.get.return_value = mock_trace
+
+        # Mock observation
+        mock_obs = MagicMock()
+        mock_obs.id = "obs-1"
+        mock_obs.type = "GENERATION"
+        mock_obs.name = "llm-call"
+        mock_obs.start_time = "2026-01-20T10:00:01"
+        mock_obs.end_time = "2026-01-20T10:00:02"
+        mock_obs.level = None
+        mock_obs.status_message = None
+        mock_obs.model = "gpt-4"
+        mock_obs.input = "Hello"
+        mock_obs.output = "Hi"
+        mock_obs.usage = MagicMock()
+        mock_obs.usage.input = 10
+        mock_obs.usage.output = 5
+        mock_obs.usage.total = 15
+        mock_obs.calculated_total_cost = 0.001
+        mock_obs.parent_observation_id = None
+
+        mock_obs_response = MagicMock()
+        mock_obs_response.data = [mock_obs]
+        mock_obs_response.meta = None
+        mock_langfuse.api.observations_v_2.get_many.return_value = mock_obs_response
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_trace("trace-123")
+
+        assert result.ok is True
+        assert result.trace is not None
+        assert len(result.trace.observations) == 1
+        assert result.trace.observations[0].id == "obs-1"
+        assert result.trace.observations[0].type == "GENERATION"
+        assert result.trace.observations[0].model == "gpt-4"
+        assert result.trace.observations[0].cost == 0.001
+
+    def test_fetch_trace_not_found(self):
+        """fetch_trace() should handle 404 not found (negative case)."""
+        mock_langfuse = MagicMock()
+        mock_langfuse.api.trace.get.side_effect = Exception("404 Not Found")
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_trace("invalid-trace-id")
+
+        assert result.ok is False
+        assert result.code == NOT_FOUND
+        assert "Trace not found" in result.message
+        assert "invalid-trace-id" in result.message
+
+    def test_fetch_trace_auth_error(self):
+        """fetch_trace() should handle auth errors."""
+        mock_langfuse = MagicMock()
+        mock_langfuse.api.trace.get.side_effect = Exception("401 Unauthorized")
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_trace("trace-123")
+
+        assert result.ok is False
+        assert result.code == AUTH_INVALID
+
+    def test_fetch_trace_rate_limit(self):
+        """fetch_trace() should handle rate limit errors."""
+        mock_langfuse = MagicMock()
+        mock_langfuse.api.trace.get.side_effect = Exception("429 Rate limit")
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_trace("trace-123")
+
+        assert result.ok is False
+        assert result.code == RATE_LIMITED
+
+    def test_fetch_trace_generic_error(self):
+        """fetch_trace() should handle generic errors."""
+        mock_langfuse = MagicMock()
+        mock_langfuse.api.trace.get.side_effect = Exception("Unknown error")
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_trace("trace-123")
+
+        assert result.ok is False
+        assert result.code == API_ERROR
+        assert "Unknown error" in result.message
+
+    def test_fetch_trace_observation_hierarchy(self):
+        """fetch_trace() should capture parent_observation_id for hierarchy."""
+        mock_langfuse = MagicMock()
+
+        mock_trace = MagicMock()
+        mock_trace.id = "trace-123"
+        mock_trace.name = "test"
+        mock_trace.timestamp = "2026-01-20T10:00:00"
+        mock_trace.session_id = None
+        mock_trace.user_id = None
+        mock_trace.input = None
+        mock_trace.output = None
+        mock_trace.metadata = None
+        mock_trace.tags = None
+        mock_langfuse.api.trace.get.return_value = mock_trace
+
+        # Root observation
+        mock_obs_root = MagicMock()
+        mock_obs_root.id = "obs-root"
+        mock_obs_root.type = "SPAN"
+        mock_obs_root.name = "root-span"
+        mock_obs_root.start_time = "2026-01-20T10:00:00"
+        mock_obs_root.end_time = None
+        mock_obs_root.level = None
+        mock_obs_root.status_message = None
+        mock_obs_root.model = None
+        mock_obs_root.input = None
+        mock_obs_root.output = None
+        mock_obs_root.usage = None
+        mock_obs_root.calculated_total_cost = None
+        mock_obs_root.parent_observation_id = None
+
+        # Child observation
+        mock_obs_child = MagicMock()
+        mock_obs_child.id = "obs-child"
+        mock_obs_child.type = "GENERATION"
+        mock_obs_child.name = "child-gen"
+        mock_obs_child.start_time = "2026-01-20T10:00:01"
+        mock_obs_child.end_time = None
+        mock_obs_child.level = None
+        mock_obs_child.status_message = None
+        mock_obs_child.model = "gpt-4"
+        mock_obs_child.input = None
+        mock_obs_child.output = None
+        mock_obs_child.usage = None
+        mock_obs_child.calculated_total_cost = None
+        mock_obs_child.parent_observation_id = "obs-root"
+
+        mock_obs_response = MagicMock()
+        mock_obs_response.data = [mock_obs_root, mock_obs_child]
+        mock_obs_response.meta = None
+        mock_langfuse.api.observations_v_2.get_many.return_value = mock_obs_response
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_trace("trace-123")
+
+        assert result.ok is True
+        assert len(result.trace.observations) == 2
+
+        # Find child observation and verify parent reference
+        child_obs = next(o for o in result.trace.observations if o.id == "obs-child")
+        assert child_obs.parent_observation_id == "obs-root"

@@ -34,6 +34,7 @@ from langfuse_utils import (  # noqa: E402
     LANGFUSE_REGIONS,
     LangfuseClient,
     LangfuseError,
+    TraceGetResult,
     TraceListResult,
 )
 
@@ -264,13 +265,182 @@ def _trace_list(args: argparse.Namespace) -> int:
 
 
 def _trace_get(args: argparse.Namespace) -> int:
-    """Get trace details."""
+    """Get trace details with all observations (ISC rows 15, 20).
+
+    Fetches a single trace and displays the hierarchy:
+    Session -> Trace -> Observations
+
+    Acceptance criteria:
+    - 'trace get <id>' fetches single trace with all observations
+    - Output shows hierarchy: Session -> Trace -> Observations
+    - Displays observation types (generation, span, event, etc.)
+    - Shows timing, input/output, model, cost for each observation
+    - Example: Valid trace ID -> full trace tree with observations
+    - Negative case: Invalid trace ID -> 'Trace not found: [id]'
+    """
     client = _require_auth()
     if client is None:
         return 1
 
-    print("trace get: Command implementation pending (US-007)")
-    print(f"  trace_id: {args.trace_id}")
+    # Set up progress indicator for long operations
+    stop_event = threading.Event()
+    progress_started = threading.Event()
+
+    def delayed_progress_start() -> None:
+        """Start progress indicator after 5 second delay."""
+        if not stop_event.wait(5.0):
+            progress_started.set()
+            _show_progress_indicator("Fetching trace details...", stop_event)
+
+    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+    progress_thread.start()
+
+    try:
+        result: TraceGetResult = client.fetch_trace(args.trace_id)
+    finally:
+        stop_event.set()
+        progress_thread.join(timeout=1.0)
+
+    # Handle errors
+    if not result.ok:
+        print(f"Error: {result.message}", file=sys.stderr)
+        client.flush()
+        return 1
+
+    trace = result.trace
+    if trace is None:
+        print(f"Error: Trace not found: {args.trace_id}", file=sys.stderr)
+        client.flush()
+        return 1
+
+    # Display trace hierarchy (ISC row 20)
+    print("=" * 80)
+    print("TRACE DETAILS")
+    print("=" * 80)
+    print()
+
+    # Session level (if available)
+    if trace.session_id:
+        print(f"Session: {trace.session_id}")
+        print("-" * 40)
+        print()
+
+    # Trace level
+    print(f"Trace: {trace.id}")
+    print(f"  Name: {trace.name or '(unnamed)'}")
+    print(f"  Timestamp: {trace.timestamp}")
+
+    if trace.user_id:
+        print(f"  User ID: {trace.user_id}")
+
+    if trace.tags:
+        print(f"  Tags: {', '.join(trace.tags)}")
+
+    if trace.input:
+        print(f"  Input: {trace.input}")
+
+    if trace.output:
+        print(f"  Output: {trace.output}")
+
+    print()
+    print("-" * 40)
+    print(f"Observations ({len(trace.observations)}):")
+    print("-" * 40)
+
+    if not trace.observations:
+        print("  (no observations)")
+    else:
+        # Group observations by parent to show hierarchy
+        # Root observations have no parent_observation_id
+        root_observations = [
+            obs for obs in trace.observations if obs.parent_observation_id is None
+        ]
+        child_map: dict[str, list] = {}
+
+        for obs in trace.observations:
+            if obs.parent_observation_id:
+                if obs.parent_observation_id not in child_map:
+                    child_map[obs.parent_observation_id] = []
+                child_map[obs.parent_observation_id].append(obs)
+
+        def print_observation(obs, indent: int = 0) -> None:
+            """Recursively print observation with children."""
+            prefix = "  " * indent
+            type_icon = {
+                "GENERATION": "[GEN]",
+                "SPAN": "[SPAN]",
+                "EVENT": "[EVENT]",
+            }.get(obs.type, f"[{obs.type}]")
+
+            # Main observation line
+            name_display = obs.name or "(unnamed)"
+            print(f"{prefix}{type_icon} {name_display} (id: {obs.id[:12]}...)")
+
+            # Timing
+            if obs.duration_ms is not None:
+                print(f"{prefix}  Duration: {obs.duration_ms:.2f}ms")
+            elif obs.start_time:
+                print(f"{prefix}  Started: {obs.start_time}")
+                if obs.end_time:
+                    print(f"{prefix}  Ended: {obs.end_time}")
+
+            # Model (for generations)
+            if obs.model:
+                print(f"{prefix}  Model: {obs.model}")
+
+            # Token usage
+            if obs.input_tokens or obs.output_tokens or obs.total_tokens:
+                tokens_parts = []
+                if obs.input_tokens:
+                    tokens_parts.append(f"in: {obs.input_tokens}")
+                if obs.output_tokens:
+                    tokens_parts.append(f"out: {obs.output_tokens}")
+                if obs.total_tokens:
+                    tokens_parts.append(f"total: {obs.total_tokens}")
+                print(f"{prefix}  Tokens: {', '.join(tokens_parts)}")
+
+            # Cost
+            if obs.cost is not None:
+                print(f"{prefix}  Cost: ${obs.cost:.6f}")
+
+            # Status/level
+            if obs.level and obs.level != "DEFAULT":
+                print(f"{prefix}  Level: {obs.level}")
+            if obs.status_message:
+                print(f"{prefix}  Status: {obs.status_message}")
+
+            # Input/output (truncated)
+            if obs.input:
+                print(f"{prefix}  Input: {obs.input}")
+            if obs.output:
+                print(f"{prefix}  Output: {obs.output}")
+
+            print()
+
+            # Print children
+            if obs.id in child_map:
+                for child in child_map[obs.id]:
+                    print_observation(child, indent + 1)
+
+        # Print root observations first, then their children recursively
+        for obs in root_observations:
+            print_observation(obs, indent=1)
+
+        # Print any orphaned observations (parent not in this trace)
+        printed_ids = set()
+        for obs in trace.observations:
+            printed_ids.add(obs.id)
+
+        for obs in trace.observations:
+            if (
+                obs.parent_observation_id
+                and obs.parent_observation_id not in printed_ids
+                and obs not in root_observations
+            ):
+                # Parent is not in trace, print at root level
+                print_observation(obs, indent=1)
+
+    print("=" * 80)
 
     client.flush()
     return 0
