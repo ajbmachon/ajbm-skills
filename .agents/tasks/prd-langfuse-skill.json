@@ -156,7 +156,7 @@
     {
       "id": "US-001",
       "title": "Project setup and linter configuration",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [],
       "description": "As a developer, I want the project scaffolded with proper Python tooling so that code quality is enforced from the start.",
       "acceptanceCriteria": [
@@ -171,13 +171,13 @@
         "Negative case: Missing pyproject.toml -> clear error about project setup"
       ],
       "startedAt": "2026-01-20T15:11:00.622242+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-20T15:11:00.622403+00:00"
+      "completedAt": "2026-01-20T15:16:04.405265+00:00",
+      "updatedAt": "2026-01-20T15:16:04.405090+00:00"
     },
     {
       "id": "US-002",
       "title": "Create shared utilities module",
-      "status": "open",
+      "status": "in_progress",
       "dependsOn": [
         "US-001"
       ],
@@ -192,7 +192,10 @@
         "Example: Invalid keys -> returns AUTH_INVALID with 'Check your API keys' message",
         "Negative case: Empty LANGFUSE_SECRET_KEY -> AUTH_MISSING, not silent failure",
         "ISC reference: rows 53-59"
-      ]
+      ],
+      "startedAt": "2026-01-20T15:16:06.506549+00:00",
+      "completedAt": null,
+      "updatedAt": "2026-01-20T15:16:06.506867+00:00"
     },
     {
       "id": "US-003",

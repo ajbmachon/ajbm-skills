@@ -1,8 +1,11 @@
 # Activity Log
 
 ## Run Summary
+- 2026-01-20 16:16:04 | run=20260120-161100-59083 | iter=1 | mode=build | story=US-001 | duration=304s | status=success
 
 ## Events
 
 [2026-01-20 15:03:12] ITERATION 1 start (mode=build story=US-001)
 [2026-01-20 16:11:00] ITERATION 1 start (mode=build story=US-001)
+[2026-01-20 16:16:04] ITERATION 1 end (duration=304s)
+[2026-01-20 16:16:06] ITERATION 2 start (mode=build story=US-002)
