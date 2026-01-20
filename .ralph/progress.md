@@ -384,3 +384,35 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Data type validation should happen client-side before API call
   - SCORE_DATA_TYPES constant provides consistent validation across CLI and library
 ---
+
+## 2026-01-20 17:45 - US-012: Create getting-started reference
+Thread:
+Run: 20260120-173752-17085 (iteration 1)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-1.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-1.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: b672b6c docs(langfuse): add getting-started reference guide (US-012)
+- Post-commit status: Some .ralph files remain (expected)
+- Verification:
+  - Command: `ruff check .` -> PASS (All checks passed!)
+  - Command: `uv run pytest tests/ -v` -> PASS (171 tests passed)
+- Files changed:
+  - .claude/skills/langfuse/references/getting-started.md (created)
+- What was implemented:
+  - Created references/getting-started.md (~150 lines, readable in <2 minutes) (ISC rows 41-42)
+  - Quick setup section with API key and .env instructions
+  - "First trace query" example using trace list command
+  - Three main workflows covered: Debug, Evaluate, Experiment (ISC row 43)
+  - Analogies for non-experts: "traces = detailed logs for each AI request" (ISC row 66)
+  - Links to deep-dive references: traces.md, evals.md, datasets.md
+  - Quick command reference table for common operations
+  - Example: New user follows guide -> successfully runs 'trace list'
+  - Key concepts section explaining trace, observation, score, dataset
+- **Learnings for future iterations:**
+  - ISC rows 41-43, 66 fully addressed by this implementation
+  - Getting-started guides should prioritize time-to-first-success
+  - Analogies help non-experts understand unfamiliar concepts quickly
+  - Quick reference tables provide scannable information for returning users
+  - Links to deep-dive content allow progressive learning without cluttering intro
+---
