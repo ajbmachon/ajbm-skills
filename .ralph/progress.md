@@ -305,3 +305,35 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Cost breakdown groups by model name when available
   - NO_TIMING_DATA error code allows graceful handling of traces without timing info
 ---
+
+## 2026-01-20 17:10 - US-009: Implement trace errors and costs commands
+Thread:
+Run: 20260120-161100-59083 (iteration 12)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-12.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-12.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 1b265fb feat(langfuse): implement trace errors and costs commands (US-009)
+- Post-commit status: clean
+- Verification:
+  - Command: `ruff check .` -> PASS (All checks passed!)
+  - Command: `source .venv/bin/activate && pytest tests/ -v` -> PASS (156 tests passed)
+- Files changed:
+  - .claude/skills/langfuse/lib/langfuse_utils.py (added data classes and methods)
+  - .claude/skills/langfuse/scripts/langfuse.py (implemented CLI handlers)
+  - tests/test_langfuse_cli.py (added 11 new tests)
+- What was implemented:
+  - `trace errors` command: finds traces with errors in observations (ISC row 17)
+  - `trace costs` command: shows cost breakdown by model, trace, or day (ISC row 18)
+  - Data classes: TraceErrorInfo, TraceErrorsResult, CostByModel, CostByTrace, CostByDay, TraceCostsResult
+  - LangfuseClient.fetch_errors(): queries observations with ERROR/FATAL/CRITICAL level
+  - LangfuseClient.fetch_costs(): aggregates costs by model, trace, or day
+  - Time range parsing helper method _parse_time_range()
+- **Learnings for future iterations:**
+  - ISC rows 17, 18 fully addressed by this implementation
+  - Time range parsing supports h (hours), d (days), w (weeks) suffixes
+  - Cost data comes from `calculated_total_cost` field in observations
+  - Error level filtering uses level field in ("ERROR", "FATAL", "CRITICAL")
+  - Negative case for errors handled: "No errors in the specified time range"
+  - defaultdict useful for aggregating costs without checking existence
+---
