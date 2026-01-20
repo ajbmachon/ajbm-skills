@@ -221,3 +221,44 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Trace status determined by checking trace.level for "ERROR" since traces don't have explicit status
   - Pagination uses response.meta.cursor when available
 ---
+
+## 2026-01-20 17:00 - US-007: Implement trace get command
+Thread:
+Run: 20260120-161100-59083 (iteration 9)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-9.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-9.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 717a02d feat(langfuse): implement trace get command with observation hierarchy (US-007)
+- Post-commit status: clean
+- Verification:
+  - Command: ruff check . -> PASS
+  - Command: pytest tests/ -v -> PASS (126 tests)
+- Files changed:
+  - .claude/skills/langfuse/lib/langfuse_utils.py (extended with fetch_trace, ObservationInfo, TraceDetail, TraceGetResult)
+  - .claude/skills/langfuse/scripts/langfuse.py (implemented _trace_get with hierarchy display)
+  - tests/test_langfuse_cli.py (added trace get tests)
+  - tests/test_langfuse_utils.py (added fetch_trace and dataclass tests)
+- What was implemented:
+  - 'trace get <id>' fetches single trace with all observations (ISC row 15)
+  - Output shows hierarchy: Session -> Trace -> Observations (ISC row 20)
+  - Displays observation types with icons: [GEN], [SPAN], [EVENT]
+  - Shows timing, input/output, model, cost for each observation
+  - Uses v2 Observations API with cursor-based pagination for fetching all observations
+  - Example: Valid trace ID -> full trace tree with observations
+  - Negative case: Invalid trace ID -> 'Trace not found: [id]'
+  - ObservationInfo dataclass with 16 fields including parent_observation_id for hierarchy
+  - TraceDetail dataclass with trace metadata and observations list
+  - TraceGetResult dataclass for consistent error handling
+  - LangfuseClient.fetch_trace() method with pagination for observations
+  - Recursive _print_observation_tree() for hierarchical output
+  - Progress indicator for fetch operations
+  - 19 additional tests covering hierarchy, types, error handling
+- **Learnings for future iterations:**
+  - ISC rows 15, 20 fully addressed by this implementation
+  - Observation hierarchy built using parent_observation_id field
+  - Root observations have parent_observation_id == None or matching trace_id
+  - Recursive tree printing handles arbitrary nesting depth
+  - Duration calculated from (end_time - start_time) when both present
+  - Langfuse v2 API pagination uses cursor from response.meta
+---
