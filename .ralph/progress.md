@@ -337,3 +337,50 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Negative case for errors handled: "No errors in the specified time range"
   - defaultdict useful for aggregating costs without checking existence
 ---
+
+## 2026-01-20 17:20 - US-010: Implement evaluate subcommand
+Thread:
+Run: 20260120-161100-59083 (iteration 13)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-13.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-13.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: e9c80a1 feat(langfuse): implement evaluate subcommand with score management (US-010)
+- Post-commit status: clean
+- Verification:
+  - Command: `ruff check .` -> PASS (All checks passed!)
+  - Command: `uv run pytest tests/ -v` -> PASS (171 tests passed)
+- Files changed:
+  - .claude/skills/langfuse/lib/langfuse_utils.py (added data classes and methods)
+  - .claude/skills/langfuse/scripts/langfuse.py (implemented CLI handlers)
+  - tests/test_langfuse_cli.py (added 17 new tests)
+- What was implemented:
+  - `evaluate design` command: interactive guide for evaluation strategy (ISC row 22)
+    - Covers SDK scoring, LLM-as-a-Judge, annotation queues, and UI scoring
+    - Provides recommended workflow and documentation links
+  - `evaluate score <trace_id>` command: creates scores on traces (ISC row 23)
+    - Supports all score types: NUMERIC, CATEGORICAL, BOOLEAN
+    - Accepts --name, --value, --data-type, --comment options
+    - Validates data types and values before submission
+    - Example: 'evaluate score abc123 --name quality --value 0.8 --data-type numeric'
+  - `evaluate scores` command: lists scores with filtering (ISC row 24)
+    - Supports --trace filter for trace-specific scores
+    - Supports --name filter for score name filtering
+    - Supports --limit option for pagination
+    - Example: 'evaluate scores --trace abc123' -> all scores for that trace
+  - Data classes: ScoreInfo, ScoreCreateResult, ScoreListResult
+  - SCORE_DATA_TYPES constant for validation
+  - LangfuseClient.create_score(): creates scores with data type validation
+  - LangfuseClient.fetch_scores(): lists scores with filtering
+  - Negative case: Invalid data-type -> 'Invalid data-type. Use: numeric, categorical, boolean'
+  - Progress indicator for fetch operations
+  - 17 additional tests covering all acceptance criteria
+- **Learnings for future iterations:**
+  - ISC rows 22-25 fully addressed by this implementation
+  - Langfuse SDK score() method takes value, data_type, trace_id, name, comment
+  - Boolean scores use 0.0/1.0 as float values
+  - Categorical scores use string values
+  - Score list API endpoint is langfuse.api.score.list()
+  - Data type validation should happen client-side before API call
+  - SCORE_DATA_TYPES constant provides consistent validation across CLI and library
+---
