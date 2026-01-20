@@ -1,291 +1,629 @@
 # Model-Specific Prompting Guide
 
-Prompting techniques that work on one model may fail on another. This guide summarizes *model-family-specific* prompting + integration gotchas (model IDs, “thinking” knobs, context limits, and common failure modes).
+Prompting techniques that work on one model may fail on another. This guide covers model-specific best practices.
 
-**Last updated:** 2025-12-23 (Europe/Berlin)
+## Table of Contents
 
----
+### Claude (Anthropic)
+- [Claude 4.x Family](#claude-4x-family)
+- [Claude Opus 4.5](#claude-opus-45)
 
-## Contents
+### OpenAI
+- [GPT-5.2](#gpt-52)
+- [GPT-5.1](#gpt-51)
+- [GPT-4o](#gpt-4o)
+- [o1/o3 Reasoning Models](#o1o3-reasoning-models)
 
-- [Claude (Anthropic)](#claude-anthropic)
-  - [Claude Sonnet 4.5](#claude-sonnet-45)
-  - [Claude Opus 4.5](#claude-opus-45)
-  - [Claude 4.x family defaults](#claude-4x-family-defaults)
-- [OpenAI](#openai)
-  - [GPT-5.2](#gpt-52)
-  - [GPT-5.2 Chat](#gpt-52-chat)
-  - [GPT-5.2 Pro](#gpt-52-pro)
-  - [o1/o3 reasoning models](#o1o3-reasoning-models)
-  - [GPT-4o](#gpt-4o)
-- [Google](#google)
-  - [Gemini 3 Pro / Flash](#gemini-3-pro--flash)
-  - [Gemini 3 gotcha: thought signatures](#gemini-3-gotcha-thought-signatures)
-- [Other families](#other-families)
-  - [DeepSeek](#deepseek)
-  - [Kimi (Moonshot)](#kimi-moonshot)
-  - [Qwen (Alibaba)](#qwen-alibaba)
-  - [xAI (Grok)](#xai-grok)
-- [Quick reference](#quick-reference)
+### DeepSeek
+- [DeepSeek V3](#deepseek-v3)
+- [DeepSeek R1](#deepseek-r1)
+
+### Google
+- [Gemini 2.0](#gemini-20)
+
+### Moonshot
+- [Kimi K2](#kimi-k2)
+
+### Alibaba
+- [Qwen 2.5](#qwen-25)
+
+### Quick Reference
+- [Critical Differences Table](#critical-differences-table)
+- [Reasoning Models Warning](#reasoning-models-warning)
 
 ---
 
 # Claude (Anthropic)
 
-## Claude Sonnet 4.5
+## Claude 4.x Family
 
-**Anthropic API model ID:** `claude-sonnet-4-5-20250929`
+### Key Changes from Claude 3.x
 
-**What it’s best at**
-- Agentic coding + long-horizon tool workflows
-- “Computer use” / tool-heavy automation
-- Long-context reasoning *when you manage context deliberately*
+| Aspect | Claude 3.x | Claude 4.x |
+|--------|------------|------------|
+| Verbosity | Naturally verbose | Concise by default |
+| Tool calling | Conservative | Aggressive parallel execution |
+| Instructions | Flexible interpretation | Precise, literal following |
+| Action vs suggestion | Mixed | Tends toward suggestion |
 
-**Context**
-- **Standard:** 200K tokens
-- **Long context (beta):** 1M tokens via beta header `context-1m-2025-08-07` (availability depends on usage tier / custom limits)
+### Prompting Adjustments
 
-**Prompting style that works**
-- Be **directive** (ask for implementation, not suggestions).
-- Make success criteria **testable**: “Return a diff”, “Return JSON matching schema”, “Include commands and expected outputs”.
-- For tool use: set a **budget + stop rule**.
+**Be directive:** Claude 4.x tends toward suggestion over action.
+```
+# Don't
+"Can you suggest some changes to improve this function?"
 
-Example:
-```text
-You may use up to 3 tool calls.
-Stop once you have enough evidence to answer confidently.
-If you still lack evidence, say exactly what you need next.
-Output: a single markdown checklist.
+# Do
+"Change this function to handle edge cases. Implement the changes."
 ```
 
-**Integration gotcha (Claude 4.5 migration)**
-- Do **not** send both `temperature` and `top_p` in the same request when migrating to Claude 4.5 models.
+**Request detail explicitly:** Concise by default.
+```
+"Include as many relevant features as possible. Go beyond basics."
+```
 
----
+**Explain why:** Context helps Claude follow constraints better.
+```
+# Don't
+"NEVER use ellipses in responses."
+
+# Do
+"Never use ellipses—they don't render in our text-to-speech system."
+```
+
+**Use positive framing:** Tell what TO do.
+```
+# Don't
+"Do not use markdown formatting."
+
+# Do
+"Format your response as smoothly flowing prose paragraphs."
+```
+
+### Tool Use Notes
+
+- Sonnet 4.5 aggressively executes parallel tool calls
+- Overtriggering is more common than undertriggering
+- Use balanced prompting (not "MUST use tool")
 
 ## Claude Opus 4.5
 
-**Anthropic API model ID:** `claude-opus-4-5-20251101`
+**Released:** November 24, 2025
+**Context:** 200K tokens
+**Strengths:** Coding, agentic workflows, computer use
 
-**What it’s best at**
-- Highest-precision analysis and coding in the Claude line
-- Hard planning / constraint optimization when you want maximal capability
+### Specific Guidance
 
-**Context**
-- **Standard:** 200K tokens
+**Extended thinking:** Enable for complex STEM, coding, constraint optimization.
+```
+# Use high-level direction, not prescriptive steps
+"Analyze this problem thoroughly before providing your solution."
 
-**Unique knob: `effort` (beta, Opus 4.5 only)**
-- Lets you trade response thoroughness vs token efficiency with a single parameter.
-- Requires beta header `effort-2025-11-24`.
-
-**Prompting style that works**
-- Prefer **goal + constraints + output format** over step-by-step micromanagement.
-- If you need depth, say so explicitly:
-```text
-Optimize for correctness and completeness over brevity.
-If there’s ambiguity, list assumptions and proceed minimally.
+# Avoid prescriptive steps that limit model creativity
 ```
 
----
+**Agentic workflows:** For long-running agents, use two-agent pattern:
+1. Initializer agent (runs once, establishes structure)
+2. Coding agent (operates across sessions)
 
-## Claude 4.x family defaults
+**State persistence:** Maintain across sessions:
+- `features.json` for feature tracking (JSON > Markdown for stability)
+- `progress.txt` for session logging
+- Git commits for checkpoints
 
-These are common across many Claude 4.x models:
-
-- Claude 4.x tends to be **more concise by default** → request detail explicitly.
-- Claude 4.x follows instructions **literally** → specify format, scope, and “done” conditions.
-- Claude 4.x can be **eager with tools** in agent setups → give stricter tool criteria if needed.
+**API note:** Use `temperature` OR `top_p`, not both (causes errors in 4.5).
 
 ---
 
 # OpenAI
 
+
 ## GPT-5.2
 
-**OpenAI API model ID:** `gpt-5.2`
+**Status:** Current flagship (replaces GPT-5.1)  
+**Best for:** Complex reasoning, broad world knowledge, agentic/tool-heavy workflows, and code-heavy tasks  
+**Knowledge cutoff:** 2025-08-31  
+**Context (API):** 400K tokens • **Max output:** 128K tokens  
+**Chat model:** `gpt-5.2-chat-latest` (128K context • 16,384 max output)
 
-**What it’s best at**
-- Coding + agentic workflows
-- Long-context projects where you can keep a stable plan and compact state
+### What changed vs GPT-5.1
 
-**Context**
-- **Context window:** 400,000 tokens
-- **Max output:** 128,000 tokens
-- **Knowledge cutoff:** 2025-08-31
+- Better general intelligence and instruction following
+- More accurate and token-efficient answers
+- Stronger multimodality (especially vision)
+- Better tool calling + context management in the API
+- New context management capability via **compaction**
+- Adds **`xhigh` reasoning effort** and **concise reasoning summaries**
 
-**Prompting style that works**
-- Use **clear sections** (TASK / CONSTRAINTS / INPUT / OUTPUT FORMAT).
-- Demand an **output shape** (schema, checklist, table) to reduce drift.
-- Repeat critical constraints at the end (mitigates “lost in the middle”).
+### The knobs that matter
 
-**Knobs to know**
-- `reasoning.effort`: control internal work (`low|medium|high|xhigh` in 5.2 family).
-- `text.verbosity`: steer detail (`low|medium|high`).
+**1) `reasoning.effort` (quality vs latency/cost)**  
+- Default is `none` (fast / low-latency).  
+- Increase gradually (`medium` → `high` → `xhigh`) for harder reasoning.  
+- With `none`, prompting matters more: explicitly ask for a *brief plan / outline* before the final answer.
 
-**Long-running agents: compaction**
-- Prefer **compaction** (summarize/condense state) over replaying full histories every turn.
+**2) `text.verbosity` (response length / “how much to say”)**  
+- Values: `low`, `medium`, `high` (default: `medium`).  
+- Use this instead of trying to fight verbosity purely with prompting.
+
+**3) Reasoning summaries (`reasoning.summary`)**  
+- GPT‑5.2 can return concise summaries of its reasoning (useful for audits / traceability without exposing full hidden reasoning).
+
+**4) Compaction (`POST /v1/responses/compact`)**  
+- Use for long-running workflows (many turns / tool calls) to extend effective context.  
+- Output is **opaque/encrypted**: treat as “state to continue with”, not data to parse.
+
+### Prompting patterns that reliably improve results
+
+**Output-shape + length clamps (high ROI)**  
+Give concrete constraints: bullet caps, section names, snippet limits, etc.  
+(Works especially well for enterprise agents and coding assistants.)
+
+**Scope-drift prevention (especially UI/front-end)**  
+GPT-5.2 is strong at structured code but may “helpfully” add features/design.  
+Explicitly forbid extras: “Implement ONLY what I asked. No embellishments.”
+
+**Long-context handling**  
+For big inputs, force re-grounding:
+- Summarize key relevant sections first
+- Restate constraints (jurisdiction/date range/etc.)
+- Anchor claims to sections (“In the Data Retention section…”)
+
+**Ambiguity guardrails**  
+If underspecified: ask 1–3 clarifying questions *or* give 2–3 interpretations with labeled assumptions.  
+Never invent exact figures/links when uncertain; prefer “based on provided context…”
+
+### Tools & agent workflows
+
+- Prefer **Responses API** for tool-heavy workflows; it supports better conversation state handling.
+- GPT-5.2 is post-trained on specific tools (notably `apply_patch` and `shell`) and supports **custom tools** (freeform tool inputs + optional constrained outputs).
+- For long task chains, compact after milestones (not every turn), then continue with the compacted state.
+
+### Common gotchas
+
+- Some sampling controls (e.g., temperature/top_p/logprobs) are only supported when `reasoning.effort` is `none`.
+- For hard problems, you usually get better reliability by:
+  1) raising `reasoning.effort`, and  
+  2) tightening output shape and scope constraints,  
+  before adding long personas or many examples.
+
+**Sources (primary):**
+- OpenAI “Using GPT-5.2 / latest model” docs: https://platform.openai.com/docs/guides/latest-model  
+- GPT-5.2 Prompting Guide (Cookbook): https://cookbook.openai.com/examples/gpt-5/gpt-5-2_prompting_guide  
+- OpenAI Models pages: https://platform.openai.com/docs/models  
+- Responses API + compaction reference: https://platform.openai.com/docs/api-reference/responses/compact  
 
 ---
 
-## GPT-5.2 Chat
+## GPT-5.1
 
-**OpenAI API model ID:** `gpt-5.2-chat-latest`  
-Use this when you specifically want the snapshot currently used in ChatGPT.
+**Status:** Previous flagship (still useful; cheaper than 5.2 in many setups)  
+**Best for:** Coding + agentic workflows where you want **configurable reasoning** and strong steerability  
+**Knowledge cutoff:** 2024-09-30  
+**Context (API):** 400K tokens • **Max output:** 128K tokens
 
-**Context**
-- **Context window:** 128,000 tokens
-- **Max output:** 16,384 tokens
-- **Knowledge cutoff:** 2025-08-31
+### Key behaviors
 
----
+- Default reasoning effort is `none` (fast, “non-reasoning-like” behavior)
+- Supported `reasoning.effort` values include `none`, `low`, `medium`, and `high`
+- More steerable in **personality, tone, and formatting** than GPT-5
+- Better calibrated to prompt difficulty (fewer wasted tokens on easy prompts)
 
-## GPT-5.2 Pro
+### Prompting: what actually works best
 
-**OpenAI API model ID:** `gpt-5.2-pro`
+**1) “None” mode ≈ GPT-4o-style prompting**  
+When `reasoning.effort="none"`, many classic prompt techniques work well again:
+- Few-shot examples (when you need strict style/format imitation)
+- High-quality tool descriptions
+- Concrete output length clamps
 
-**Important differences**
-- Available in the **Responses API only**.
-- Designed for tougher problems; some requests can take longer.
-- Supports `reasoning.effort` = `medium|high|xhigh`.
-- If you hit timeouts, use **background mode**.
+**2) Persistence and completeness**  
+On longer agentic tasks, add an explicit rule:  
+“Keep going until the user’s request is completely resolved; don’t stop early.”
 
-**Context**
-- **Context window:** 400,000 tokens
-- **Max output:** 128,000 tokens
+**3) Persona is helpful — but don’t confuse tone with capability**  
+GPT-5.1 responds well to a clear persona, but persona alone won’t “add knowledge.”  
+Use persona for tone/communication style; use explicit constraints + evals for correctness.
 
----
+### Tools: `apply_patch` and `shell`
 
-## o1/o3 reasoning models
+GPT‑5.1 is post‑trained on:
+- `apply_patch` (structured diffs for file edits; reduces patch failure rates vs DIY JSON tools)
+- `shell` (plan-execute loop via controlled command execution)
 
-These models are *reasoning-native*; prompting them like GPT-4o often makes them worse.
+### When to prefer GPT-5.1 vs GPT-5.2
 
-**Do**
-- Give the task once, clearly.
-- Specify output format.
-- Keep instructions minimal.
+- Choose **GPT‑5.1** if you want lower cost and you’re already getting high quality with your prompt suite.
+- Choose **GPT‑5.2** if you need stronger instruction following, better tool reliability, improved vision, compaction, and the best all-around performance.
 
-**Avoid**
-- “Think step by step” / “show your reasoning”
-- Large few-shot blocks unless you’ve validated they help
-- Over-prescribing how to think
+**Sources (primary):**
+- GPT-5.1 model info: https://platform.openai.com/docs/models/gpt-5-1  
+- GPT-5.1 Prompting Guide (Cookbook): https://cookbook.openai.com/examples/gpt-5/gpt-5-1_prompting_guide  
+- OpenAI API Changelog (5.1 defaults to `none`): https://platform.openai.com/docs/changelog  
 
 ---
 
 ## GPT-4o
 
-Best when you want fast, literal instruction following.
+**Context:** 128K tokens
+**Best for:** Execution tasks, speed-sensitive applications
 
-**Prompting style that works**
-- Be explicit; don’t rely on implied rules.
-- Use delimiters for long inputs.
-- Specify format/length/structure.
+### Key Behaviors
 
-Example:
-```text
-Summarize the text below into exactly 5 bullets.
-Each bullet must be <= 18 words.
-Text:
-"""
-...
+- More literal instruction following than GPT-4
+- Requires explicit specification (implicit rules not inferred)
+- Highly steerable with single sentences
+
+### Prompting Patterns
+
+**Use delimiters:**
+```python
+prompt = """
+Summarize the text below as a bullet point list.
+
+Text: \"\"\"
+{text_input}
+\"\"\"
 """
 ```
+
+**Be specific about format:**
+```
+"Use a 3 to 5 sentence paragraph to describe this product."
+```
+
+**Say what TO do:**
+```
+# Don't
+"DO NOT ASK USERNAME OR PASSWORD"
+
+# Do
+"Refer the user to www.example.com/help instead of asking for PII"
+```
+
+### Agentic Prompting
+
+Include these reminders for agentic behavior:
+```
+# Persistence
+Keep going until the user's query is completely resolved.
+
+# Tool Usage
+If unsure about content, use tools to gather information. Do NOT guess.
+
+# Planning (optional)
+Plan extensively before each function call.
+```
+
+## o1/o3 Reasoning Models
+
+**What they are:** OpenAI’s “o‑series” reasoning models are trained to think longer and harder about ambiguous, multi-step problems. They behave differently from GPT “workhorse” models.  
+
+### Prompting rules of thumb (from OpenAI guidance)
+
+- **Keep prompts simple and direct.** These models do best with high-level guidance and clear success criteria.
+- **Avoid chain-of-thought prompting** (“think step by step”, “show your reasoning”). They already reason internally.
+- **Try zero-shot first.** Add a *small* number of examples only if you need strict formatting behavior, and ensure examples match instructions precisely.
+- **Use delimiters** (headings, XML tags, fenced blocks) to separate task, context, and constraints.
+- **Be explicit about constraints** (budget, time, scope, acceptance criteria).
+
+### Developer messages and formatting
+
+- In the API, reasoning models support **developer messages** (instead of “system” messages) to align with the model-spec chain of command.
+- Starting with `o1-2024-12-17`, reasoning models avoid Markdown by default. If you *want* Markdown, include **`Formatting re-enabled`** on the first line of your developer message.
+
+### Tool-heavy / agentic workflows
+
+- Prefer the **Responses API** for reasoning models. For complex multi-tool workflows, use `store: true` and carry forward conversation state via `previous_response_id` or by replaying prior output items.
+- OpenAI recommends including reasoning items around function calls (at minimum, between the last function call and the previous user message) so the model doesn’t “restart” its reasoning when you respond to tool outputs.
+
+### When to use o-series vs GPT-5.x
+
+- Use **o-series** when accuracy/reliability on ambiguous decisions matters more than latency (planning, policy/compliance judgments, dense document reasoning).
+- Use **GPT‑5.2 / GPT‑5.1** when you need fast execution, high-quality writing/coding, or you want to tune reasoning effort per call.
+
+**Sources (primary):**
+- Reasoning best practices: https://platform.openai.com/docs/guides/reasoning-best-practices  
+- Reasoning models guide: https://platform.openai.com/docs/guides/reasoning  
+
+
+# DeepSeek
+
+## DeepSeek V3
+
+**Architecture:** 671B MoE (37B active)
+**Context:** 128K tokens
+**Best for:** General chat, code generation
+
+### Temperature Settings
+
+| Use Case | Temperature |
+|----------|-------------|
+| Coding / Math | 0.0 |
+| Data Analysis | 1.0 |
+| General Chat | 1.3 |
+| Creative Writing | 1.5 |
+
+### Prompting
+
+Standard prompting works. System prompts supported.
+
+```python
+messages = [
+    {"role": "system", "content": "You are an expert Python developer."},
+    {"role": "user", "content": "Write a function to..."}
+]
+```
+
+## DeepSeek R1
+
+**Critical:** Requires FUNDAMENTALLY different prompting.
+
+### What NOT to Do
+
+```
+DON'T: Use system prompts
+DON'T: Provide few-shot examples (degrades performance)
+DON'T: Trigger chain-of-thought manually (automatic)
+DON'T: Set temperature/top_p (not supported for R1)
+```
+
+### What TO Do
+
+**All instructions in user message:**
+```python
+messages = [
+    {
+        "role": "user",
+        "content": """
+You are an expert Python developer.
+
+## Task
+Write a function to validate email addresses.
+
+## Requirements
+- Handle edge cases
+- Return boolean
+- Include docstring
+
+## Output Format
+Provide only the Python code.
+"""
+    }
+]
+```
+
+**Multi-turn handling:**
+```python
+# IMPORTANT: Strip reasoning_content between turns
+for message in conversation_history:
+    if 'reasoning_content' in message:
+        del message['reasoning_content']  # Required to avoid 400 errors
+```
+
+### R1-Specific Tips
+
+- For math: Include "Put your final answer within `\boxed{}`"
+- Use `temperature=0.6` (official recommendation)
+- If reasoning bypassed: "Start with the `<think>` tag"
 
 ---
 
 # Google
 
-## Gemini 3 Pro / Flash
+## Gemini 2.0
 
-**Gemini API model IDs**
-- `gemini-3-pro-preview`
-- `gemini-3-flash-preview`
+**Context:** 1M tokens
+**Strengths:** Multimodal, long context, native tool use
 
-**Token limits (Preview)**
-- **Input:** 1,048,576 tokens
-- **Output:** 65,536 tokens
-- **Knowledge cutoff (model card):** 2025-01
+### Key Principle: Query at END
 
-**Thinking control**
-Gemini 3 uses *thinking levels* (not budgets):
-- **Gemini 3 Pro:** `low`, `high`
-- **Gemini 3 Flash:** `minimal`, `low`, `medium`, `high`
-If not specified, Gemini 3 defaults to `high`.
+For long contexts, place the question LAST:
+```
+[All context / documents]
+...
+Based on the information above, answer: [question]
+```
 
-**Prompting style that works**
-- Put **context first**, **task last** (Gemini is sensitive to ordering).
-- Use strict schemas for structured output and function calling.
+### Temperature
 
----
+| Model | Temperature |
+|-------|-------------|
+| Gemini 2.0 | 0 works for deterministic |
+| Gemini 2.5 | 0 works for deterministic |
+| Gemini 3.0 | 1.0 (required default) |
 
-## Gemini 3 gotcha: thought signatures
+### Multimodal Prompting
 
-If you use **function calling / tools** with Gemini 3, you must **circulate thought signatures** across turns exactly as received. If you omit them, you can get validation errors (and/or degraded reasoning depending on the endpoint).
+**Images:** Place text prompt AFTER image.
+```python
+contents = [
+    image_part,  # Image first
+    "Describe what you see"  # Text after
+]
+```
 
-Practical rule:
-- Treat thought signatures as opaque tokens.
-- Echo them back unchanged in conversation history.
+### Grounding
 
----
+Enable Google Search for factual accuracy:
+```python
+response = model.generate_content(
+    "What happened in tech news today?",
+    tools=[{"google_search": {}}]
+)
+```
 
-# Other families
+### Key Behaviors
 
-## DeepSeek
-
-General guidance:
-- Standard prompting works well.
-- Use structured output (JSON) if you need reliable parsing.
-- Keep tool schemas tight; validate tool inputs.
-
-## Kimi (Moonshot)
-
-General guidance:
-- Works best with **goal-oriented** prompts.
-- Avoid “Step 1 / Step 2 / Step 3” micromanagement.
-- Specify output format and success criteria.
-
-## Qwen (Alibaba)
-
-General guidance:
-- Strong multilingual + structured output compliance.
-- Use explicit schemas and examples for tricky formatting.
-- For code, include test cases and edge constraints.
-
-## xAI (Grok)
-
-**What it's best at**
-- Agentic workflows and tool-calling tasks
-- Long-context tasks (Grok 4.1 Fast supports a 2M context window)
-
-**Prompting style that works**
-- Use a **detailed system prompt** with explicit task goals and edge cases.
-- Provide **structured context** using XML tags or Markdown headings.
-- Keep **prompt history stable** across tool loops to maximize cache hits and speed.
-
-**Tool-calling guidance**
-- In streaming mode, **function calls are returned in a single chunk**, not interleaved.
-- If tool calls are required, instruct the model to **use tools via the tool interface only** (never emit tool-call markup in normal text).
+- **No negative examples:** Don't show "what NOT to do"
+- **Thinking mode:** Use `thinkingBudget` for complex tasks
+- **Lost-in-middle:** Still applies even with 1M context
+- **Object detection:** Returns 0-1000 normalized coordinates
 
 ---
 
-# Quick reference
+# Moonshot
 
-## What to pick (common scenarios)
+## Kimi K2
 
-| Need | Best starting choice |
-|------|-----------------------|
-| Best agentic coding + long context | GPT-5.2 |
-| Highest precision (willing to wait) | GPT-5.2 Pro |
-| Match ChatGPT’s current behavior | GPT-5.2 Chat (`-chat-latest`) |
-| 1M-token ingestion + tool workflows | Gemini 3 Pro/Flash (Preview) |
-| Claude-style agent workflows | Claude Sonnet 4.5 |
-| Claude maximum capability | Claude Opus 4.5 |
-| Reasoning-native minimal prompting | o1/o3 (if you’re using them) |
+**Architecture:** 1T MoE (32B active)
+**Context:** 128K-256K tokens
+**Design:** Agentic-first
 
-## Biggest “gotchas” checklist
+### Critical Settings
 
-- **Gemini 3 + tools:** always round-trip **thought signatures**.
-- **Claude 4.5 migration:** don’t send **both** `temperature` and `top_p`.
-- **GPT-5.2 Pro:** Responses API only; consider background mode for long tasks.
-- **Reasoning-native models:** don’t demand chain-of-thought; keep prompts simple.
+```python
+temperature = 0.6  # Official recommendation
+system_prompt = "You are Kimi, an AI assistant created by Moonshot AI."
+```
+
+### Prompting Style
+
+**Use goal-oriented prompts (not step-by-step):**
+```
+# Don't
+"Step 1: Read the file. Step 2: Parse JSON. Step 3: Extract users..."
+
+# Do
+"Count the number of users in this JSON file and return the total."
+```
+
+### Known Issues
+
+| Issue | Mitigation |
+|-------|------------|
+| Instruction drift after ~900 words | Put critical constraints EARLY |
+| Formatting inconsistencies in long outputs | Use explicit section markers |
+| Overthinking simple tasks | Request brevity explicitly |
+| Over-confident paraphrasing | Ask for direct quotes |
+
+### Long Context
+
+- Normal speed < 100K tokens
+- Speed drops 100K-256K tokens
+- For very long: add executive summary in final user message
+
+### K2-Thinking Variant
+
+```python
+temperature = 1.0  # Different from Instruct!
+max_tokens = 16000  # Minimum for reasoning + output
+min_p = 0.01
+```
 
 ---
+
+# Alibaba
+
+## Qwen 2.5
+
+**Sizes:** 0.5B - 72B (open weights)
+**Context:** 128K tokens
+**Variants:** Qwen2.5, Qwen2.5-Coder, Qwen2.5-Math, Qwen-Max (API)
+
+### Chat Template (Critical)
+
+Qwen uses ChatML format. Always use the tokenizer:
+```python
+# CORRECT
+text = tokenizer.apply_chat_template(
+    messages,
+    tokenize=False,
+    add_generation_prompt=True
+)
+
+# NEVER manually construct ChatML tokens
+```
+
+### Sampling Parameters
+
+**General:**
+```python
+{
+    "temperature": 0.7,
+    "top_p": 0.8,
+    "top_k": 20,
+    "repetition_penalty": 1.05
+}
+```
+
+**Code (Qwen-Coder):**
+```python
+{
+    "temperature": 0.2,  # Lower for determinism
+    "top_p": 0.9,
+    "repetition_penalty": 1.05
+}
+```
+
+### Key Differentiators
+
+- **Bilingual strength:** Native Chinese + English (no quality penalty for Chinese)
+- **29+ languages:** Strong multilingual without English bias
+- **Open weights:** Apache 2.0 license (except 3B Coder)
+
+### Default System Prompt
+
+```
+"You are Qwen, created by Alibaba Cloud. You are a helpful assistant."
+```
+
+### Notes
+
+- `repetition_penalty: 1.05` recommended to prevent repetition
+- Qwen-Coder specialized for code; use base for non-code
+- Qwen2.5-Math: English and Chinese math only (not general use)
+
+---
+
+# Quick Reference
+
+## Critical Differences Table
+
+| Model | CoT Prompting | Few-Shot | System Prompt |
+|-------|---------------|----------|---------------|
+| Claude 4.x | Manual | Helpful | Yes |
+| GPT-4o | Manual | Helpful | Yes |
+| GPT-5.2 | Light (ask for brief plan) | Helpful in `none`/`low`; less needed at `medium+` | Yes (system/developer) |
+| GPT-5.1 | Light (ask for brief plan) | Helpful in `none`/`low`; less needed at `medium+` | Yes (system/developer) |
+| o1/o3 | **NEVER** | **Hurts** | Developer role |
+| DeepSeek V3 | Manual | Helpful | Yes |
+| DeepSeek R1 | **NEVER** | **Hurts** | **NO** |
+| Gemini 2.0 | Manual/Thinking | Helpful (no negatives) | Yes |
+| Kimi K2 | Automatic (Thinking) | Varies | Goal-oriented |
+| Qwen 2.5 | Manual | Helpful | Yes |
+## Reasoning Models Warning
+
+There are (at least) two “reasoning styles” you’ll run into:
+
+### 1) Always-thinking reasoning models (o-series, DeepSeek R1, Kimi Thinking)
+Examples: **o1/o3**, DeepSeek R1, Kimi K2-Thinking
+
+For these models:
+1. **Avoid chain-of-thought prompts** (“think step by step”, “explain your reasoning”) — often unnecessary and can hurt performance
+2. **Try zero-shot first**; add few-shot only if needed and tightly aligned
+3. **Keep prompts simple and direct**
+4. Prefer the **Responses API** for tool-heavy flows; carry forward conversation state
+
+### 2) Tunable reasoning (GPT-5.1 / GPT-5.2)
+These models can run with **`reasoning.effort="none"`** (fast, “workhorse-like”), or spend more compute at `medium`/`high`/`xhigh`.
+
+- In `none`: classic prompt engineering (few-shot, detailed schemas) works well.
+- In `medium+`: reduce prompt micromanagement; tighten *success criteria + output shape* instead.
+
+## Model Selection Guide
+
+| Need | Best Choice |
+|------|-------------|
+| Complex reasoning | GPT‑5.2, o1/o3, DeepSeek R1 |
+| Code generation | Claude Opus 4.5, DeepSeek, Qwen-Coder |
+| Speed + cost | Gemini Flash, DeepSeek V3, Kimi K2 |
+| Long context | GPT‑5.2/5.1 (400K), Gemini (1M), Kimi (256K), Claude (200K) |
+| Multilingual | Qwen, Kimi |
+| Agentic workflows | Claude 4.x, Kimi K2 |
+| Multimodal | Gemini, GPT-4o |
+
+---
+
+*Last updated: January 2026*
+*Add new models by appending sections and updating TOC*

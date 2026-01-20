@@ -57,8 +57,8 @@ Or specify a custom command:
 
 ## Hook Behavior
 
-The Stop hook runs `<linter> 2>&1 || true` to:
-- Capture all output (stdout + stderr)
+The Stop hook runs `<linter> > /dev/null 2>&1 || true` to:
+- Suppress all output (prevents terminal rendering issues)
 - Never block Claude even if linting fails
 - Auto-fix what it can on every response
 
