@@ -140,6 +140,8 @@ class TestSetupCheckCommand:
             captured = capsys.readouterr()
             # Should show connection info
             assert "langfuse" in captured.out.lower()
+            # Should show success indicator
+            assert "✓" in captured.out or "ok" in captured.out.lower()
 
     def test_setup_check_fails_with_invalid_auth(self, capsys, monkeypatch):
         """'setup check' should fail clearly with invalid auth."""
@@ -155,6 +157,122 @@ class TestSetupCheckCommand:
             assert exit_code == 1
             captured = capsys.readouterr()
             assert "invalid" in captured.err.lower() or "failed" in captured.err.lower()
+
+    def test_setup_check_shows_next_step_on_failure(self, capsys):
+        """'setup check' should show next step when auth fails."""
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(
+                ok=False, code="AUTH_INVALID", message="Invalid API keys"
+            )
+
+            exit_code = main(["setup", "check"])
+
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            # Should suggest running diagnose
+            assert "diagnose" in captured.err.lower()
+
+
+class TestSetupDiagnoseCommand:
+    """Tests for 'setup diagnose' command (ISC rows 36-40)."""
+
+    @pytest.fixture(autouse=True)
+    def mock_env(self, monkeypatch):
+        """Set up valid environment for auth."""
+        monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
+        monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
+        monkeypatch.setenv("LANGFUSE_BASE_URL", "https://cloud.langfuse.com")
+
+    def test_setup_diagnose_runs_diagnostics(self, capsys):
+        """'setup diagnose' should run diagnostics."""
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.diagnose.return_value = MagicMock(
+                healthy=True,
+                summary="All checks passed.",
+                issues=[],
+                next_steps=[],
+            )
+
+            exit_code = main(["setup", "diagnose"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            assert "diagnostic" in captured.out.lower() or "check" in captured.out.lower()
+
+    def test_setup_diagnose_shows_issues(self, capsys):
+        """'setup diagnose' should show found issues."""
+        mock_issue = MagicMock()
+        mock_issue.code = "AUTH_INVALID"
+        mock_issue.severity = "error"
+        mock_issue.message = "Authentication failed"
+        mock_issue.detail = "Check your API keys"
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.diagnose.return_value = MagicMock(
+                healthy=False,
+                summary="Found 1 issue(s)",
+                issues=[mock_issue],
+                next_steps=["Fix your credentials"],
+            )
+
+            exit_code = main(["setup", "diagnose"])
+
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            assert "auth_invalid" in captured.out.lower()
+
+    def test_setup_diagnose_handles_missing_credentials(self, capsys, monkeypatch):
+        """'setup diagnose' should handle missing credentials gracefully."""
+        # Clear credentials
+        monkeypatch.delenv("LANGFUSE_SECRET_KEY", raising=False)
+        monkeypatch.delenv("LANGFUSE_PUBLIC_KEY", raising=False)
+        monkeypatch.setattr("langfuse_utils.load_dotenv", lambda *args, **kwargs: None)
+
+        exit_code = main(["setup", "diagnose"])
+
+        assert exit_code == 1
+        captured = capsys.readouterr()
+        # Should show helpful message about missing credentials
+        assert "missing" in captured.out.lower() or "credential" in captured.out.lower()
+
+
+class TestSetupGuideCommand:
+    """Tests for 'setup guide' command (ISC row 37)."""
+
+    def test_setup_guide_shows_steps(self, capsys):
+        """'setup guide' should show step-by-step instructions."""
+        exit_code = main(["setup", "guide"])
+
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        # Should contain step-by-step content
+        assert "step" in captured.out.lower()
+        # Should mention key components
+        assert "langfuse" in captured.out.lower()
+        assert "env" in captured.out.lower() or ".env" in captured.out.lower()
+
+    def test_setup_guide_shows_regions(self, capsys):
+        """'setup guide' should show both EU and US regions."""
+        exit_code = main(["setup", "guide"])
+
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        # Should mention both regions
+        assert "eu" in captured.out.lower()
+        assert "us" in captured.out.lower()
+
+    def test_setup_guide_shows_api_key_format(self, capsys):
+        """'setup guide' should show correct API key format."""
+        exit_code = main(["setup", "guide"])
+
+        assert exit_code == 0
+        captured = capsys.readouterr()
+        # Should mention key prefixes
+        assert "sk-lf" in captured.out.lower()
+        assert "pk-lf" in captured.out.lower()
 
 
 class TestTraceSubcommandActions:

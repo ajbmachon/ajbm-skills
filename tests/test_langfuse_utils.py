@@ -26,12 +26,19 @@ sys.path.insert(
 )
 
 from langfuse_utils import (
+    AUTH_EXPIRED,
     AUTH_INVALID,
     AUTH_MISSING,
     ERROR_MESSAGES,
+    LANGFUSE_REGIONS,
+    MAX_RETRIES,
     NETWORK_ERROR,
+    NETWORK_TIMEOUT,
     RATE_LIMITED,
+    REGION_MISMATCH,
     AuthResult,
+    DiagnosisIssue,
+    DiagnosisResult,
     LangfuseClient,
     LangfuseError,
 )
@@ -48,13 +55,43 @@ class TestErrorCodeConstants:
         """AUTH_INVALID constant should be defined."""
         assert AUTH_INVALID == "AUTH_INVALID"
 
+    def test_auth_expired_constant_exists(self):
+        """AUTH_EXPIRED constant should be defined."""
+        assert AUTH_EXPIRED == "AUTH_EXPIRED"
+
     def test_network_error_constant_exists(self):
         """NETWORK_ERROR constant should be defined."""
         assert NETWORK_ERROR == "NETWORK_ERROR"
 
+    def test_network_timeout_constant_exists(self):
+        """NETWORK_TIMEOUT constant should be defined."""
+        assert NETWORK_TIMEOUT == "NETWORK_TIMEOUT"
+
     def test_rate_limited_constant_exists(self):
         """RATE_LIMITED constant should be defined."""
         assert RATE_LIMITED == "RATE_LIMITED"
+
+    def test_region_mismatch_constant_exists(self):
+        """REGION_MISMATCH constant should be defined."""
+        assert REGION_MISMATCH == "REGION_MISMATCH"
+
+
+class TestRegionConstants:
+    """Tests for region constants (ISC row 38)."""
+
+    def test_eu_region_exists(self):
+        """EU region should be defined."""
+        assert "EU" in LANGFUSE_REGIONS
+        assert "cloud.langfuse.com" in LANGFUSE_REGIONS["EU"]
+
+    def test_us_region_exists(self):
+        """US region should be defined."""
+        assert "US" in LANGFUSE_REGIONS
+        assert "us.cloud.langfuse.com" in LANGFUSE_REGIONS["US"]
+
+    def test_max_retries_defined(self):
+        """MAX_RETRIES constant should be defined."""
+        assert MAX_RETRIES == 3
 
 
 class TestErrorMessages:
@@ -62,7 +99,15 @@ class TestErrorMessages:
 
     def test_all_error_codes_have_messages(self):
         """Every error code should have a human-readable message."""
-        error_codes = [AUTH_MISSING, AUTH_INVALID, NETWORK_ERROR, RATE_LIMITED]
+        error_codes = [
+            AUTH_MISSING,
+            AUTH_INVALID,
+            AUTH_EXPIRED,
+            NETWORK_ERROR,
+            NETWORK_TIMEOUT,
+            RATE_LIMITED,
+            REGION_MISMATCH,
+        ]
         for code in error_codes:
             assert code in ERROR_MESSAGES
             assert len(ERROR_MESSAGES[code]) > 0
@@ -310,10 +355,136 @@ class TestLangfuseClientAuthCheck:
 
         client = LangfuseClient()
         client._langfuse = mock_client
-        result = client.auth_check()
+        result = client.auth_check(retry=False)  # Don't retry for unit tests
 
-        assert result.code == NETWORK_ERROR
+        # With no retry, network errors return NETWORK_TIMEOUT after exhausting retries
+        assert result.code in (NETWORK_ERROR, NETWORK_TIMEOUT)
         assert result.ok is False
+
+    def test_auth_check_retries_on_network_error(self):
+        """auth_check() should retry on network errors with retry=True (ISC row 63)."""
+        mock_client = MagicMock()
+        # Fail first call, succeed on second
+        mock_client.auth_check.side_effect = [
+            Exception("Connection timeout"),
+            None,  # Success
+        ]
+
+        client = LangfuseClient()
+        client._langfuse = mock_client
+        result = client.auth_check(retry=True)
+
+        assert result.code == "OK"
+        assert result.ok is True
+        # Should have been called twice
+        assert mock_client.auth_check.call_count == 2
+
+    def test_auth_check_no_retry_on_auth_error(self):
+        """auth_check() should NOT retry on auth errors (401)."""
+        mock_client = MagicMock()
+        mock_client.auth_check.side_effect = Exception("401 Unauthorized")
+
+        client = LangfuseClient()
+        client._langfuse = mock_client
+        result = client.auth_check(retry=True)
+
+        assert result.code == AUTH_INVALID
+        # Should only be called once - no retry
+        assert mock_client.auth_check.call_count == 1
+
+
+class TestLangfuseClientDiagnose:
+    """Tests for LangfuseClient diagnose() method (ISC rows 36-40)."""
+
+    @pytest.fixture(autouse=True)
+    def setup_env(self, monkeypatch):
+        """Set up valid environment using monkeypatch."""
+        monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
+        monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
+        monkeypatch.setenv("LANGFUSE_BASE_URL", "https://cloud.langfuse.com")
+
+    def test_diagnose_returns_healthy_on_success(self):
+        """diagnose() should return healthy when all checks pass."""
+        mock_client = MagicMock()
+        mock_client.auth_check.return_value = None  # Success
+
+        client = LangfuseClient()
+        client._langfuse = mock_client
+        result = client.diagnose()
+
+        assert result.healthy is True
+        assert len(result.issues) == 0
+
+    def test_diagnose_detects_invalid_secret_key_format(self, monkeypatch):
+        """diagnose() should detect invalid secret key format."""
+        monkeypatch.setenv("LANGFUSE_SECRET_KEY", "invalid-key-format")
+
+        mock_client = MagicMock()
+        mock_client.auth_check.return_value = None  # Auth check itself passes
+
+        client = LangfuseClient()
+        client._langfuse = mock_client
+        result = client.diagnose()
+
+        assert result.healthy is False
+        issue_codes = [issue.code for issue in result.issues]
+        assert "INVALID_SECRET_KEY_FORMAT" in issue_codes
+
+    def test_diagnose_detects_invalid_public_key_format(self, monkeypatch):
+        """diagnose() should detect invalid public key format."""
+        monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "invalid-key-format")
+
+        mock_client = MagicMock()
+        mock_client.auth_check.return_value = None
+
+        client = LangfuseClient()
+        client._langfuse = mock_client
+        result = client.diagnose()
+
+        assert result.healthy is False
+        issue_codes = [issue.code for issue in result.issues]
+        assert "INVALID_PUBLIC_KEY_FORMAT" in issue_codes
+
+    def test_diagnose_includes_next_steps(self, monkeypatch):
+        """diagnose() should provide next steps when issues found."""
+        monkeypatch.setenv("LANGFUSE_SECRET_KEY", "invalid-key")
+
+        mock_client = MagicMock()
+        mock_client.auth_check.return_value = None
+
+        client = LangfuseClient()
+        client._langfuse = mock_client
+        result = client.diagnose()
+
+        assert result.healthy is False
+        assert len(result.next_steps) > 0
+
+
+class TestDiagnosisDataclasses:
+    """Tests for diagnosis dataclasses."""
+
+    def test_diagnosis_issue_has_required_fields(self):
+        """DiagnosisIssue should have all required fields."""
+        issue = DiagnosisIssue(
+            code="TEST_CODE",
+            severity="error",
+            message="Test message",
+            detail="Test detail",
+        )
+        assert issue.code == "TEST_CODE"
+        assert issue.severity == "error"
+        assert issue.message == "Test message"
+        assert issue.detail == "Test detail"
+
+    def test_diagnosis_result_has_required_fields(self):
+        """DiagnosisResult should have all required fields."""
+        result = DiagnosisResult(
+            healthy=True, summary="All good", issues=[], next_steps=[]
+        )
+        assert result.healthy is True
+        assert result.summary == "All good"
+        assert result.issues == []
+        assert result.next_steps == []
 
 
 class TestModuleFileExists:

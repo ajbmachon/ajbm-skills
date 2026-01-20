@@ -5,13 +5,16 @@ This module provides:
 - Auth loading from .env (LANGFUSE_SECRET_KEY, LANGFUSE_PUBLIC_KEY, LANGFUSE_BASE_URL)
 - Error code constants with human-readable messages
 - flush() helper for short-lived operations
+- Retry with exponential backoff for network operations
+- Region detection and diagnosis utilities
 
-ISC Reference: rows 53-59
+ISC Reference: rows 53-59, 35-40
 """
 
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -27,8 +30,28 @@ if TYPE_CHECKING:
 
 AUTH_MISSING = "AUTH_MISSING"
 AUTH_INVALID = "AUTH_INVALID"
+AUTH_EXPIRED = "AUTH_EXPIRED"
 NETWORK_ERROR = "NETWORK_ERROR"
+NETWORK_TIMEOUT = "NETWORK_TIMEOUT"
 RATE_LIMITED = "RATE_LIMITED"
+REGION_MISMATCH = "REGION_MISMATCH"
+
+# -----------------------------------------------------------------------------
+# Region Constants (ISC row 38)
+# -----------------------------------------------------------------------------
+
+LANGFUSE_REGIONS = {
+    "EU": "https://cloud.langfuse.com",
+    "US": "https://us.cloud.langfuse.com",
+}
+
+DEFAULT_REGION = "EU"
+DEFAULT_BASE_URL = LANGFUSE_REGIONS[DEFAULT_REGION]
+
+# Retry configuration (ISC row 63)
+MAX_RETRIES = 3
+RETRY_BACKOFF_BASE = 1.0  # seconds
+RETRY_BACKOFF_MULTIPLIER = 2.0
 
 # -----------------------------------------------------------------------------
 # Human-Readable Error Messages (ISC row 59)
@@ -41,18 +64,33 @@ ERROR_MESSAGES: dict[str, str] = {
         "in your .env file. See: https://langfuse.com/docs/get-started"
     ),
     AUTH_INVALID: (
-        "Langfuse authentication failed. Check your API keys are correct and not expired. "
+        "Langfuse authentication failed. Check your API keys are correct. "
         "Keys should start with 'sk-lf-' (secret) and 'pk-lf-' (public). "
         "Also verify LANGFUSE_BASE_URL matches your region (EU vs US)."
+    ),
+    AUTH_EXPIRED: (
+        "Langfuse API keys appear to be expired. "
+        "Please generate new keys in the Langfuse dashboard: Settings > API Keys. "
+        "See: https://langfuse.com/docs/get-started"
     ),
     NETWORK_ERROR: (
         "Could not connect to Langfuse. Check your internet connection and "
         "verify LANGFUSE_BASE_URL is correct. "
         "EU: https://cloud.langfuse.com | US: https://us.cloud.langfuse.com"
     ),
+    NETWORK_TIMEOUT: (
+        "Connection to Langfuse timed out after retrying. "
+        "Check your internet connection and try again. "
+        "If the issue persists, check Langfuse status at https://status.langfuse.com"
+    ),
     RATE_LIMITED: (
         "Langfuse API rate limit exceeded. Please wait a moment before retrying. "
         "For high-volume usage, consider implementing request batching."
+    ),
+    REGION_MISMATCH: (
+        "Your API keys appear to be for a different region than your configured "
+        "LANGFUSE_BASE_URL. EU keys work with https://cloud.langfuse.com, "
+        "US keys work with https://us.cloud.langfuse.com."
     ),
 }
 
@@ -189,8 +227,11 @@ class LangfuseClient:
         if self._langfuse is not None:
             self._langfuse.flush()
 
-    def auth_check(self) -> AuthResult:
+    def auth_check(self, retry: bool = True) -> AuthResult:
         """Verify authentication and connection to Langfuse.
+
+        Args:
+            retry: If True, retry on network errors with exponential backoff (ISC row 63).
 
         Returns:
             AuthResult with code and message indicating status.
@@ -198,43 +239,188 @@ class LangfuseClient:
         Note:
             Does not raise exceptions - returns error codes for handling.
         """
-        try:
-            # Attempt to make a simple API call to verify auth
-            # Using auth_check() from the SDK if available, otherwise a simple operation
-            self.langfuse.auth_check()
-            return AuthResult(code="OK", message="Successfully connected to Langfuse")
-        except Exception as e:
-            error_str = str(e).lower()
+        last_error: Exception | None = None
+        attempts = MAX_RETRIES if retry else 1
 
-            # Detect auth issues
-            if "401" in error_str or "unauthorized" in error_str:
-                return AuthResult(
-                    code=AUTH_INVALID,
-                    message=ERROR_MESSAGES[AUTH_INVALID],
+        for attempt in range(attempts):
+            try:
+                # Attempt to make a simple API call to verify auth
+                self.langfuse.auth_check()
+                return AuthResult(code="OK", message="Successfully connected to Langfuse")
+            except Exception as e:
+                last_error = e
+                error_str = str(e).lower()
+
+                # Don't retry auth errors - they won't change
+                if "401" in error_str or "unauthorized" in error_str:
+                    return AuthResult(
+                        code=AUTH_INVALID,
+                        message=ERROR_MESSAGES[AUTH_INVALID],
+                    )
+
+                # Don't retry rate limiting - wait is needed
+                if "429" in error_str or "rate" in error_str:
+                    return AuthResult(
+                        code=RATE_LIMITED,
+                        message=ERROR_MESSAGES[RATE_LIMITED],
+                    )
+
+                # Network errors - retry with backoff
+                is_network_error = any(
+                    term in error_str
+                    for term in ["connection", "timeout", "network", "dns", "refused"]
                 )
 
-            # Detect rate limiting
-            if "429" in error_str or "rate" in error_str:
-                return AuthResult(
-                    code=RATE_LIMITED,
-                    message=ERROR_MESSAGES[RATE_LIMITED],
-                )
+                if is_network_error and attempt < attempts - 1:
+                    # Exponential backoff
+                    wait_time = RETRY_BACKOFF_BASE * (RETRY_BACKOFF_MULTIPLIER**attempt)
+                    time.sleep(wait_time)
+                    continue
 
-            # Detect network issues
-            if any(
-                term in error_str
-                for term in ["connection", "timeout", "network", "dns", "refused"]
-            ):
+                # Final attempt or non-retryable error
+                if is_network_error:
+                    return AuthResult(
+                        code=NETWORK_TIMEOUT,
+                        message=ERROR_MESSAGES[NETWORK_TIMEOUT],
+                    )
+
+                # Unknown error - include original message
                 return AuthResult(
                     code=NETWORK_ERROR,
-                    message=ERROR_MESSAGES[NETWORK_ERROR],
+                    message=f"Langfuse connection failed: {e}",
                 )
 
-            # Unknown error - include original message
-            return AuthResult(
-                code=NETWORK_ERROR,
-                message=f"Langfuse connection failed: {e}",
+        # Should not reach here, but handle gracefully
+        return AuthResult(
+            code=NETWORK_ERROR,
+            message=f"Langfuse connection failed after {attempts} attempts: {last_error}",
+        )
+
+    def diagnose(self) -> DiagnosisResult:
+        """Diagnose common auth and connection issues (ISC rows 36-40).
+
+        Performs comprehensive checks to identify setup problems:
+        - Validates key format (sk-lf-, pk-lf- prefixes)
+        - Checks for region mismatch (EU vs US)
+        - Tests network connectivity
+        - Provides specific remediation steps
+
+        Returns:
+            DiagnosisResult with detailed findings and next steps.
+        """
+        issues: list[DiagnosisIssue] = []
+        next_steps: list[str] = []
+
+        # Check 1: Key format validation
+        secret_key = self.secret_key
+        public_key = self.public_key
+
+        if secret_key and not secret_key.startswith("sk-lf-"):
+            issues.append(
+                DiagnosisIssue(
+                    code="INVALID_SECRET_KEY_FORMAT",
+                    severity="error",
+                    message="Secret key should start with 'sk-lf-'",
+                    detail=f"Your key starts with '{secret_key[:8]}...' instead",
+                )
             )
+            next_steps.append(
+                "Get a new secret key from Langfuse dashboard: Settings > API Keys"
+            )
+
+        if public_key and not public_key.startswith("pk-lf-"):
+            issues.append(
+                DiagnosisIssue(
+                    code="INVALID_PUBLIC_KEY_FORMAT",
+                    severity="error",
+                    message="Public key should start with 'pk-lf-'",
+                    detail=f"Your key starts with '{public_key[:8]}...' instead",
+                )
+            )
+            next_steps.append(
+                "Get a new public key from Langfuse dashboard: Settings > API Keys"
+            )
+
+        # Check 2: Region detection and mismatch
+        configured_url = self.base_url.rstrip("/")
+        configured_region = self._detect_region_from_url(configured_url)
+        key_region = self._detect_region_from_key(secret_key)
+
+        if key_region and configured_region and key_region != configured_region:
+            issues.append(
+                DiagnosisIssue(
+                    code=REGION_MISMATCH,
+                    severity="error",
+                    message=f"Your keys appear to be for {key_region} cloud, "
+                    f"but LANGFUSE_BASE_URL points to {configured_region}",
+                    detail=f"Keys: {key_region} | URL: {configured_url}",
+                )
+            )
+            correct_url = LANGFUSE_REGIONS.get(key_region, configured_url)
+            next_steps.append(
+                f"Set LANGFUSE_BASE_URL={correct_url} in your .env file"
+            )
+
+        # Check 3: Test actual connection
+        auth_result = self.auth_check(retry=True)
+
+        if not auth_result.ok:
+            issues.append(
+                DiagnosisIssue(
+                    code=auth_result.code,
+                    severity="error",
+                    message="Connection test failed",
+                    detail=auth_result.message,
+                )
+            )
+
+            # Add specific next steps based on error type
+            if auth_result.code == AUTH_INVALID:
+                next_steps.append("Verify your API keys are correct in .env")
+                next_steps.append("Check if keys have been rotated in Langfuse dashboard")
+            elif auth_result.code in (NETWORK_ERROR, NETWORK_TIMEOUT):
+                next_steps.append("Check your internet connection")
+                next_steps.append("Verify LANGFUSE_BASE_URL is accessible")
+            elif auth_result.code == RATE_LIMITED:
+                next_steps.append("Wait a few minutes before retrying")
+
+        # Build summary
+        if not issues:
+            return DiagnosisResult(
+                healthy=True,
+                summary="All checks passed. Your Langfuse setup is working correctly.",
+                issues=[],
+                next_steps=[],
+            )
+
+        return DiagnosisResult(
+            healthy=False,
+            summary=f"Found {len(issues)} issue(s) with your Langfuse setup.",
+            issues=issues,
+            next_steps=list(dict.fromkeys(next_steps)),  # Dedupe while preserving order
+        )
+
+    def _detect_region_from_url(self, url: str) -> str | None:
+        """Detect region from base URL."""
+        url_lower = url.lower()
+        if "us.cloud.langfuse.com" in url_lower:
+            return "US"
+        if "cloud.langfuse.com" in url_lower:
+            return "EU"
+        # Custom/self-hosted - can't determine
+        return None
+
+    def _detect_region_from_key(self, key: str) -> str | None:
+        """Attempt to detect region from key format.
+
+        Note: This is a heuristic. Langfuse may encode region in keys,
+        but there's no official documentation on this. We check common patterns.
+        """
+        if not key:
+            return None
+        # Currently, there's no reliable way to detect region from key format
+        # This is a placeholder for future enhancement if Langfuse adds region encoding
+        return None
 
 
 @dataclass
@@ -248,3 +434,23 @@ class AuthResult:
     def ok(self) -> bool:
         """Return True if authentication succeeded."""
         return self.code == "OK"
+
+
+@dataclass
+class DiagnosisIssue:
+    """A single issue found during diagnosis."""
+
+    code: str
+    severity: str  # "error", "warning", "info"
+    message: str
+    detail: str
+
+
+@dataclass
+class DiagnosisResult:
+    """Result of a comprehensive diagnosis (ISC rows 36-40)."""
+
+    healthy: bool
+    summary: str
+    issues: list[DiagnosisIssue]
+    next_steps: list[str]

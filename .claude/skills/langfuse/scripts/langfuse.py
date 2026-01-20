@@ -28,7 +28,11 @@ _LIB_DIR = _SCRIPT_DIR.parent / "lib"
 if str(_LIB_DIR) not in sys.path:
     sys.path.insert(0, str(_LIB_DIR))
 
-from langfuse_utils import LangfuseClient, LangfuseError  # noqa: E402
+from langfuse_utils import (  # noqa: E402
+    LANGFUSE_REGIONS,
+    LangfuseClient,
+    LangfuseError,
+)
 
 
 def _require_auth() -> LangfuseClient | None:
@@ -528,34 +532,143 @@ def _setup_help(args: argparse.Namespace) -> int:
 
 
 def _setup_check(_args: argparse.Namespace) -> int:
-    """Verify auth and connection (ISC row 35)."""
+    """Verify auth and connection (ISC row 35).
+
+    Acceptance criteria:
+    - 'setup check' verifies auth and connection to Langfuse
+    - Example: Valid setup -> 'Connected to Langfuse at [url]. Project: [name]'
+    """
     try:
         client = LangfuseClient()
     except LangfuseError as e:
         print(f"Setup check failed: {e}", file=sys.stderr)
+        print("\nNext step: Run 'setup guide' for step-by-step setup instructions.", file=sys.stderr)
         return 1
 
-    result = client.auth_check()
+    print(f"Checking connection to {client.base_url}...")
+    result = client.auth_check(retry=True)
+
     if result.ok:
-        print(f"Connected to Langfuse at {client.base_url}")
-        print("Authentication: OK")
+        print(f"\n✓ Connected to Langfuse at {client.base_url}")
+        print("✓ Authentication: OK")
+        # Note: Project name would require additional API call which isn't in basic auth_check
+        # The SDK doesn't expose project info in auth_check response
         return 0
     else:
-        print(f"Connection failed: {result.message}", file=sys.stderr)
+        print(f"\n✗ Connection failed: {result.message}", file=sys.stderr)
+        print("\nNext step: Run 'setup diagnose' to identify the issue.", file=sys.stderr)
         return 1
 
 
 def _setup_diagnose(_args: argparse.Namespace) -> int:
-    """Diagnose common issues."""
-    print("setup diagnose: Command implementation pending (US-005)")
-    print("Will detect: wrong region (EU vs US), expired keys, invalid keys")
-    return 0
+    """Diagnose common issues (ISC rows 36-40).
+
+    Acceptance criteria:
+    - 'setup diagnose' detects common issues: wrong region (EU vs US), expired keys, invalid keys
+    - Example: Wrong region -> 'Your keys appear to be for EU cloud, but LANGFUSE_BASE_URL points to US'
+    """
+    print("Running diagnostics...\n")
+
+    try:
+        client = LangfuseClient()
+    except LangfuseError as e:
+        # Even if client creation fails, we can still diagnose
+        print(f"⚠ Cannot create client: {e.code}")
+        print(f"  {e.message}\n")
+
+        if e.code == "AUTH_MISSING":
+            print("Diagnosis: Missing credentials")
+            print("\nNext steps:")
+            print("  1. Create a .env file in your project root")
+            print("  2. Add your Langfuse credentials:")
+            print("     LANGFUSE_SECRET_KEY=sk-lf-...")
+            print("     LANGFUSE_PUBLIC_KEY=pk-lf-...")
+            print("     LANGFUSE_BASE_URL=https://cloud.langfuse.com")
+            print("\n  Run 'setup guide' for detailed instructions.")
+        return 1
+
+    diagnosis = client.diagnose()
+
+    if diagnosis.healthy:
+        print("✓ " + diagnosis.summary)
+        return 0
+
+    print("✗ " + diagnosis.summary + "\n")
+
+    for issue in diagnosis.issues:
+        severity_icon = {"error": "✗", "warning": "⚠", "info": "ℹ"}.get(
+            issue.severity, "•"
+        )
+        print(f"{severity_icon} [{issue.code}] {issue.message}")
+        if issue.detail:
+            print(f"  {issue.detail}")
+        print()
+
+    if diagnosis.next_steps:
+        print("Next steps:")
+        for i, step in enumerate(diagnosis.next_steps, 1):
+            print(f"  {i}. {step}")
+
+    return 1
 
 
 def _setup_guide(_args: argparse.Namespace) -> int:
-    """Walk through setup step-by-step."""
-    print("setup guide: Command implementation pending (US-005)")
-    print("Will walk through: .env setup, API key creation, region selection")
+    """Walk through setup step-by-step (ISC row 37).
+
+    Acceptance criteria:
+    - 'setup guide' walks through setup step-by-step
+    - Clear next steps provided on any failure
+    """
+    print("=" * 60)
+    print("Langfuse Setup Guide")
+    print("=" * 60)
+    print()
+    print("Step 1: Create a Langfuse Account")
+    print("-" * 40)
+    print("If you don't have an account yet:")
+    print("  • EU Cloud: https://cloud.langfuse.com")
+    print("  • US Cloud: https://us.cloud.langfuse.com")
+    print()
+    print("Step 2: Create a Project")
+    print("-" * 40)
+    print("  1. Log in to Langfuse")
+    print("  2. Click 'New Project' or select an existing project")
+    print("  3. Note which region you're using (EU or US)")
+    print()
+    print("Step 3: Generate API Keys")
+    print("-" * 40)
+    print("  1. Go to Settings > API Keys")
+    print("  2. Click 'Create API Key'")
+    print("  3. Copy both keys:")
+    print("     • Secret Key (starts with 'sk-lf-')")
+    print("     • Public Key (starts with 'pk-lf-')")
+    print()
+    print("Step 4: Configure Environment")
+    print("-" * 40)
+    print("Create a .env file in your project root with:")
+    print()
+    print("  LANGFUSE_SECRET_KEY=sk-lf-your-secret-key")
+    print("  LANGFUSE_PUBLIC_KEY=pk-lf-your-public-key")
+    print()
+    print("For region, add the appropriate base URL:")
+    print()
+    for region, url in LANGFUSE_REGIONS.items():
+        print(f"  # {region} Cloud:")
+        print(f"  LANGFUSE_BASE_URL={url}")
+        print()
+    print("Step 5: Verify Setup")
+    print("-" * 40)
+    print("Run the following command to verify your setup:")
+    print()
+    print("  python scripts/langfuse.py setup check")
+    print()
+    print("If you encounter issues, run:")
+    print()
+    print("  python scripts/langfuse.py setup diagnose")
+    print()
+    print("=" * 60)
+    print("For more information: https://langfuse.com/docs/get-started")
+    print("=" * 60)
     return 0
 
 
