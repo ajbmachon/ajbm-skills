@@ -1373,17 +1373,230 @@ class TestEvaluateSubcommandActions:
         monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
         monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
 
+    def test_evaluate_design_shows_guidance(self, capsys):
+        """'evaluate design' should show evaluation strategy guidance (ISC row 22)."""
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+
+            exit_code = main(["evaluate", "design"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show evaluation methods
+            assert "EVALUATION" in captured.out
+            # Should mention score types
+            assert "NUMERIC" in captured.out
+            assert "CATEGORICAL" in captured.out
+            assert "BOOLEAN" in captured.out
+            # Should mention LLM-as-a-Judge
+            assert "LLM-AS-A-JUDGE" in captured.out
+            # Should mention annotation queues
+            assert "ANNOTATION" in captured.out
+
     def test_evaluate_score_requires_trace_id(self, capsys):
         """'evaluate score' should require trace_id argument."""
         with pytest.raises(SystemExit):
             main(["evaluate", "score"])
 
-    def test_evaluate_score_accepts_arguments(self, capsys):
-        """'evaluate score' should accept required arguments."""
+    def test_evaluate_score_requires_name(self, capsys):
+        """'evaluate score <trace_id>' should require --name."""
+        with pytest.raises(SystemExit):
+            main(["evaluate", "score", "trace-123"])
+
+    def test_evaluate_score_requires_value(self, capsys):
+        """'evaluate score <trace_id> --name X' should require --value."""
+        with pytest.raises(SystemExit):
+            main(["evaluate", "score", "trace-123", "--name", "quality"])
+
+    def test_evaluate_score_creates_numeric_score(self, capsys):
+        """'evaluate score' should create a numeric score (ISC row 23).
+
+        Example: 'evaluate score abc123 --name quality --value 0.8 --data-type numeric'
+        """
+        from langfuse_utils import ScoreCreateResult, ScoreInfo
+
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
             mock_instance.auth_check.return_value = MagicMock(ok=True)
             mock_instance.flush.return_value = None
+            mock_instance.create_score.return_value = ScoreCreateResult(
+                ok=True,
+                code="OK",
+                message="Score 'quality' created for trace abc123",
+                score=ScoreInfo(
+                    id="abc123-quality",
+                    trace_id="abc123",
+                    name="quality",
+                    value=0.8,
+                    data_type="NUMERIC",
+                    comment=None,
+                ),
+            )
+
+            exit_code = main(
+                [
+                    "evaluate",
+                    "score",
+                    "abc123",
+                    "--name",
+                    "quality",
+                    "--value",
+                    "0.8",
+                    "--data-type",
+                    "numeric",
+                ]
+            )
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show success
+            assert "SCORE CREATED" in captured.out
+            assert "abc123" in captured.out
+            assert "quality" in captured.out
+            assert "0.8" in captured.out
+            assert "NUMERIC" in captured.out
+
+    def test_evaluate_score_creates_categorical_score(self, capsys):
+        """'evaluate score' should create a categorical score."""
+        from langfuse_utils import ScoreCreateResult, ScoreInfo
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.create_score.return_value = ScoreCreateResult(
+                ok=True,
+                code="OK",
+                message="Score 'accuracy' created for trace trace-456",
+                score=ScoreInfo(
+                    id="trace-456-accuracy",
+                    trace_id="trace-456",
+                    name="accuracy",
+                    value="partially correct",
+                    data_type="CATEGORICAL",
+                    comment=None,
+                ),
+            )
+
+            exit_code = main(
+                [
+                    "evaluate",
+                    "score",
+                    "trace-456",
+                    "--name",
+                    "accuracy",
+                    "--value",
+                    "partially correct",
+                    "--data-type",
+                    "categorical",
+                ]
+            )
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            assert "SCORE CREATED" in captured.out
+            assert "CATEGORICAL" in captured.out
+
+    def test_evaluate_score_creates_boolean_score(self, capsys):
+        """'evaluate score' should create a boolean score."""
+        from langfuse_utils import ScoreCreateResult, ScoreInfo
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.create_score.return_value = ScoreCreateResult(
+                ok=True,
+                code="OK",
+                message="Score 'is_helpful' created for trace trace-789",
+                score=ScoreInfo(
+                    id="trace-789-is_helpful",
+                    trace_id="trace-789",
+                    name="is_helpful",
+                    value=1.0,
+                    data_type="BOOLEAN",
+                    comment=None,
+                ),
+            )
+
+            exit_code = main(
+                [
+                    "evaluate",
+                    "score",
+                    "trace-789",
+                    "--name",
+                    "is_helpful",
+                    "--value",
+                    "1",
+                    "--data-type",
+                    "boolean",
+                ]
+            )
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            assert "SCORE CREATED" in captured.out
+            assert "BOOLEAN" in captured.out
+
+    def test_evaluate_score_with_comment(self, capsys):
+        """'evaluate score' should accept --comment option."""
+        from langfuse_utils import ScoreCreateResult, ScoreInfo
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.create_score.return_value = ScoreCreateResult(
+                ok=True,
+                code="OK",
+                message="Score 'quality' created for trace trace-123",
+                score=ScoreInfo(
+                    id="trace-123-quality",
+                    trace_id="trace-123",
+                    name="quality",
+                    value=0.9,
+                    data_type="NUMERIC",
+                    comment="Excellent response",
+                ),
+            )
+
+            exit_code = main(
+                [
+                    "evaluate",
+                    "score",
+                    "trace-123",
+                    "--name",
+                    "quality",
+                    "--value",
+                    "0.9",
+                    "--comment",
+                    "Excellent response",
+                ]
+            )
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            assert "Excellent response" in captured.out
+
+    def test_evaluate_score_invalid_data_type(self, capsys):
+        """'evaluate score' with invalid data-type shows error (negative case).
+
+        Acceptance criteria: Invalid score type -> 'Invalid data-type. Use: numeric, categorical, boolean'
+        """
+        from langfuse_utils import ScoreCreateResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.create_score.return_value = ScoreCreateResult(
+                ok=False,
+                code="INVALID_DATA_TYPE",
+                message="Invalid data-type. Use: numeric, categorical, boolean",
+                score=None,
+            )
 
             exit_code = main(
                 [
@@ -1394,14 +1607,260 @@ class TestEvaluateSubcommandActions:
                     "quality",
                     "--value",
                     "0.8",
+                    "--data-type",
+                    "numeric",  # Simulating invalid type via mock
                 ]
             )
 
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            assert "invalid data-type" in captured.err.lower()
+
+    def test_evaluate_score_trace_not_found(self, capsys):
+        """'evaluate score' with invalid trace_id shows not found error."""
+        from langfuse_utils import ScoreCreateResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.create_score.return_value = ScoreCreateResult(
+                ok=False,
+                code="NOT_FOUND",
+                message="Trace not found: invalid-trace-id",
+                score=None,
+            )
+
+            exit_code = main(
+                [
+                    "evaluate",
+                    "score",
+                    "invalid-trace-id",
+                    "--name",
+                    "quality",
+                    "--value",
+                    "0.8",
+                ]
+            )
+
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            assert "not found" in captured.err.lower()
+
+    def test_evaluate_scores_lists_scores(self, capsys):
+        """'evaluate scores' should list scores for the project (ISC row 24)."""
+        from langfuse_utils import ScoreInfo, ScoreListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_scores.return_value = ScoreListResult(
+                ok=True,
+                code="OK",
+                message="Found 2 score(s)",
+                scores=[
+                    ScoreInfo(
+                        id="score-1",
+                        trace_id="trace-123",
+                        name="quality",
+                        value=0.8,
+                        data_type="NUMERIC",
+                        comment="Good response",
+                    ),
+                    ScoreInfo(
+                        id="score-2",
+                        trace_id="trace-456",
+                        name="accuracy",
+                        value="correct",
+                        data_type="CATEGORICAL",
+                        comment=None,
+                    ),
+                ],
+                total_count=2,
+            )
+
+            exit_code = main(["evaluate", "scores"])
+
             assert exit_code == 0
             captured = capsys.readouterr()
-            assert "trace-123" in captured.out
+            # Should show score count
+            assert "2 score(s)" in captured.out
+            # Should show score names
             assert "quality" in captured.out
-            assert "0.8" in captured.out
+            assert "accuracy" in captured.out
+            # Should show trace IDs
+            assert "trace-123" in captured.out
+            assert "trace-456" in captured.out
+            # Should show types
+            assert "NUMERIC" in captured.out
+            assert "CATEGORICAL" in captured.out
+
+    def test_evaluate_scores_filters_by_trace(self, capsys):
+        """'evaluate scores --trace abc123' should filter by trace ID.
+
+        Example: 'evaluate scores --trace abc123' -> all scores for that trace
+        """
+        from langfuse_utils import ScoreInfo, ScoreListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_scores.return_value = ScoreListResult(
+                ok=True,
+                code="OK",
+                message="Found 1 score(s)",
+                scores=[
+                    ScoreInfo(
+                        id="score-1",
+                        trace_id="abc123",
+                        name="quality",
+                        value=0.9,
+                        data_type="NUMERIC",
+                        comment=None,
+                    ),
+                ],
+                total_count=1,
+            )
+
+            exit_code = main(["evaluate", "scores", "--trace", "abc123"])
+
+            assert exit_code == 0
+            # Verify fetch_scores was called with trace_id filter
+            mock_instance.fetch_scores.assert_called_once_with(
+                trace_id="abc123",
+                name=None,
+                limit=20,
+            )
+
+    def test_evaluate_scores_filters_by_name(self, capsys):
+        """'evaluate scores --name quality' should filter by score name."""
+        from langfuse_utils import ScoreListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_scores.return_value = ScoreListResult(
+                ok=True,
+                code="OK",
+                message="Found 0 score(s)",
+                scores=[],
+                total_count=0,
+            )
+
+            exit_code = main(["evaluate", "scores", "--name", "quality"])
+
+            assert exit_code == 0
+            # Verify fetch_scores was called with name filter
+            mock_instance.fetch_scores.assert_called_once_with(
+                trace_id=None,
+                name="quality",
+                limit=20,
+            )
+
+    def test_evaluate_scores_accepts_limit(self, capsys):
+        """'evaluate scores --limit 5' should limit results."""
+        from langfuse_utils import ScoreListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_scores.return_value = ScoreListResult(
+                ok=True,
+                code="OK",
+                message="Found 0 score(s)",
+                scores=[],
+                total_count=0,
+            )
+
+            exit_code = main(["evaluate", "scores", "--limit", "5"])
+
+            assert exit_code == 0
+            mock_instance.fetch_scores.assert_called_once_with(
+                trace_id=None,
+                name=None,
+                limit=5,
+            )
+
+    def test_evaluate_scores_no_scores_found(self, capsys):
+        """'evaluate scores' with no scores shows appropriate message."""
+        from langfuse_utils import ScoreListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_scores.return_value = ScoreListResult(
+                ok=True,
+                code="OK",
+                message="Found 0 score(s)",
+                scores=[],
+                total_count=0,
+            )
+
+            exit_code = main(["evaluate", "scores"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            assert "no scores found" in captured.out.lower()
+
+    def test_evaluate_scores_handles_api_error(self, capsys):
+        """'evaluate scores' should handle API errors gracefully."""
+        from langfuse_utils import ScoreListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_scores.return_value = ScoreListResult(
+                ok=False,
+                code="API_ERROR",
+                message="Failed to fetch scores: Connection timeout",
+                scores=[],
+            )
+
+            exit_code = main(["evaluate", "scores"])
+
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            assert "error" in captured.err.lower()
+
+    def test_evaluate_scores_shows_pagination_hint(self, capsys):
+        """'evaluate scores' should indicate when more scores are available."""
+        from langfuse_utils import ScoreInfo, ScoreListResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_scores.return_value = ScoreListResult(
+                ok=True,
+                code="OK",
+                message="Found 20 score(s)",
+                scores=[
+                    ScoreInfo(
+                        id=f"score-{i}",
+                        trace_id=f"trace-{i}",
+                        name="quality",
+                        value=0.5 + i * 0.02,
+                        data_type="NUMERIC",
+                    )
+                    for i in range(20)
+                ],
+                total_count=20,
+                has_more=True,
+                cursor="next-page-cursor",
+            )
+
+            exit_code = main(["evaluate", "scores"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show hint about more scores
+            assert "more" in captured.out.lower()
 
 
 class TestExperimentSubcommandActions:

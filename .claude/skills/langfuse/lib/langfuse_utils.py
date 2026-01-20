@@ -1260,6 +1260,261 @@ class LangfuseClient:
                 group_by=group_by,
             )
 
+    def create_score(
+        self,
+        trace_id: str,
+        name: str,
+        value: float | str,
+        data_type: str = "numeric",
+        comment: str | None = None,
+        observation_id: str | None = None,
+    ) -> ScoreCreateResult:
+        """Create a score on a trace or observation (ISC row 23).
+
+        Supports all score types: NUMERIC, CATEGORICAL, BOOLEAN.
+
+        Args:
+            trace_id: The trace ID to score
+            name: Score name (e.g., 'quality', 'accuracy')
+            value: Score value - float for numeric/boolean, string for categorical
+            data_type: Score type ('numeric', 'categorical', 'boolean')
+            comment: Optional comment explaining the score
+            observation_id: Optional observation ID to attach score to
+
+        Returns:
+            ScoreCreateResult with created score or error.
+
+        Example:
+            'evaluate score abc123 --name quality --value 0.8 --data-type numeric'
+
+        Negative case:
+            Invalid score type -> 'Invalid data-type. Use: numeric, categorical, boolean'
+        """
+        # Validate data type
+        data_type_lower = data_type.lower()
+        if data_type_lower not in SCORE_DATA_TYPES:
+            return ScoreCreateResult(
+                ok=False,
+                code="INVALID_DATA_TYPE",
+                message=f"Invalid data-type. Use: {', '.join(SCORE_DATA_TYPES)}",
+                score=None,
+            )
+
+        try:
+            # Map to Langfuse data type enum format
+            type_map = {
+                "numeric": "NUMERIC",
+                "categorical": "CATEGORICAL",
+                "boolean": "BOOLEAN",
+            }
+            langfuse_data_type = type_map[data_type_lower]
+
+            # Parse value based on data type
+            parsed_value: float | str
+            if data_type_lower == "numeric":
+                try:
+                    parsed_value = float(value)
+                except (TypeError, ValueError):
+                    return ScoreCreateResult(
+                        ok=False,
+                        code="INVALID_VALUE",
+                        message=f"Invalid numeric value: {value}. Must be a number.",
+                        score=None,
+                    )
+            elif data_type_lower == "boolean":
+                # Boolean expects 0 or 1 as float
+                try:
+                    float_val = float(value)
+                    if float_val not in (0, 1, 0.0, 1.0):
+                        return ScoreCreateResult(
+                            ok=False,
+                            code="INVALID_VALUE",
+                            message=f"Invalid boolean value: {value}. Use 0 or 1.",
+                            score=None,
+                        )
+                    parsed_value = float_val
+                except (TypeError, ValueError):
+                    # Try parsing "true"/"false" strings
+                    str_val = str(value).lower()
+                    if str_val in ("true", "1"):
+                        parsed_value = 1.0
+                    elif str_val in ("false", "0"):
+                        parsed_value = 0.0
+                    else:
+                        return ScoreCreateResult(
+                            ok=False,
+                            code="INVALID_VALUE",
+                            message=f"Invalid boolean value: {value}. Use 0, 1, true, or false.",
+                            score=None,
+                        )
+            else:  # categorical
+                parsed_value = str(value)
+
+            # Build kwargs for score creation
+            score_kwargs: dict = {
+                "trace_id": trace_id,
+                "name": name,
+                "value": parsed_value,
+                "data_type": langfuse_data_type,
+            }
+            if comment:
+                score_kwargs["comment"] = comment
+            if observation_id:
+                score_kwargs["observation_id"] = observation_id
+
+            # Create score using SDK
+            self.langfuse.score(**score_kwargs)
+            self.flush()
+
+            # Build score info for response
+            score_info = ScoreInfo(
+                id=f"{trace_id}-{name}",  # Synthetic ID (actual ID not returned by SDK)
+                trace_id=trace_id,
+                name=name,
+                value=parsed_value,
+                data_type=langfuse_data_type,
+                comment=comment,
+                observation_id=observation_id,
+                timestamp=None,
+            )
+
+            return ScoreCreateResult(
+                ok=True,
+                code="OK",
+                message=f"Score '{name}' created for trace {trace_id}",
+                score=score_info,
+            )
+
+        except Exception as e:
+            error_str = str(e).lower()
+
+            if "401" in error_str or "unauthorized" in error_str:
+                return ScoreCreateResult(
+                    ok=False,
+                    code=AUTH_INVALID,
+                    message=ERROR_MESSAGES[AUTH_INVALID],
+                    score=None,
+                )
+            if "404" in error_str or "not found" in error_str:
+                return ScoreCreateResult(
+                    ok=False,
+                    code=NOT_FOUND,
+                    message=f"Trace not found: {trace_id}",
+                    score=None,
+                )
+            if "429" in error_str or "rate" in error_str:
+                return ScoreCreateResult(
+                    ok=False,
+                    code=RATE_LIMITED,
+                    message=ERROR_MESSAGES[RATE_LIMITED],
+                    score=None,
+                )
+
+            return ScoreCreateResult(
+                ok=False,
+                code=API_ERROR,
+                message=f"Failed to create score: {e}",
+                score=None,
+            )
+
+    def fetch_scores(
+        self,
+        trace_id: str | None = None,
+        name: str | None = None,
+        limit: int = 20,
+    ) -> ScoreListResult:
+        """Fetch scores with optional filters (ISC row 24).
+
+        Lists scores for the project, optionally filtered by trace ID or name.
+
+        Args:
+            trace_id: Filter scores by trace ID
+            name: Filter scores by name
+            limit: Maximum number of scores to return
+
+        Returns:
+            ScoreListResult with scores or error information.
+
+        Example:
+            'evaluate scores --trace abc123' -> all scores for that trace
+        """
+        try:
+            # Build kwargs for score list API call
+            kwargs: dict = {"limit": limit}
+            if trace_id:
+                kwargs["trace_id"] = trace_id
+            if name:
+                kwargs["name"] = name
+
+            # Fetch scores using the SDK API
+            response = self.langfuse.api.score.list(**kwargs)
+
+            # Process scores into ScoreInfo objects
+            scores: list[ScoreInfo] = []
+            for score in response.data:
+                # Format timestamp if available
+                timestamp = ""
+                if hasattr(score, "timestamp") and score.timestamp:
+                    timestamp = (
+                        score.timestamp.isoformat()
+                        if hasattr(score.timestamp, "isoformat")
+                        else str(score.timestamp)
+                    )
+
+                score_info = ScoreInfo(
+                    id=score.id,
+                    trace_id=getattr(score, "trace_id", ""),
+                    name=getattr(score, "name", ""),
+                    value=getattr(score, "value", None),
+                    data_type=getattr(score, "data_type", "NUMERIC"),
+                    comment=getattr(score, "comment", None),
+                    observation_id=getattr(score, "observation_id", None),
+                    timestamp=timestamp,
+                )
+                scores.append(score_info)
+
+            # Check for pagination
+            has_more = False
+            cursor = None
+            if hasattr(response, "meta") and response.meta:
+                cursor = getattr(response.meta, "cursor", None)
+                has_more = cursor is not None
+
+            return ScoreListResult(
+                ok=True,
+                code="OK",
+                message=f"Found {len(scores)} score(s)",
+                scores=scores,
+                total_count=len(scores),
+                has_more=has_more,
+                cursor=cursor,
+            )
+
+        except Exception as e:
+            error_str = str(e).lower()
+
+            if "401" in error_str or "unauthorized" in error_str:
+                return ScoreListResult(
+                    ok=False,
+                    code=AUTH_INVALID,
+                    message=ERROR_MESSAGES[AUTH_INVALID],
+                    scores=[],
+                )
+            if "429" in error_str or "rate" in error_str:
+                return ScoreListResult(
+                    ok=False,
+                    code=RATE_LIMITED,
+                    message=ERROR_MESSAGES[RATE_LIMITED],
+                    scores=[],
+                )
+
+            return ScoreListResult(
+                ok=False,
+                code=API_ERROR,
+                message=f"Failed to fetch scores: {e}",
+                scores=[],
+            )
+
 
 @dataclass
 class AuthResult:
@@ -1563,3 +1818,57 @@ class TraceCostsResult:
     by_model: list[CostByModel] | None = None
     by_trace: list[CostByTrace] | None = None
     by_day: list[CostByDay] | None = None
+
+
+# -----------------------------------------------------------------------------
+# Score/Evaluate Data Classes (ISC rows 22-25)
+# -----------------------------------------------------------------------------
+
+# Valid score data types
+SCORE_DATA_TYPES = ["numeric", "categorical", "boolean"]
+
+
+@dataclass
+class ScoreInfo:
+    """Information about a single score (ISC rows 23-24).
+
+    Represents score data for display in score list output.
+    """
+
+    id: str
+    trace_id: str
+    name: str
+    value: float | str | None
+    data_type: str  # "NUMERIC", "CATEGORICAL", "BOOLEAN"
+    comment: str | None = None
+    observation_id: str | None = None
+    timestamp: str | None = None
+
+
+@dataclass
+class ScoreCreateResult:
+    """Result of creating a score (ISC row 23).
+
+    Contains the created score or error information.
+    """
+
+    ok: bool
+    code: str
+    message: str
+    score: ScoreInfo | None = None
+
+
+@dataclass
+class ScoreListResult:
+    """Result of listing scores (ISC row 24).
+
+    Contains scores and pagination metadata.
+    """
+
+    ok: bool
+    code: str
+    message: str
+    scores: list[ScoreInfo]
+    total_count: int = 0
+    has_more: bool = False
+    cursor: str | None = None

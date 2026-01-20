@@ -34,6 +34,8 @@ from langfuse_utils import (  # noqa: E402
     LANGFUSE_REGIONS,
     LangfuseClient,
     LangfuseError,
+    ScoreCreateResult,
+    ScoreListResult,
     TraceAnalyzeResult,
     TraceCostsResult,
     TraceErrorsResult,
@@ -864,47 +866,248 @@ def _evaluate_help(args: argparse.Namespace) -> int:
 
 
 def _evaluate_design(_args: argparse.Namespace) -> int:
-    """Design evaluation strategy."""
+    """Design evaluation strategy interactively (ISC row 22).
+
+    Acceptance criteria:
+    - 'evaluate design' helps design evaluation strategy interactively
+    - Provides guidance on score types, methods, and best practices
+    """
     client = _require_auth()
     if client is None:
         return 1
 
-    print("evaluate design: Command implementation pending (US-010)")
+    print("=" * 80)
+    print("EVALUATION STRATEGY DESIGN GUIDE")
+    print("=" * 80)
+    print()
+    print("Langfuse supports multiple evaluation methods. Choose based on your needs:")
+    print()
+
+    print("-" * 40)
+    print("1. SCORES VIA SDK/API (Programmatic)")
+    print("-" * 40)
+    print("   Use when: You need automated scoring pipelines, deterministic checks,")
+    print("             or custom evaluation logic")
+    print()
+    print("   Score Types:")
+    print("   • NUMERIC    - Continuous float values (e.g., 0.0 to 1.0)")
+    print("   • CATEGORICAL- Discrete categories (e.g., 'good', 'bad', 'neutral')")
+    print("   • BOOLEAN    - Binary true/false (0 or 1)")
+    print()
+    print("   Example:")
+    print("     evaluate score <trace_id> --name quality --value 0.8 --data-type numeric")
+    print()
+
+    print("-" * 40)
+    print("2. LLM-AS-A-JUDGE (Automated)")
+    print("-" * 40)
+    print("   Use when: You need scalable subjective assessments")
+    print("             (e.g., tone, helpfulness, accuracy)")
+    print()
+    print("   Requirements:")
+    print("   • LLM Connection configured in project settings")
+    print("   • Model MUST support structured output")
+    print()
+    print("   Setup:")
+    print("   1. Configure LLM Connection in Langfuse dashboard")
+    print("   2. Create evaluator (managed or custom)")
+    print("   3. Map variables (input, output, ground_truth)")
+    print()
+
+    print("-" * 40)
+    print("3. ANNOTATION QUEUES (Human Review)")
+    print("-" * 40)
+    print("   Use when: You need human reviewers to build ground truth datasets")
+    print("             or do systematic quality labeling")
+    print()
+    print("   Requirements:")
+    print("   • Score Configs defined first")
+    print("   • Users assigned to queues")
+    print()
+    print("   Setup:")
+    print("   1. Create Score Configs in Settings")
+    print("   2. Create Annotation Queue")
+    print("   3. Add traces to queue")
+    print("   4. Annotators review and score")
+    print()
+
+    print("-" * 40)
+    print("4. SCORES VIA UI (Quick Manual)")
+    print("-" * 40)
+    print("   Use when: You need quick spot checks or ad-hoc reviews")
+    print()
+    print("   Simply view a trace in Langfuse UI and click 'Add Score'")
+    print()
+
+    print("=" * 80)
+    print("RECOMMENDED WORKFLOW")
+    print("=" * 80)
+    print()
+    print("1. Start with manual scoring (UI) to understand quality patterns")
+    print("2. Define Score Configs for consistency")
+    print("3. Set up LLM-as-a-Judge for scalable automated evals")
+    print("4. Use Annotation Queues to build ground truth for validation")
+    print("5. Compare automated vs human scores with Score Analytics")
+    print()
+    print("For more details: https://langfuse.com/docs/evaluation/core-concepts")
+    print("=" * 80)
 
     client.flush()
     return 0
 
 
 def _evaluate_score(args: argparse.Namespace) -> int:
-    """Create a score on a trace."""
+    """Create a score on a trace (ISC row 23).
+
+    Acceptance criteria:
+    - 'evaluate score <trace_id>' creates a score on a trace
+    - Supports all score types: NUMERIC, CATEGORICAL, BOOLEAN
+    - Score command accepts: --name, --value, --comment, --data-type
+    - Example: 'evaluate score abc123 --name quality --value 0.8 --data-type numeric'
+    - Negative case: Invalid score type -> 'Invalid data-type. Use: numeric, categorical, boolean'
+    """
     client = _require_auth()
     if client is None:
         return 1
 
-    print("evaluate score: Command implementation pending (US-010)")
-    print(f"  trace_id: {args.trace_id}")
-    print(f"  --name: {args.name}")
-    print(f"  --value: {args.value}")
-    print(f"  --data-type: {args.data_type}")
+    # Create the score
+    result: ScoreCreateResult = client.create_score(
+        trace_id=args.trace_id,
+        name=args.name,
+        value=args.value,
+        data_type=args.data_type,
+        comment=args.comment,
+    )
+
+    # Handle errors
+    if not result.ok:
+        print(f"Error: {result.message}", file=sys.stderr)
+        client.flush()
+        return 1
+
+    # Success output
+    print("=" * 60)
+    print("SCORE CREATED")
+    print("=" * 60)
+    print()
+    print(f"✓ Score '{args.name}' created successfully")
+    print()
+    print(f"  Trace ID:   {args.trace_id}")
+    print(f"  Name:       {args.name}")
+    print(f"  Value:      {args.value}")
+    print(f"  Data Type:  {args.data_type.upper()}")
+
     if args.comment:
-        print(f"  --comment: {args.comment}")
+        print(f"  Comment:    {args.comment}")
+
+    print()
+    print("=" * 60)
 
     client.flush()
     return 0
 
 
 def _evaluate_scores(args: argparse.Namespace) -> int:
-    """List scores."""
+    """List scores for the project (ISC row 24).
+
+    Acceptance criteria:
+    - 'evaluate scores' lists scores for the project
+    - Supports filtering by trace ID and score name
+    - Example: 'evaluate scores --trace abc123' -> all scores for that trace
+    """
     client = _require_auth()
     if client is None:
         return 1
 
-    print("evaluate scores: Command implementation pending (US-010)")
+    # Set up progress indicator for long operations
+    stop_event = threading.Event()
+    progress_started = threading.Event()
+
+    def delayed_progress_start() -> None:
+        """Start progress indicator after 5 second delay."""
+        if not stop_event.wait(5.0):
+            progress_started.set()
+            _show_progress_indicator("Fetching scores...", stop_event)
+
+    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+    progress_thread.start()
+
+    try:
+        result: ScoreListResult = client.fetch_scores(
+            trace_id=args.trace,
+            name=args.name,
+            limit=args.limit,
+        )
+    finally:
+        stop_event.set()
+        progress_thread.join(timeout=1.0)
+
+    # Handle errors
+    if not result.ok:
+        print(f"Error: {result.message}", file=sys.stderr)
+        client.flush()
+        return 1
+
+    # Handle no scores found
+    if not result.scores:
+        filter_desc = ""
+        if args.trace:
+            filter_desc = f" for trace {args.trace}"
+        elif args.name:
+            filter_desc = f" with name '{args.name}'"
+        print(f"No scores found{filter_desc}.")
+        client.flush()
+        return 0
+
+    # Display scores
+    print("=" * 80)
+    print("SCORES")
+    print("=" * 80)
+    print()
+
+    filter_desc = ""
     if args.trace:
-        print(f"  --trace: {args.trace}")
-    if args.name:
-        print(f"  --name: {args.name}")
-    print(f"  --limit: {args.limit}")
+        filter_desc = f" (trace: {args.trace})"
+    elif args.name:
+        filter_desc = f" (name: {args.name})"
+
+    print(f"Found {len(result.scores)} score(s){filter_desc}:")
+    print()
+
+    # Table header
+    print(f"{'Name':<20} {'Value':<15} {'Type':<12} {'Trace ID':<36} {'Comment':<25}")
+    print("-" * 110)
+
+    for score in result.scores:
+        # Format value based on type
+        if score.data_type == "NUMERIC":
+            value_display = f"{score.value:.4f}" if isinstance(score.value, float) else str(score.value)
+        elif score.data_type == "BOOLEAN":
+            value_display = "True" if score.value == 1 else "False"
+        else:
+            value_display = str(score.value) if score.value is not None else "(none)"
+
+        # Truncate long values
+        if len(value_display) > 14:
+            value_display = value_display[:11] + "..."
+
+        # Format comment
+        comment_display = score.comment or ""
+        if len(comment_display) > 24:
+            comment_display = comment_display[:21] + "..."
+
+        # Truncate trace ID for display
+        trace_display = score.trace_id[:36] if score.trace_id else "(none)"
+
+        print(f"{score.name:<20} {value_display:<15} {score.data_type:<12} {trace_display:<36} {comment_display:<25}")
+
+    # Pagination info
+    if result.has_more:
+        print()
+        print("(More scores available. Use --limit to fetch more.)")
+
+    print()
+    print("=" * 80)
 
     client.flush()
     return 0
