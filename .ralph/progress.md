@@ -473,3 +473,43 @@ Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ra
   - Including both SDK examples and skill commands shows multiple paths
   - "Common Patterns" sections provide actionable templates
 ---
+
+## 2026-01-20 18:15 - US-015: MVP validation and integration testing
+Thread:
+Run: 20260120-173752-17085 (iteration 4)
+Run log: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-4.log
+Run summary: /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-4.md
+- Guardrails reviewed: yes
+- No-commit run: false
+- Commit: 304797c test(langfuse): add MVP integration tests with real Langfuse connection (US-015)
+- Post-commit status: clean
+- Verification:
+  - Command: `ruff check .` -> PASS (All checks passed!)
+  - Command: `pytest tests/ -v` -> PASS (187 tests passed)
+- Files changed:
+  - tests/integration/__init__.py (created)
+  - tests/integration/test_langfuse_integration.py (created/updated)
+  - .claude/skills/langfuse/lib/langfuse_utils.py (fixed dict/object handling)
+- What was implemented:
+  - Created comprehensive integration tests in tests/integration/ (ISC row 72)
+  - Tests use .env credentials to connect to real Langfuse (ISC row 73)
+  - MVP workflow test: setup check -> trace list -> trace get/analyze (ISC rows 74-76)
+  - Fixed langfuse_utils.py to use _safe_get consistently for API responses
+    - Langfuse API sometimes returns dict instead of objects
+    - Added _safe_get() method to handle both dict and object access uniformly
+    - Updated fetch_trace, fetch_errors, fetch_costs to use _safe_get
+  - Added network timeout detection with proper error code NETWORK_TIMEOUT
+  - Improved retry_on_timeout with exponential backoff and rate limit handling
+  - Tests skip gracefully with clear message when .env missing (ISC row 77)
+  - Test classes: TestMissingEnvSkipBehavior, TestSetupCheckIntegration,
+    TestTraceListIntegration, TestTraceAnalyzeIntegration, TestMVPEndToEndIntegration,
+    TestTraceErrorsIntegration, TestTraceCostsIntegration, TestScoresIntegration
+  - All 187 tests pass (171 unit + 16 integration)
+- **Learnings for future iterations:**
+  - ISC rows 72-77 fully addressed by this implementation
+  - Langfuse API may return dict or object - always use _safe_get for defensive access
+  - Network timeouts should be classified as NETWORK_TIMEOUT not generic API_ERROR
+  - Retry logic needs to handle "timed out" (space) in addition to "timeout"
+  - Integration tests should use exponential backoff to avoid rate limits
+  - pytest markers like @pytest.mark.skipif work well for conditional test skipping
+---
