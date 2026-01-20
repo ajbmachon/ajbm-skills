@@ -1016,6 +1016,354 @@ class TestTraceSubcommandActions:
             assert "not found" in captured.err.lower()
 
 
+class TestTraceErrorsCommand:
+    """Tests for 'trace errors' command (ISC row 17)."""
+
+    @pytest.fixture(autouse=True)
+    def mock_auth(self, monkeypatch):
+        """Mock auth for all trace errors tests."""
+        monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
+        monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
+
+    def test_trace_errors_finds_errors(self, capsys):
+        """'trace errors' should find traces with errors (ISC row 17)."""
+        from langfuse_utils import TraceErrorInfo, TraceErrorsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_errors.return_value = TraceErrorsResult(
+                ok=True,
+                code="OK",
+                message="Found 2 error(s) in last 24 hour(s)",
+                errors=[
+                    TraceErrorInfo(
+                        trace_id="trace-err-1",
+                        trace_name="failed-chatbot",
+                        trace_timestamp="2026-01-20T10:00:00",
+                        observation_id="obs-err-1",
+                        observation_name="llm-call",
+                        observation_type="GENERATION",
+                        error_message="Rate limit exceeded",
+                        error_level="ERROR",
+                    ),
+                    TraceErrorInfo(
+                        trace_id="trace-err-2",
+                        trace_name="failed-analyzer",
+                        trace_timestamp="2026-01-20T09:00:00",
+                        observation_id="obs-err-2",
+                        observation_name="api-call",
+                        observation_type="SPAN",
+                        error_message="Connection timeout",
+                        error_level="ERROR",
+                    ),
+                ],
+                total_count=2,
+                time_range="last 24 hour(s)",
+            )
+
+            exit_code = main(["trace", "errors"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show error count
+            assert "2 error(s)" in captured.out
+            # Should show trace IDs
+            assert "trace-err-1" in captured.out
+            assert "trace-err-2" in captured.out
+            # Should show error messages
+            assert "Rate limit exceeded" in captured.out
+            assert "Connection timeout" in captured.out
+
+    def test_trace_errors_no_errors_found(self, capsys):
+        """'trace errors' with no errors shows appropriate message (negative case)."""
+        from langfuse_utils import TraceErrorsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_errors.return_value = TraceErrorsResult(
+                ok=True,
+                code="OK",
+                message="No errors in the specified time range (last 24 hour(s))",
+                errors=[],
+                total_count=0,
+                time_range="last 24 hour(s)",
+            )
+
+            exit_code = main(["trace", "errors"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            assert "no errors in the specified time range" in captured.out.lower()
+
+    def test_trace_errors_accepts_since(self, capsys):
+        """'trace errors --since 7d' should filter by time range."""
+        from langfuse_utils import TraceErrorsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_errors.return_value = TraceErrorsResult(
+                ok=True,
+                code="OK",
+                message="No errors in the specified time range (last 7 day(s))",
+                errors=[],
+                total_count=0,
+                time_range="last 7 day(s)",
+            )
+
+            exit_code = main(["trace", "errors", "--since", "7d"])
+
+            assert exit_code == 0
+            # Verify fetch_errors was called with correct since
+            mock_instance.fetch_errors.assert_called_once_with(
+                since="7d",
+                limit=20,
+            )
+
+    def test_trace_errors_accepts_limit(self, capsys):
+        """'trace errors --limit 5' should limit results."""
+        from langfuse_utils import TraceErrorsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_errors.return_value = TraceErrorsResult(
+                ok=True,
+                code="OK",
+                message="No errors",
+                errors=[],
+                total_count=0,
+                time_range="last 24 hour(s)",
+            )
+
+            exit_code = main(["trace", "errors", "--limit", "5"])
+
+            assert exit_code == 0
+            mock_instance.fetch_errors.assert_called_once_with(
+                since="24h",
+                limit=5,
+            )
+
+    def test_trace_errors_handles_api_error(self, capsys):
+        """'trace errors' should handle API errors gracefully."""
+        from langfuse_utils import TraceErrorsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_errors.return_value = TraceErrorsResult(
+                ok=False,
+                code="API_ERROR",
+                message="Failed to fetch errors: Connection timeout",
+                errors=[],
+            )
+
+            exit_code = main(["trace", "errors"])
+
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            assert "error" in captured.err.lower()
+
+
+class TestTraceCostsCommand:
+    """Tests for 'trace costs' command (ISC row 18)."""
+
+    @pytest.fixture(autouse=True)
+    def mock_auth(self, monkeypatch):
+        """Mock auth for all trace costs tests."""
+        monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
+        monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
+
+    def test_trace_costs_shows_by_model(self, capsys):
+        """'trace costs --group-by model' shows cost breakdown by model (ISC row 18)."""
+        from langfuse_utils import CostByModel, TraceCostsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_costs.return_value = TraceCostsResult(
+                ok=True,
+                code="OK",
+                message="Cost breakdown for last 7 day(s)",
+                total_cost=0.0125,
+                time_range="last 7 day(s)",
+                group_by="model",
+                by_model=[
+                    CostByModel(model="gpt-4", total_cost=0.01, observation_count=10),
+                    CostByModel(model="gpt-3.5-turbo", total_cost=0.0025, observation_count=50),
+                ],
+            )
+
+            exit_code = main(["trace", "costs", "--group-by", "model"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show total cost
+            assert "0.012500" in captured.out
+            # Should show models
+            assert "gpt-4" in captured.out
+            assert "gpt-3.5-turbo" in captured.out
+            # Should show cost by model
+            assert "COST BY MODEL" in captured.out
+
+    def test_trace_costs_shows_by_trace(self, capsys):
+        """'trace costs --group-by trace' shows top expensive traces."""
+        from langfuse_utils import CostByTrace, TraceCostsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_costs.return_value = TraceCostsResult(
+                ok=True,
+                code="OK",
+                message="Cost breakdown for last 7 day(s)",
+                total_cost=0.05,
+                time_range="last 7 day(s)",
+                group_by="trace",
+                by_trace=[
+                    CostByTrace(
+                        trace_id="trace-expensive-1",
+                        trace_name="complex-query",
+                        total_cost=0.03,
+                        observation_count=15,
+                    ),
+                    CostByTrace(
+                        trace_id="trace-expensive-2",
+                        trace_name="summarization",
+                        total_cost=0.02,
+                        observation_count=8,
+                    ),
+                ],
+            )
+
+            exit_code = main(["trace", "costs", "--group-by", "trace"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show trace IDs
+            assert "trace-expensive-1" in captured.out
+            assert "trace-expensive-2" in captured.out
+            # Should show trace names
+            assert "complex-query" in captured.out
+            assert "summarization" in captured.out
+            # Should show "TOP" header
+            assert "TOP" in captured.out
+
+    def test_trace_costs_shows_by_day(self, capsys):
+        """'trace costs --group-by day' shows cost per day."""
+        from langfuse_utils import CostByDay, TraceCostsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_costs.return_value = TraceCostsResult(
+                ok=True,
+                code="OK",
+                message="Cost breakdown for last 7 day(s)",
+                total_cost=0.07,
+                time_range="last 7 day(s)",
+                group_by="day",
+                by_day=[
+                    CostByDay(date="2026-01-20", total_cost=0.03, observation_count=100),
+                    CostByDay(date="2026-01-19", total_cost=0.02, observation_count=80),
+                    CostByDay(date="2026-01-18", total_cost=0.02, observation_count=60),
+                ],
+            )
+
+            exit_code = main(["trace", "costs", "--group-by", "day"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show dates
+            assert "2026-01-20" in captured.out
+            assert "2026-01-19" in captured.out
+            # Should show "COST BY DAY" header
+            assert "COST BY DAY" in captured.out
+
+    def test_trace_costs_accepts_since(self, capsys):
+        """'trace costs --since 24h' should filter by time range."""
+        from langfuse_utils import TraceCostsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_costs.return_value = TraceCostsResult(
+                ok=True,
+                code="OK",
+                message="Cost breakdown for last 24 hour(s)",
+                total_cost=0.0,
+                time_range="last 24 hour(s)",
+                group_by="model",
+            )
+
+            exit_code = main(["trace", "costs", "--since", "24h"])
+
+            assert exit_code == 0
+            mock_instance.fetch_costs.assert_called_once_with(
+                group_by="model",
+                since="24h",
+            )
+
+    def test_trace_costs_handles_no_data(self, capsys):
+        """'trace costs' with no cost data shows appropriate message."""
+        from langfuse_utils import TraceCostsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_costs.return_value = TraceCostsResult(
+                ok=True,
+                code="OK",
+                message="Cost breakdown for last 7 day(s)",
+                total_cost=0.0,
+                time_range="last 7 day(s)",
+                group_by="model",
+                by_model=None,
+            )
+
+            exit_code = main(["trace", "costs"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show total cost as 0
+            assert "0.000000" in captured.out
+
+    def test_trace_costs_handles_api_error(self, capsys):
+        """'trace costs' should handle API errors gracefully."""
+        from langfuse_utils import TraceCostsResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.fetch_costs.return_value = TraceCostsResult(
+                ok=False,
+                code="API_ERROR",
+                message="Failed to fetch costs: Connection timeout",
+                total_cost=0.0,
+                time_range="",
+                group_by="model",
+            )
+
+            exit_code = main(["trace", "costs"])
+
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            assert "error" in captured.err.lower()
+
+
 class TestEvaluateSubcommandActions:
     """Tests for evaluate subcommand actions (ISC rows 22-28)."""
 

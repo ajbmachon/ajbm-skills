@@ -912,6 +912,354 @@ class LangfuseClient:
             ),
         )
 
+    def _parse_time_range(self, time_range: str) -> tuple[str | None, str]:
+        """Parse time range string like '24h', '7d' into ISO timestamp.
+
+        Args:
+            time_range: Time range string (e.g., '24h', '7d', '1h')
+
+        Returns:
+            Tuple of (ISO timestamp for from_timestamp, human-readable time range)
+        """
+        from datetime import UTC, datetime, timedelta
+
+        now = datetime.now(UTC)
+
+        # Parse the time range
+        if time_range.endswith("h"):
+            hours = int(time_range[:-1])
+            from_time = now - timedelta(hours=hours)
+            human_range = f"last {hours} hour(s)"
+        elif time_range.endswith("d"):
+            days = int(time_range[:-1])
+            from_time = now - timedelta(days=days)
+            human_range = f"last {days} day(s)"
+        elif time_range.endswith("w"):
+            weeks = int(time_range[:-1])
+            from_time = now - timedelta(weeks=weeks)
+            human_range = f"last {weeks} week(s)"
+        else:
+            # Default to 24 hours
+            from_time = now - timedelta(hours=24)
+            human_range = "last 24 hours"
+
+        return from_time.isoformat(), human_range
+
+    def fetch_errors(
+        self,
+        since: str = "24h",
+        limit: int = 20,
+    ) -> TraceErrorsResult:
+        """Find traces with errors in observations (ISC row 17).
+
+        Fetches traces/observations that have errors, showing:
+        - trace ID, error message, timestamp, observation that failed
+
+        Args:
+            since: Time range to search (e.g., '24h', '7d')
+            limit: Maximum number of error traces to return
+
+        Returns:
+            TraceErrorsResult with errors or appropriate message.
+            Negative case: No errors found -> 'No errors in the specified time range'
+        """
+        try:
+            from_timestamp, human_range = self._parse_time_range(since)
+
+            # Fetch observations with ERROR level using v2 API
+            # We need to query observations that have level=ERROR
+            errors: list[TraceErrorInfo] = []
+            seen_trace_obs: set[tuple[str, str]] = set()  # Dedupe by (trace_id, obs_id)
+            cursor = None
+
+            while len(errors) < limit:
+                obs_kwargs: dict = {
+                    "limit": min(100, limit * 2),  # Fetch more to account for filtering
+                    "from_start_time": from_timestamp,
+                }
+                if cursor:
+                    obs_kwargs["cursor"] = cursor
+
+                obs_response = self.langfuse.api.observations_v_2.get_many(**obs_kwargs)
+
+                for obs in obs_response.data:
+                    # Check for error level
+                    level = getattr(obs, "level", None)
+                    if level not in ("ERROR", "FATAL", "CRITICAL"):
+                        continue
+
+                    trace_id = getattr(obs, "trace_id", None)
+                    if not trace_id:
+                        continue
+
+                    # Dedupe
+                    key = (trace_id, obs.id)
+                    if key in seen_trace_obs:
+                        continue
+                    seen_trace_obs.add(key)
+
+                    # Format timestamp
+                    timestamp = ""
+                    if hasattr(obs, "start_time") and obs.start_time:
+                        timestamp = (
+                            obs.start_time.isoformat()
+                            if hasattr(obs.start_time, "isoformat")
+                            else str(obs.start_time)
+                        )
+
+                    error_info = TraceErrorInfo(
+                        trace_id=trace_id,
+                        trace_name=None,  # Will be populated if we fetch trace details
+                        trace_timestamp=timestamp,
+                        observation_id=obs.id,
+                        observation_name=getattr(obs, "name", None),
+                        observation_type=getattr(obs, "type", "UNKNOWN"),
+                        error_message=getattr(obs, "status_message", None),
+                        error_level=level,
+                    )
+                    errors.append(error_info)
+
+                    if len(errors) >= limit:
+                        break
+
+                # Check for more pages
+                cursor = None
+                if hasattr(obs_response, "meta") and obs_response.meta:
+                    cursor = getattr(obs_response.meta, "cursor", None)
+
+                if not cursor:
+                    break
+
+            # Negative case: No errors found
+            if not errors:
+                return TraceErrorsResult(
+                    ok=True,
+                    code="OK",
+                    message=f"No errors in the specified time range ({human_range})",
+                    errors=[],
+                    total_count=0,
+                    time_range=human_range,
+                )
+
+            return TraceErrorsResult(
+                ok=True,
+                code="OK",
+                message=f"Found {len(errors)} error(s) in {human_range}",
+                errors=errors,
+                total_count=len(errors),
+                time_range=human_range,
+            )
+
+        except Exception as e:
+            error_str = str(e).lower()
+
+            if "401" in error_str or "unauthorized" in error_str:
+                return TraceErrorsResult(
+                    ok=False,
+                    code=AUTH_INVALID,
+                    message=ERROR_MESSAGES[AUTH_INVALID],
+                    errors=[],
+                )
+            if "429" in error_str or "rate" in error_str:
+                return TraceErrorsResult(
+                    ok=False,
+                    code=RATE_LIMITED,
+                    message=ERROR_MESSAGES[RATE_LIMITED],
+                    errors=[],
+                )
+
+            return TraceErrorsResult(
+                ok=False,
+                code=API_ERROR,
+                message=f"Failed to fetch errors: {e}",
+                errors=[],
+            )
+
+    def fetch_costs(
+        self,
+        group_by: str = "model",
+        since: str = "7d",
+        limit: int = 20,
+    ) -> TraceCostsResult:
+        """Get cost breakdown by model, trace, or time period (ISC row 18).
+
+        Fetches cost data and aggregates by the specified grouping:
+        - model: Cost per model (e.g., gpt-4, claude-3)
+        - trace: Cost per trace (top N most expensive)
+        - day: Cost per day
+
+        Args:
+            group_by: Grouping mode ('model', 'trace', 'day')
+            since: Time range to analyze (e.g., '24h', '7d')
+            limit: Maximum number of items to return per group
+
+        Returns:
+            TraceCostsResult with cost breakdown.
+        """
+        try:
+            from collections import defaultdict
+
+            from_timestamp, human_range = self._parse_time_range(since)
+
+            # Fetch observations with cost data
+            cost_by_model: dict[str, tuple[float, int]] = defaultdict(lambda: (0.0, 0))
+            cost_by_trace: dict[str, tuple[str | None, float, int]] = defaultdict(
+                lambda: (None, 0.0, 0)
+            )
+            cost_by_day: dict[str, tuple[float, int]] = defaultdict(lambda: (0.0, 0))
+            total_cost = 0.0
+
+            cursor = None
+
+            while True:
+                obs_kwargs: dict = {
+                    "limit": 100,
+                    "from_start_time": from_timestamp,
+                }
+                if cursor:
+                    obs_kwargs["cursor"] = cursor
+
+                obs_response = self.langfuse.api.observations_v_2.get_many(**obs_kwargs)
+
+                for obs in obs_response.data:
+                    # Get cost
+                    cost = getattr(obs, "calculated_total_cost", None)
+                    if cost is None or cost == 0:
+                        continue
+
+                    total_cost += cost
+
+                    # Aggregate by model
+                    model = getattr(obs, "model", None) or "unknown"
+                    existing_model = cost_by_model[model]
+                    cost_by_model[model] = (
+                        existing_model[0] + cost,
+                        existing_model[1] + 1,
+                    )
+
+                    # Aggregate by trace
+                    trace_id = getattr(obs, "trace_id", None)
+                    if trace_id:
+                        existing_trace = cost_by_trace[trace_id]
+                        cost_by_trace[trace_id] = (
+                            existing_trace[0],  # name (keep first)
+                            existing_trace[1] + cost,
+                            existing_trace[2] + 1,
+                        )
+
+                    # Aggregate by day
+                    start_time = getattr(obs, "start_time", None)
+                    if start_time:
+                        if hasattr(start_time, "date"):
+                            day_str = start_time.date().isoformat()
+                        else:
+                            day_str = str(start_time)[:10]
+
+                        existing_day = cost_by_day[day_str]
+                        cost_by_day[day_str] = (
+                            existing_day[0] + cost,
+                            existing_day[1] + 1,
+                        )
+
+                # Check for more pages
+                cursor = None
+                if hasattr(obs_response, "meta") and obs_response.meta:
+                    cursor = getattr(obs_response.meta, "cursor", None)
+
+                if not cursor:
+                    break
+
+            # Build response based on group_by
+            by_model_list: list[CostByModel] | None = None
+            by_trace_list: list[CostByTrace] | None = None
+            by_day_list: list[CostByDay] | None = None
+
+            if group_by == "model":
+                by_model_list = sorted(
+                    [
+                        CostByModel(
+                            model=model,
+                            total_cost=data[0],
+                            observation_count=data[1],
+                        )
+                        for model, data in cost_by_model.items()
+                    ],
+                    key=lambda x: x.total_cost,
+                    reverse=True,
+                )[:limit]
+
+            elif group_by == "trace":
+                by_trace_list = sorted(
+                    [
+                        CostByTrace(
+                            trace_id=trace_id,
+                            trace_name=data[0],
+                            total_cost=data[1],
+                            observation_count=data[2],
+                        )
+                        for trace_id, data in cost_by_trace.items()
+                    ],
+                    key=lambda x: x.total_cost,
+                    reverse=True,
+                )[:limit]
+
+            elif group_by == "day":
+                by_day_list = sorted(
+                    [
+                        CostByDay(
+                            date=date,
+                            total_cost=data[0],
+                            observation_count=data[1],
+                        )
+                        for date, data in cost_by_day.items()
+                    ],
+                    key=lambda x: x.date,
+                    reverse=True,
+                )[:limit]
+
+            return TraceCostsResult(
+                ok=True,
+                code="OK",
+                message=f"Cost breakdown for {human_range}",
+                total_cost=total_cost,
+                time_range=human_range,
+                group_by=group_by,
+                by_model=by_model_list,
+                by_trace=by_trace_list,
+                by_day=by_day_list,
+            )
+
+        except Exception as e:
+            error_str = str(e).lower()
+
+            if "401" in error_str or "unauthorized" in error_str:
+                return TraceCostsResult(
+                    ok=False,
+                    code=AUTH_INVALID,
+                    message=ERROR_MESSAGES[AUTH_INVALID],
+                    total_cost=0.0,
+                    time_range="",
+                    group_by=group_by,
+                )
+            if "429" in error_str or "rate" in error_str:
+                return TraceCostsResult(
+                    ok=False,
+                    code=RATE_LIMITED,
+                    message=ERROR_MESSAGES[RATE_LIMITED],
+                    total_cost=0.0,
+                    time_range="",
+                    group_by=group_by,
+                )
+
+            return TraceCostsResult(
+                ok=False,
+                code=API_ERROR,
+                message=f"Failed to fetch costs: {e}",
+                total_cost=0.0,
+                time_range="",
+                group_by=group_by,
+            )
+
 
 @dataclass
 class AuthResult:
@@ -1123,3 +1471,95 @@ class TraceAnalyzeResult:
 
 # Error code for no timing data
 NO_TIMING_DATA = "NO_TIMING_DATA"
+
+
+# -----------------------------------------------------------------------------
+# Trace Errors Data Classes (ISC row 17)
+# -----------------------------------------------------------------------------
+
+
+@dataclass
+class TraceErrorInfo:
+    """Information about an error found in a trace (ISC row 17).
+
+    Contains: trace ID, error message, timestamp, observation that failed.
+    """
+
+    trace_id: str
+    trace_name: str | None
+    trace_timestamp: str
+    observation_id: str
+    observation_name: str | None
+    observation_type: str
+    error_message: str | None
+    error_level: str
+
+
+@dataclass
+class TraceErrorsResult:
+    """Result of finding traces with errors (ISC row 17).
+
+    Acceptance criteria:
+    - Shows: trace ID, error message, timestamp, observation that failed
+    - Negative case: No errors found -> 'No errors in the specified time range'
+    """
+
+    ok: bool
+    code: str
+    message: str
+    errors: list[TraceErrorInfo]
+    total_count: int = 0
+    time_range: str = ""
+
+
+# -----------------------------------------------------------------------------
+# Trace Costs Data Classes (ISC row 18)
+# -----------------------------------------------------------------------------
+
+
+@dataclass
+class CostByModel:
+    """Cost breakdown for a single model."""
+
+    model: str
+    total_cost: float
+    observation_count: int
+
+
+@dataclass
+class CostByTrace:
+    """Cost breakdown for a single trace."""
+
+    trace_id: str
+    trace_name: str | None
+    total_cost: float
+    observation_count: int
+
+
+@dataclass
+class CostByDay:
+    """Cost breakdown for a single day."""
+
+    date: str
+    total_cost: float
+    observation_count: int
+
+
+@dataclass
+class TraceCostsResult:
+    """Result of cost analysis (ISC row 18).
+
+    Acceptance criteria:
+    - Shows: total cost, cost per model, cost per trace (top N)
+    - Supports grouping: by model, by trace, by day
+    """
+
+    ok: bool
+    code: str
+    message: str
+    total_cost: float
+    time_range: str
+    group_by: str  # "model", "trace", "day"
+    by_model: list[CostByModel] | None = None
+    by_trace: list[CostByTrace] | None = None
+    by_day: list[CostByDay] | None = None

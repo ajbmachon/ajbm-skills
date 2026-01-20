@@ -35,6 +35,8 @@ from langfuse_utils import (  # noqa: E402
     LangfuseClient,
     LangfuseError,
     TraceAnalyzeResult,
+    TraceCostsResult,
+    TraceErrorsResult,
     TraceGetResult,
     TraceListResult,
 )
@@ -598,28 +600,194 @@ def _trace_analyze(args: argparse.Namespace) -> int:
 
 
 def _trace_errors(args: argparse.Namespace) -> int:
-    """Find traces with errors."""
+    """Find traces with errors in observations (ISC row 17).
+
+    Acceptance criteria:
+    - 'trace errors' finds traces with errors in observations
+    - Shows: trace ID, error message, timestamp, observation that failed
+    - Example: 'trace errors --since 24h' -> errors in last 24 hours
+    - Negative case: No errors found -> 'No errors in the specified time range'
+    """
     client = _require_auth()
     if client is None:
         return 1
 
-    print("trace errors: Command implementation pending (US-009)")
-    print(f"  --since: {args.since}")
-    print(f"  --limit: {args.limit}")
+    # Set up progress indicator for long operations
+    stop_event = threading.Event()
+    progress_started = threading.Event()
+
+    def delayed_progress_start() -> None:
+        """Start progress indicator after 5 second delay."""
+        if not stop_event.wait(5.0):
+            progress_started.set()
+            _show_progress_indicator("Searching for errors...", stop_event)
+
+    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+    progress_thread.start()
+
+    try:
+        result: TraceErrorsResult = client.fetch_errors(
+            since=args.since,
+            limit=args.limit,
+        )
+    finally:
+        stop_event.set()
+        progress_thread.join(timeout=1.0)
+
+    # Handle errors
+    if not result.ok:
+        print(f"Error: {result.message}", file=sys.stderr)
+        client.flush()
+        return 1
+
+    # Negative case: No errors found
+    if not result.errors:
+        print(f"No errors in the specified time range ({result.time_range})")
+        client.flush()
+        return 0
+
+    # Display errors (ISC row 17)
+    print("=" * 80)
+    print("TRACE ERRORS")
+    print("=" * 80)
+    print()
+    print(f"Found {result.total_count} error(s) in {result.time_range}")
+    print()
+
+    # Table header
+    print("-" * 80)
+
+    for i, error in enumerate(result.errors, 1):
+        # Error level indicator
+        level_icon = "✗"
+        if error.error_level == "FATAL" or error.error_level == "CRITICAL":
+            level_icon = "⚠"
+
+        obs_name = error.observation_name or "(unnamed)"
+        print(f"{i}. {level_icon} [{error.error_level}] {obs_name}")
+        print(f"   Trace ID: {error.trace_id}")
+        print(f"   Observation: [{error.observation_type}] {error.observation_id[:16]}...")
+        print(f"   Timestamp: {error.trace_timestamp}")
+
+        if error.error_message:
+            # Truncate long error messages
+            msg = error.error_message
+            if len(msg) > 100:
+                msg = msg[:97] + "..."
+            print(f"   Message: {msg}")
+        print()
+
+    print("-" * 80)
+    print("\nUse 'trace get <trace_id>' to see full trace details.")
 
     client.flush()
     return 0
 
 
 def _trace_costs(args: argparse.Namespace) -> int:
-    """Show cost breakdown."""
+    """Show cost breakdown by model, trace, or time period (ISC row 18).
+
+    Acceptance criteria:
+    - 'trace costs' shows cost breakdown by model, trace, or time period
+    - Shows: total cost, cost per model, cost per trace (top N)
+    - Example: 'trace costs --group-by model' -> cost breakdown by model
+    """
     client = _require_auth()
     if client is None:
         return 1
 
-    print("trace costs: Command implementation pending (US-009)")
-    print(f"  --group-by: {args.group_by}")
-    print(f"  --since: {args.since}")
+    # Set up progress indicator for long operations
+    stop_event = threading.Event()
+    progress_started = threading.Event()
+
+    def delayed_progress_start() -> None:
+        """Start progress indicator after 5 second delay."""
+        if not stop_event.wait(5.0):
+            progress_started.set()
+            _show_progress_indicator("Analyzing costs...", stop_event)
+
+    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+    progress_thread.start()
+
+    try:
+        result: TraceCostsResult = client.fetch_costs(
+            group_by=args.group_by,
+            since=args.since,
+        )
+    finally:
+        stop_event.set()
+        progress_thread.join(timeout=1.0)
+
+    # Handle errors
+    if not result.ok:
+        print(f"Error: {result.message}", file=sys.stderr)
+        client.flush()
+        return 1
+
+    # Display costs (ISC row 18)
+    print("=" * 80)
+    print("COST BREAKDOWN")
+    print("=" * 80)
+    print()
+    print(f"Time range: {result.time_range}")
+    print(f"Total cost: ${result.total_cost:.6f}")
+    print()
+
+    # Display based on grouping mode
+    if result.group_by == "model" and result.by_model:
+        print("-" * 40)
+        print("COST BY MODEL")
+        print("-" * 40)
+        print()
+
+        # Table header
+        print(f"{'Model':<30} {'Cost':>15} {'Observations':>15}")
+        print("-" * 62)
+
+        for item in result.by_model:
+            print(f"{item.model:<30} ${item.total_cost:>14.6f} {item.observation_count:>15}")
+
+        print()
+
+    elif result.group_by == "trace" and result.by_trace:
+        print("-" * 40)
+        print(f"TOP {len(result.by_trace)} MOST EXPENSIVE TRACES")
+        print("-" * 40)
+        print()
+
+        for i, item in enumerate(result.by_trace, 1):
+            trace_name = item.trace_name or "(unnamed)"
+            if len(trace_name) > 40:
+                trace_name = trace_name[:37] + "..."
+
+            print(f"{i}. {trace_name}")
+            print(f"   ID: {item.trace_id}")
+            print(f"   Cost: ${item.total_cost:.6f}")
+            print(f"   Observations: {item.observation_count}")
+            print()
+
+    elif result.group_by == "day" and result.by_day:
+        print("-" * 40)
+        print("COST BY DAY")
+        print("-" * 40)
+        print()
+
+        # Table header
+        print(f"{'Date':<15} {'Cost':>15} {'Observations':>15}")
+        print("-" * 47)
+
+        for item in result.by_day:
+            print(f"{item.date:<15} ${item.total_cost:>14.6f} {item.observation_count:>15}")
+
+        print()
+
+    else:
+        # No data for the grouping
+        if result.total_cost == 0:
+            print("No cost data found in the specified time range.")
+            print()
+
+    print("=" * 80)
 
     client.flush()
     return 0
