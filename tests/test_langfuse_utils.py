@@ -1169,3 +1169,425 @@ class TestLangfuseClientFetchTrace:
         # Find child observation and verify parent reference
         child_obs = next(o for o in result.trace.observations if o.id == "obs-child")
         assert child_obs.parent_observation_id == "obs-root"
+
+
+class TestTraceAnalyzeDataclasses:
+    """Tests for trace analysis dataclasses (ISC rows 16, 21, 69)."""
+
+    def test_bottleneck_info_fields(self):
+        """BottleneckInfo should have required fields."""
+        from langfuse_utils import BottleneckInfo
+
+        bottleneck = BottleneckInfo(
+            observation_id="obs-123",
+            observation_name="slow-span",
+            observation_type="SPAN",
+            duration_ms=2500.0,
+            percentage_of_total=75.0,
+            model="gpt-4",
+        )
+        assert bottleneck.observation_id == "obs-123"
+        assert bottleneck.observation_name == "slow-span"
+        assert bottleneck.duration_ms == 2500.0
+        assert bottleneck.percentage_of_total == 75.0
+        assert bottleneck.model == "gpt-4"
+
+    def test_error_info_fields(self):
+        """ErrorInfo should have required fields."""
+        from langfuse_utils import ErrorInfo
+
+        error = ErrorInfo(
+            observation_id="obs-err",
+            observation_name="failed-call",
+            observation_type="GENERATION",
+            level="ERROR",
+            status_message="Rate limit exceeded",
+            timestamp="2026-01-20T10:00:00",
+        )
+        assert error.observation_id == "obs-err"
+        assert error.level == "ERROR"
+        assert error.status_message == "Rate limit exceeded"
+
+    def test_latency_stats_fields(self):
+        """LatencyStats should have required fields."""
+        from langfuse_utils import LatencyStats
+
+        stats = LatencyStats(
+            total_ms=3200.0,
+            p50_ms=400.0,
+            p95_ms=2800.0,
+            p99_ms=3000.0,
+            observation_count=10,
+        )
+        assert stats.total_ms == 3200.0
+        assert stats.p50_ms == 400.0
+        assert stats.p95_ms == 2800.0
+        assert stats.p99_ms == 3000.0
+        assert stats.observation_count == 10
+
+    def test_trace_analysis_fields(self):
+        """TraceAnalysis should have required fields."""
+        from langfuse_utils import LatencyStats, TraceAnalysis
+
+        analysis = TraceAnalysis(
+            trace_id="trace-123",
+            trace_name="test-trace",
+            has_timing_data=True,
+            has_errors=False,
+            summary="Total latency: 1000ms",
+            latency=LatencyStats(total_ms=1000.0, observation_count=3),
+            bottlenecks=[],
+            errors=[],
+            total_cost=0.001,
+            cost_by_model={"gpt-4": 0.001},
+        )
+        assert analysis.trace_id == "trace-123"
+        assert analysis.has_timing_data is True
+        assert analysis.summary == "Total latency: 1000ms"
+
+    def test_trace_analyze_result_success(self):
+        """TraceAnalyzeResult should represent successful analysis."""
+        from langfuse_utils import LatencyStats, TraceAnalysis, TraceAnalyzeResult
+
+        analysis = TraceAnalysis(
+            trace_id="trace-123",
+            trace_name="test",
+            has_timing_data=True,
+            has_errors=False,
+            summary="Analysis complete",
+            latency=LatencyStats(total_ms=1000.0, observation_count=2),
+            bottlenecks=[],
+            errors=[],
+            total_cost=None,
+            cost_by_model=None,
+        )
+        result = TraceAnalyzeResult(
+            ok=True,
+            code="OK",
+            message="Analysis complete",
+            analysis=analysis,
+        )
+        assert result.ok is True
+        assert result.code == "OK"
+        assert result.analysis is not None
+
+    def test_trace_analyze_result_no_timing_data(self):
+        """TraceAnalyzeResult should handle no timing data case."""
+        from langfuse_utils import TraceAnalyzeResult
+
+        result = TraceAnalyzeResult(
+            ok=False,
+            code="NO_TIMING_DATA",
+            message="Cannot analyze: no timing data available",
+            analysis=None,
+        )
+        assert result.ok is False
+        assert result.code == "NO_TIMING_DATA"
+
+
+class TestLangfuseClientAnalyzeTrace:
+    """Tests for LangfuseClient analyze_trace() method (ISC rows 16, 21, 69)."""
+
+    @pytest.fixture(autouse=True)
+    def setup_env(self, monkeypatch):
+        """Set up valid environment using monkeypatch."""
+        monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
+        monkeypatch.setenv("LANGFUSE_PUBLIC_KEY", "pk-lf-test")
+
+    def _create_mock_trace_with_observations(
+        self, trace_id: str, observations: list[dict]
+    ) -> tuple[MagicMock, MagicMock]:
+        """Helper to create mock trace and observations."""
+        mock_langfuse = MagicMock()
+
+        mock_trace = MagicMock()
+        mock_trace.id = trace_id
+        mock_trace.name = "test-trace"
+        mock_trace.timestamp = "2026-01-20T10:00:00"
+        mock_trace.session_id = None
+        mock_trace.user_id = None
+        mock_trace.input = None
+        mock_trace.output = None
+        mock_trace.metadata = None
+        mock_trace.tags = None
+        mock_langfuse.api.trace.get.return_value = mock_trace
+
+        mock_obs_list = []
+        for obs_data in observations:
+            mock_obs = MagicMock()
+            mock_obs.id = obs_data.get("id", "obs-1")
+            mock_obs.type = obs_data.get("type", "SPAN")
+            mock_obs.name = obs_data.get("name", "test-obs")
+            mock_obs.start_time = obs_data.get("start_time", "2026-01-20T10:00:00")
+            mock_obs.end_time = obs_data.get("end_time")
+            mock_obs.level = obs_data.get("level")
+            mock_obs.status_message = obs_data.get("status_message")
+            mock_obs.model = obs_data.get("model")
+            mock_obs.input = obs_data.get("input")
+            mock_obs.output = obs_data.get("output")
+            mock_obs.usage = obs_data.get("usage")
+            mock_obs.calculated_total_cost = obs_data.get("cost")
+            mock_obs.parent_observation_id = obs_data.get("parent_id")
+            mock_obs_list.append(mock_obs)
+
+        mock_obs_response = MagicMock()
+        mock_obs_response.data = mock_obs_list
+        mock_obs_response.meta = None
+        mock_langfuse.api.observations_v_2.get_many.return_value = mock_obs_response
+
+        return mock_langfuse, mock_trace
+
+    def test_analyze_trace_returns_analyze_result(self):
+        """analyze_trace() should return TraceAnalyzeResult."""
+        from datetime import datetime, timedelta
+
+        from langfuse_utils import TraceAnalyzeResult
+
+        start = datetime(2026, 1, 20, 10, 0, 0)
+        end = start + timedelta(seconds=1)
+
+        mock_langfuse, _ = self._create_mock_trace_with_observations(
+            "trace-123",
+            [
+                {
+                    "id": "obs-1",
+                    "type": "GENERATION",
+                    "name": "llm-call",
+                    "start_time": start,
+                    "end_time": end,
+                }
+            ],
+        )
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.analyze_trace("trace-123")
+
+        assert isinstance(result, TraceAnalyzeResult)
+
+    def test_analyze_trace_identifies_bottlenecks(self):
+        """analyze_trace() should identify slowest observations (ISC row 16)."""
+        from datetime import datetime, timedelta
+
+        start = datetime(2026, 1, 20, 10, 0, 0)
+
+        mock_langfuse, _ = self._create_mock_trace_with_observations(
+            "trace-123",
+            [
+                {
+                    "id": "obs-1",
+                    "type": "GENERATION",
+                    "name": "fast-call",
+                    "start_time": start,
+                    "end_time": start + timedelta(milliseconds=200),
+                },
+                {
+                    "id": "obs-2",
+                    "type": "SPAN",
+                    "name": "slow-span",
+                    "start_time": start,
+                    "end_time": start + timedelta(milliseconds=2800),
+                },
+                {
+                    "id": "obs-3",
+                    "type": "SPAN",
+                    "name": "medium-span",
+                    "start_time": start,
+                    "end_time": start + timedelta(milliseconds=500),
+                },
+            ],
+        )
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.analyze_trace("trace-123")
+
+        assert result.ok is True
+        assert result.analysis is not None
+        # Should identify bottlenecks sorted by duration
+        assert len(result.analysis.bottlenecks) == 3
+        # Slowest should be first
+        assert result.analysis.bottlenecks[0].observation_name == "slow-span"
+        assert result.analysis.bottlenecks[0].duration_ms == 2800.0
+
+    def test_analyze_trace_calculates_percentiles(self):
+        """analyze_trace() should calculate p50, p95, p99 (ISC row 16)."""
+        from datetime import datetime, timedelta
+
+        start = datetime(2026, 1, 20, 10, 0, 0)
+
+        # Create 5 observations with different durations for percentile calculation
+        mock_langfuse, _ = self._create_mock_trace_with_observations(
+            "trace-123",
+            [
+                {"id": f"obs-{i}", "type": "SPAN", "name": f"span-{i}",
+                 "start_time": start, "end_time": start + timedelta(milliseconds=d)}
+                for i, d in enumerate([100, 200, 300, 400, 500])
+            ],
+        )
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.analyze_trace("trace-123")
+
+        assert result.ok is True
+        assert result.analysis is not None
+        assert result.analysis.latency is not None
+        # Should have percentiles with 5 data points
+        assert result.analysis.latency.p50_ms is not None
+        assert result.analysis.latency.p95_ms is not None
+        assert result.analysis.latency.p99_ms is not None
+
+    def test_analyze_trace_highlights_errors(self):
+        """analyze_trace() should highlight error observations (ISC row 16)."""
+        from datetime import datetime, timedelta
+
+        start = datetime(2026, 1, 20, 10, 0, 0)
+
+        mock_langfuse, _ = self._create_mock_trace_with_observations(
+            "trace-err",
+            [
+                {
+                    "id": "obs-ok",
+                    "type": "SPAN",
+                    "name": "success-span",
+                    "start_time": start,
+                    "end_time": start + timedelta(milliseconds=100),
+                    "level": "INFO",
+                },
+                {
+                    "id": "obs-err",
+                    "type": "GENERATION",
+                    "name": "failed-call",
+                    "start_time": start,
+                    "end_time": start + timedelta(milliseconds=500),
+                    "level": "ERROR",
+                    "status_message": "Rate limit exceeded",
+                },
+            ],
+        )
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.analyze_trace("trace-err")
+
+        assert result.ok is True
+        assert result.analysis is not None
+        assert result.analysis.has_errors is True
+        assert len(result.analysis.errors) == 1
+        assert result.analysis.errors[0].level == "ERROR"
+        assert result.analysis.errors[0].observation_name == "failed-call"
+
+    def test_analyze_trace_no_timing_data(self):
+        """analyze_trace() with no timing data returns appropriate error (ISC row 16)."""
+        mock_langfuse, _ = self._create_mock_trace_with_observations(
+            "trace-no-time",
+            [
+                {
+                    "id": "obs-1",
+                    "type": "EVENT",
+                    "name": "event-only",
+                    "start_time": "2026-01-20T10:00:00",
+                    # No end_time = no duration
+                },
+            ],
+        )
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.analyze_trace("trace-no-time")
+
+        # Should return error for no timing data
+        assert result.ok is False
+        assert result.code == "NO_TIMING_DATA"
+        assert "no timing data" in result.message.lower()
+
+    def test_analyze_trace_not_found(self):
+        """analyze_trace() should handle trace not found."""
+        mock_langfuse = MagicMock()
+        mock_langfuse.api.trace.get.side_effect = Exception("404 Not Found")
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.analyze_trace("invalid-trace-id")
+
+        assert result.ok is False
+        assert result.code == NOT_FOUND
+
+    def test_analyze_trace_collects_costs(self):
+        """analyze_trace() should collect cost information."""
+        from datetime import datetime, timedelta
+
+        start = datetime(2026, 1, 20, 10, 0, 0)
+
+        mock_langfuse, _ = self._create_mock_trace_with_observations(
+            "trace-cost",
+            [
+                {
+                    "id": "obs-1",
+                    "type": "GENERATION",
+                    "name": "gpt4-call",
+                    "model": "gpt-4",
+                    "start_time": start,
+                    "end_time": start + timedelta(milliseconds=500),
+                    "cost": 0.002,
+                },
+                {
+                    "id": "obs-2",
+                    "type": "GENERATION",
+                    "name": "gpt35-call",
+                    "model": "gpt-3.5-turbo",
+                    "start_time": start,
+                    "end_time": start + timedelta(milliseconds=200),
+                    "cost": 0.0005,
+                },
+            ],
+        )
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.analyze_trace("trace-cost")
+
+        assert result.ok is True
+        assert result.analysis is not None
+        assert result.analysis.total_cost == 0.0025
+        assert result.analysis.cost_by_model is not None
+        assert "gpt-4" in result.analysis.cost_by_model
+        assert "gpt-3.5-turbo" in result.analysis.cost_by_model
+
+    def test_analyze_trace_summary_format(self):
+        """analyze_trace() should return insight-first summary (ISC row 21, 69)."""
+        from datetime import datetime, timedelta
+
+        start = datetime(2026, 1, 20, 10, 0, 0)
+
+        mock_langfuse, _ = self._create_mock_trace_with_observations(
+            "trace-123",
+            [
+                {
+                    "id": "obs-1",
+                    "type": "SPAN",
+                    "name": "embedding-lookup",
+                    "start_time": start,
+                    "end_time": start + timedelta(milliseconds=2800),
+                },
+                {
+                    "id": "obs-2",
+                    "type": "SPAN",
+                    "name": "fast-span",
+                    "start_time": start,
+                    "end_time": start + timedelta(milliseconds=400),
+                },
+            ],
+        )
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.analyze_trace("trace-123")
+
+        assert result.ok is True
+        assert result.analysis is not None
+        # Summary should mention key insight
+        assert "embedding-lookup" in result.analysis.summary or "3200" in result.analysis.summary
+        # Summary should be present in message
+        assert result.message == result.analysis.summary

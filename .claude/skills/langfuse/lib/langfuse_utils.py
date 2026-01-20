@@ -740,6 +740,178 @@ class LangfuseClient:
                 trace=None,
             )
 
+    def analyze_trace(self, trace_id: str) -> TraceAnalyzeResult:
+        """Analyze a trace for latency bottlenecks and issues (ISC rows 16, 21, 69).
+
+        Performs comprehensive analysis of a trace:
+        - Identifies slowest observations and their contribution to total time
+        - Highlights error observations first
+        - Calculates latency statistics (p50, p95, p99 if enough data)
+        - Provides insight-first output with key findings before supporting data
+
+        Args:
+            trace_id: The ID of the trace to analyze.
+
+        Returns:
+            TraceAnalyzeResult with analysis or error information.
+
+        Examples:
+            - 'Your p95 latency is 3.2s, caused by the embedding-lookup span (2.8s average)'
+            - Trace with errors -> highlights error observations first
+            - No timing data -> 'Cannot analyze: no timing data available'
+        """
+        # First, fetch the trace with observations
+        trace_result = self.fetch_trace(trace_id)
+
+        if not trace_result.ok:
+            return TraceAnalyzeResult(
+                ok=False,
+                code=trace_result.code,
+                message=trace_result.message,
+                analysis=None,
+            )
+
+        trace = trace_result.trace
+        if trace is None:
+            return TraceAnalyzeResult(
+                ok=False,
+                code=NOT_FOUND,
+                message=f"Trace not found: {trace_id}",
+                analysis=None,
+            )
+
+        # Collect timing data from observations
+        durations: list[tuple[ObservationInfo, float]] = []
+        errors: list[ErrorInfo] = []
+        total_cost = 0.0
+        cost_by_model: dict[str, float] = {}
+
+        for obs in trace.observations:
+            # Collect duration data
+            if obs.duration_ms is not None:
+                durations.append((obs, obs.duration_ms))
+
+            # Collect errors
+            if obs.level in ("ERROR", "FATAL", "CRITICAL"):
+                errors.append(
+                    ErrorInfo(
+                        observation_id=obs.id,
+                        observation_name=obs.name,
+                        observation_type=obs.type,
+                        level=obs.level,
+                        status_message=obs.status_message,
+                        timestamp=obs.start_time,
+                    )
+                )
+
+            # Collect costs
+            if obs.cost is not None:
+                total_cost += obs.cost
+                model = obs.model or "unknown"
+                cost_by_model[model] = cost_by_model.get(model, 0.0) + obs.cost
+
+        # Check for timing data (negative case)
+        has_timing_data = len(durations) > 0
+        has_errors = len(errors) > 0
+
+        if not has_timing_data:
+            return TraceAnalyzeResult(
+                ok=False,
+                code=NO_TIMING_DATA,
+                message="Cannot analyze: no timing data available",
+                analysis=TraceAnalysis(
+                    trace_id=trace_id,
+                    trace_name=trace.name,
+                    has_timing_data=False,
+                    has_errors=has_errors,
+                    summary="Cannot analyze: no timing data available",
+                    latency=None,
+                    bottlenecks=[],
+                    errors=errors,
+                    total_cost=total_cost if total_cost > 0 else None,
+                    cost_by_model=cost_by_model if cost_by_model else None,
+                ),
+            )
+
+        # Calculate latency statistics
+        sorted_durations = sorted([d for _, d in durations])
+        total_latency = sum(sorted_durations)
+
+        def percentile(data: list[float], p: float) -> float:
+            """Calculate percentile value."""
+            if not data:
+                return 0.0
+            k = (len(data) - 1) * (p / 100.0)
+            f = int(k)
+            c = f + 1 if f + 1 < len(data) else f
+            if f == c:
+                return data[f]
+            return data[f] * (c - k) + data[c] * (k - f)
+
+        # Only calculate percentiles if we have enough data points
+        latency = LatencyStats(
+            total_ms=total_latency,
+            p50_ms=percentile(sorted_durations, 50) if len(sorted_durations) >= 3 else None,
+            p95_ms=percentile(sorted_durations, 95) if len(sorted_durations) >= 3 else None,
+            p99_ms=percentile(sorted_durations, 99) if len(sorted_durations) >= 3 else None,
+            observation_count=len(sorted_durations),
+        )
+
+        # Identify bottlenecks (sorted by duration descending)
+        bottlenecks: list[BottleneckInfo] = []
+        for obs, duration in sorted(durations, key=lambda x: x[1], reverse=True):
+            percentage = (duration / total_latency * 100) if total_latency > 0 else 0
+            bottlenecks.append(
+                BottleneckInfo(
+                    observation_id=obs.id,
+                    observation_name=obs.name,
+                    observation_type=obs.type,
+                    duration_ms=duration,
+                    percentage_of_total=percentage,
+                    model=obs.model,
+                )
+            )
+
+        # Generate insight-first summary
+        summary_parts = []
+
+        # Errors first (ISC row 16: highlights error observations first)
+        if has_errors:
+            summary_parts.append(f"Found {len(errors)} error(s) in trace")
+
+        # Key latency insight
+        if bottlenecks:
+            top = bottlenecks[0]
+            top_name = top.observation_name or top.observation_type
+            summary_parts.append(
+                f"Total latency: {total_latency:.0f}ms, "
+                f"slowest: {top_name} ({top.duration_ms:.0f}ms, {top.percentage_of_total:.0f}%)"
+            )
+
+            # Add percentile insight if available
+            if latency.p95_ms is not None:
+                summary_parts.append(f"p50: {latency.p50_ms:.0f}ms, p95: {latency.p95_ms:.0f}ms")
+
+        summary = ". ".join(summary_parts) if summary_parts else "Trace analyzed successfully"
+
+        return TraceAnalyzeResult(
+            ok=True,
+            code="OK",
+            message=summary,
+            analysis=TraceAnalysis(
+                trace_id=trace_id,
+                trace_name=trace.name,
+                has_timing_data=True,
+                has_errors=has_errors,
+                summary=summary,
+                latency=latency,
+                bottlenecks=bottlenecks,
+                errors=errors,
+                total_cost=total_cost if total_cost > 0 else None,
+                cost_by_model=cost_by_model if cost_by_model else None,
+            ),
+        )
+
 
 @dataclass
 class AuthResult:
@@ -859,3 +1031,95 @@ class TraceGetResult:
     code: str
     message: str
     trace: TraceDetail | None = None
+
+
+# -----------------------------------------------------------------------------
+# Trace Analysis Data Classes (ISC row 16, 21, 69)
+# -----------------------------------------------------------------------------
+
+
+@dataclass
+class BottleneckInfo:
+    """Information about a latency bottleneck in a trace.
+
+    Identifies observations that contribute significantly to total latency.
+    """
+
+    observation_id: str
+    observation_name: str | None
+    observation_type: str
+    duration_ms: float
+    percentage_of_total: float  # How much this contributes to total latency
+    model: str | None = None
+
+
+@dataclass
+class ErrorInfo:
+    """Information about an error in a trace observation."""
+
+    observation_id: str
+    observation_name: str | None
+    observation_type: str
+    level: str
+    status_message: str | None
+    timestamp: str
+
+
+@dataclass
+class LatencyStats:
+    """Latency statistics for trace analysis.
+
+    Contains p50, p95, p99 percentiles when analyzing multiple observations.
+    """
+
+    total_ms: float
+    p50_ms: float | None = None
+    p95_ms: float | None = None
+    p99_ms: float | None = None
+    observation_count: int = 0
+
+
+@dataclass
+class TraceAnalysis:
+    """Complete analysis of a trace (ISC rows 16, 21, 69).
+
+    Provides insight-first output with key findings before supporting data.
+    """
+
+    trace_id: str
+    trace_name: str | None
+    has_timing_data: bool
+    has_errors: bool
+
+    # Key findings (insight-first)
+    summary: str  # Human-readable summary of key findings
+
+    # Latency analysis
+    latency: LatencyStats | None
+
+    # Bottlenecks (sorted by percentage_of_total descending)
+    bottlenecks: list[BottleneckInfo]
+
+    # Errors (if any)
+    errors: list[ErrorInfo]
+
+    # Cost summary
+    total_cost: float | None
+    cost_by_model: dict[str, float] | None
+
+
+@dataclass
+class TraceAnalyzeResult:
+    """Result of trace analysis (ISC row 16).
+
+    Contains the analysis or error information.
+    """
+
+    ok: bool
+    code: str
+    message: str
+    analysis: TraceAnalysis | None = None
+
+
+# Error code for no timing data
+NO_TIMING_DATA = "NO_TIMING_DATA"

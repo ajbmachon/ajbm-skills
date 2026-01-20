@@ -34,6 +34,7 @@ from langfuse_utils import (  # noqa: E402
     LANGFUSE_REGIONS,
     LangfuseClient,
     LangfuseError,
+    TraceAnalyzeResult,
     TraceGetResult,
     TraceListResult,
 )
@@ -447,13 +448,150 @@ def _trace_get(args: argparse.Namespace) -> int:
 
 
 def _trace_analyze(args: argparse.Namespace) -> int:
-    """Analyze a trace for issues."""
+    """Analyze a trace for latency bottlenecks and issues (ISC rows 16, 21, 69).
+
+    Acceptance criteria:
+    - 'trace analyze <id>' analyzes latency and finds bottlenecks
+    - Output is insight-first: key findings before supporting data
+    - Identifies slowest observations and their contribution to total time
+    - Calculates p50, p95, p99 if analyzing multiple traces
+    - Example: 'Your p95 latency is 3.2s, caused by the embedding-lookup span (2.8s average)'
+    - Trace with errors -> highlights error observations first
+    - Negative case: Trace has no timing data -> 'Cannot analyze: no timing data available'
+    """
     client = _require_auth()
     if client is None:
         return 1
 
-    print("trace analyze: Command implementation pending (US-008)")
-    print(f"  trace_id: {args.trace_id}")
+    # Set up progress indicator for long operations
+    stop_event = threading.Event()
+    progress_started = threading.Event()
+
+    def delayed_progress_start() -> None:
+        """Start progress indicator after 5 second delay."""
+        if not stop_event.wait(5.0):
+            progress_started.set()
+            _show_progress_indicator("Analyzing trace...", stop_event)
+
+    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+    progress_thread.start()
+
+    try:
+        result: TraceAnalyzeResult = client.analyze_trace(args.trace_id)
+    finally:
+        stop_event.set()
+        progress_thread.join(timeout=1.0)
+
+    # Handle errors
+    if not result.ok:
+        print(f"Error: {result.message}", file=sys.stderr)
+        client.flush()
+        return 1
+
+    analysis = result.analysis
+    if analysis is None:
+        print(f"Error: No analysis returned for trace {args.trace_id}", file=sys.stderr)
+        client.flush()
+        return 1
+
+    # Display analysis results (insight-first per ISC row 21, 69)
+    print("=" * 80)
+    print("TRACE ANALYSIS")
+    print("=" * 80)
+    print()
+
+    # Trace info
+    print(f"Trace: {analysis.trace_id}")
+    if analysis.trace_name:
+        print(f"Name: {analysis.trace_name}")
+    print()
+
+    # KEY FINDINGS FIRST (insight-first per ISC row 21, 69)
+    print("-" * 40)
+    print("KEY FINDINGS")
+    print("-" * 40)
+    print()
+    print(f"  {analysis.summary}")
+    print()
+
+    # ERRORS FIRST (if any) - per ISC row 16: highlights error observations first
+    if analysis.has_errors and analysis.errors:
+        print("-" * 40)
+        print(f"ERRORS ({len(analysis.errors)})")
+        print("-" * 40)
+        print()
+        for error in analysis.errors:
+            error_name = error.observation_name or error.observation_type
+            print(f"  ✗ [{error.level}] {error_name}")
+            print(f"    ID: {error.observation_id[:12]}...")
+            if error.status_message:
+                print(f"    Message: {error.status_message}")
+            print(f"    Time: {error.timestamp}")
+            print()
+
+    # LATENCY ANALYSIS
+    if analysis.latency:
+        print("-" * 40)
+        print("LATENCY ANALYSIS")
+        print("-" * 40)
+        print()
+        print(f"  Total latency: {analysis.latency.total_ms:.2f}ms")
+        print(f"  Observations analyzed: {analysis.latency.observation_count}")
+
+        # Percentiles (if available)
+        if analysis.latency.p50_ms is not None:
+            print()
+            print("  Percentiles:")
+            print(f"    p50: {analysis.latency.p50_ms:.2f}ms")
+            if analysis.latency.p95_ms is not None:
+                print(f"    p95: {analysis.latency.p95_ms:.2f}ms")
+            if analysis.latency.p99_ms is not None:
+                print(f"    p99: {analysis.latency.p99_ms:.2f}ms")
+        print()
+
+    # BOTTLENECKS
+    if analysis.bottlenecks:
+        print("-" * 40)
+        print("BOTTLENECKS (sorted by duration)")
+        print("-" * 40)
+        print()
+
+        # Show top 5 bottlenecks by default
+        for i, bottleneck in enumerate(analysis.bottlenecks[:5], 1):
+            name = bottleneck.observation_name or bottleneck.observation_type
+            type_icon = {
+                "GENERATION": "[GEN]",
+                "SPAN": "[SPAN]",
+                "EVENT": "[EVENT]",
+            }.get(bottleneck.observation_type, f"[{bottleneck.observation_type}]")
+
+            print(f"  {i}. {type_icon} {name}")
+            print(f"     Duration: {bottleneck.duration_ms:.2f}ms ({bottleneck.percentage_of_total:.1f}% of total)")
+            if bottleneck.model:
+                print(f"     Model: {bottleneck.model}")
+            print()
+
+        if len(analysis.bottlenecks) > 5:
+            print(f"  ... and {len(analysis.bottlenecks) - 5} more observation(s)")
+            print()
+
+    # COST SUMMARY (if available)
+    if analysis.total_cost is not None and analysis.total_cost > 0:
+        print("-" * 40)
+        print("COST SUMMARY")
+        print("-" * 40)
+        print()
+        print(f"  Total cost: ${analysis.total_cost:.6f}")
+        if analysis.cost_by_model:
+            print()
+            print("  By model:")
+            for model, cost in sorted(
+                analysis.cost_by_model.items(), key=lambda x: x[1], reverse=True
+            ):
+                print(f"    {model}: ${cost:.6f}")
+        print()
+
+    print("=" * 80)
 
     client.flush()
     return 0

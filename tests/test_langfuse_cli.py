@@ -743,17 +743,277 @@ class TestTraceSubcommandActions:
             assert "user-feedback" in captured.out
 
     def test_trace_analyze_accepts_trace_id(self, capsys):
-        """'trace analyze <id>' should accept trace ID."""
+        """'trace analyze <id>' should accept trace ID (ISC row 16)."""
+        from langfuse_utils import (
+            BottleneckInfo,
+            LatencyStats,
+            TraceAnalysis,
+            TraceAnalyzeResult,
+        )
+
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
             mock_instance.auth_check.return_value = MagicMock(ok=True)
             mock_instance.flush.return_value = None
+            mock_instance.analyze_trace.return_value = TraceAnalyzeResult(
+                ok=True,
+                code="OK",
+                message="Total latency: 1500ms, slowest: llm-call (1000ms, 67%)",
+                analysis=TraceAnalysis(
+                    trace_id="test-trace-456",
+                    trace_name="test-trace",
+                    has_timing_data=True,
+                    has_errors=False,
+                    summary="Total latency: 1500ms, slowest: llm-call (1000ms, 67%)",
+                    latency=LatencyStats(
+                        total_ms=1500.0,
+                        p50_ms=500.0,
+                        p95_ms=1000.0,
+                        p99_ms=1000.0,
+                        observation_count=3,
+                    ),
+                    bottlenecks=[
+                        BottleneckInfo(
+                            observation_id="obs-1",
+                            observation_name="llm-call",
+                            observation_type="GENERATION",
+                            duration_ms=1000.0,
+                            percentage_of_total=66.7,
+                            model="gpt-4",
+                        ),
+                    ],
+                    errors=[],
+                    total_cost=0.001,
+                    cost_by_model={"gpt-4": 0.001},
+                ),
+            )
 
             exit_code = main(["trace", "analyze", "test-trace-456"])
 
             assert exit_code == 0
             captured = capsys.readouterr()
             assert "test-trace-456" in captured.out
+
+    def test_trace_analyze_shows_insight_first(self, capsys):
+        """'trace analyze' should show key findings before data (ISC row 21, 69)."""
+        from langfuse_utils import (
+            BottleneckInfo,
+            LatencyStats,
+            TraceAnalysis,
+            TraceAnalyzeResult,
+        )
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.analyze_trace.return_value = TraceAnalyzeResult(
+                ok=True,
+                code="OK",
+                message="Total latency: 3200ms, slowest: embedding-lookup (2800ms, 88%)",
+                analysis=TraceAnalysis(
+                    trace_id="trace-abc",
+                    trace_name="chatbot",
+                    has_timing_data=True,
+                    has_errors=False,
+                    summary="Total latency: 3200ms, slowest: embedding-lookup (2800ms, 88%). p50: 400ms, p95: 2800ms",
+                    latency=LatencyStats(
+                        total_ms=3200.0,
+                        p50_ms=400.0,
+                        p95_ms=2800.0,
+                        p99_ms=2800.0,
+                        observation_count=5,
+                    ),
+                    bottlenecks=[
+                        BottleneckInfo(
+                            observation_id="obs-1",
+                            observation_name="embedding-lookup",
+                            observation_type="SPAN",
+                            duration_ms=2800.0,
+                            percentage_of_total=87.5,
+                        ),
+                    ],
+                    errors=[],
+                    total_cost=None,
+                    cost_by_model=None,
+                ),
+            )
+
+            exit_code = main(["trace", "analyze", "trace-abc"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Key findings should appear early in output
+            assert "KEY FINDINGS" in captured.out
+            # Should show slowest span
+            assert "embedding-lookup" in captured.out
+            # Should show percentiles
+            assert "p95" in captured.out or "2800" in captured.out
+
+    def test_trace_analyze_highlights_errors_first(self, capsys):
+        """'trace analyze' should highlight errors first (ISC row 16)."""
+        from langfuse_utils import (
+            BottleneckInfo,
+            ErrorInfo,
+            LatencyStats,
+            TraceAnalysis,
+            TraceAnalyzeResult,
+        )
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.analyze_trace.return_value = TraceAnalyzeResult(
+                ok=True,
+                code="OK",
+                message="Found 1 error(s) in trace. Total latency: 1500ms",
+                analysis=TraceAnalysis(
+                    trace_id="trace-err",
+                    trace_name="error-trace",
+                    has_timing_data=True,
+                    has_errors=True,
+                    summary="Found 1 error(s) in trace. Total latency: 1500ms, slowest: failed-call (1000ms, 67%)",
+                    latency=LatencyStats(
+                        total_ms=1500.0,
+                        observation_count=2,
+                    ),
+                    bottlenecks=[
+                        BottleneckInfo(
+                            observation_id="obs-err",
+                            observation_name="failed-call",
+                            observation_type="GENERATION",
+                            duration_ms=1000.0,
+                            percentage_of_total=66.7,
+                            model="gpt-4",
+                        ),
+                    ],
+                    errors=[
+                        ErrorInfo(
+                            observation_id="obs-err",
+                            observation_name="failed-call",
+                            observation_type="GENERATION",
+                            level="ERROR",
+                            status_message="Rate limit exceeded",
+                            timestamp="2026-01-20T10:00:00",
+                        ),
+                    ],
+                    total_cost=None,
+                    cost_by_model=None,
+                ),
+            )
+
+            exit_code = main(["trace", "analyze", "trace-err"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show errors section
+            assert "ERRORS" in captured.out
+            # Error should appear in output
+            assert "ERROR" in captured.out
+            assert "failed-call" in captured.out or "Rate limit exceeded" in captured.out
+
+    def test_trace_analyze_no_timing_data(self, capsys):
+        """'trace analyze' with no timing data shows error (negative case ISC row 16)."""
+        from langfuse_utils import TraceAnalysis, TraceAnalyzeResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.analyze_trace.return_value = TraceAnalyzeResult(
+                ok=False,
+                code="NO_TIMING_DATA",
+                message="Cannot analyze: no timing data available",
+                analysis=TraceAnalysis(
+                    trace_id="trace-no-time",
+                    trace_name="no-timing-trace",
+                    has_timing_data=False,
+                    has_errors=False,
+                    summary="Cannot analyze: no timing data available",
+                    latency=None,
+                    bottlenecks=[],
+                    errors=[],
+                    total_cost=None,
+                    cost_by_model=None,
+                ),
+            )
+
+            exit_code = main(["trace", "analyze", "trace-no-time"])
+
+            # Should fail with appropriate message
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            assert "cannot analyze" in captured.err.lower() or "no timing data" in captured.err.lower()
+
+    def test_trace_analyze_shows_cost_breakdown(self, capsys):
+        """'trace analyze' should show cost breakdown when available."""
+        from langfuse_utils import (
+            BottleneckInfo,
+            LatencyStats,
+            TraceAnalysis,
+            TraceAnalyzeResult,
+        )
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.analyze_trace.return_value = TraceAnalyzeResult(
+                ok=True,
+                code="OK",
+                message="Analysis complete",
+                analysis=TraceAnalysis(
+                    trace_id="trace-cost",
+                    trace_name="cost-trace",
+                    has_timing_data=True,
+                    has_errors=False,
+                    summary="Total latency: 1000ms",
+                    latency=LatencyStats(total_ms=1000.0, observation_count=2),
+                    bottlenecks=[
+                        BottleneckInfo(
+                            observation_id="obs-1",
+                            observation_name="llm-call",
+                            observation_type="GENERATION",
+                            duration_ms=800.0,
+                            percentage_of_total=80.0,
+                            model="gpt-4",
+                        ),
+                    ],
+                    errors=[],
+                    total_cost=0.0025,
+                    cost_by_model={"gpt-4": 0.002, "gpt-3.5-turbo": 0.0005},
+                ),
+            )
+
+            exit_code = main(["trace", "analyze", "trace-cost"])
+
+            assert exit_code == 0
+            captured = capsys.readouterr()
+            # Should show cost summary
+            assert "COST" in captured.out
+            assert "gpt-4" in captured.out
+
+    def test_trace_analyze_handles_not_found(self, capsys):
+        """'trace analyze' should handle not found error."""
+        from langfuse_utils import TraceAnalyzeResult
+
+        with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
+            mock_instance = MockClient.return_value
+            mock_instance.auth_check.return_value = MagicMock(ok=True)
+            mock_instance.flush.return_value = None
+            mock_instance.analyze_trace.return_value = TraceAnalyzeResult(
+                ok=False,
+                code="NOT_FOUND",
+                message="Trace not found: invalid-id",
+                analysis=None,
+            )
+
+            exit_code = main(["trace", "analyze", "invalid-id"])
+
+            assert exit_code == 1
+            captured = capsys.readouterr()
+            assert "not found" in captured.err.lower()
 
 
 class TestEvaluateSubcommandActions:
