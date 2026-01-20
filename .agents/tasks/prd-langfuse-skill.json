@@ -326,9 +326,9 @@
         "Negative case: Trace has no timing data -> 'Cannot analyze: no timing data available'",
         "ISC reference: rows 16, 21, 69"
       ],
-      "startedAt": "2026-01-20T15:58:29.608548+00:00",
+      "startedAt": "2026-01-20T16:04:50.796630+00:00",
       "completedAt": null,
-      "updatedAt": "2026-01-20T15:58:29.608823+00:00"
+      "updatedAt": "2026-01-20T16:04:50.796854+00:00"
     },
     {
       "id": "US-009",
