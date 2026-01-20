@@ -2,10 +2,12 @@
 
 A collection of generally useful Claude Code skills that work across all Anthropic surfaces.
 
-**Plugin names:** `ajbm-dev`, `ajbm-business`
+**Plugins:** `ajbm-dev`, `ajbm-business`, `ajbm-security`
 **Install:** `/plugin install ajbm-dev@ajbm`
 
-## Quick Reference
+---
+
+## Development Skills (ajbm-dev)
 
 ### authoring-skills
 
@@ -24,21 +26,21 @@ Use when writing or reviewing SKILL.md files.
 - [ ] Consistent terminology
 - [ ] Concrete examples
 
-### hormozi-pitch
+### interview
 
-Use when creating offers, pitches, pricing, guarantees, or value propositions.
+Use when user mentions spec, requirements, interview, wants to flesh out an idea, or needs help planning a feature.
 
-**Value Equation:**
-```
-Value = (Dream Outcome × Perceived Likelihood) / (Time Delay × Effort & Sacrifice)
-```
+**Two-Phase Identity:**
+- **Phases 1-2:** Critical Challenger (skeptical, probing, BLOCKING research)
+- **Phase 3+:** Expert Partner (collaborative, thorough, CONSTRAINT-ENFORCED)
 
-**Frameworks:**
-- **MAGIC Naming**: Make a name, Announce target, Give results, Indicate timeframe, Call out container
-- **Guarantee Types**: Unconditional, Conditional, Anti-guarantee, Implied
-- **Value Stack**: Justify any price point by stacking bonuses
+**Key mechanisms:**
+- Constraint Registry captures hard/soft constraints at transition
+- Verification Gate checks recommendations against constraints
+- Self-Challenge Trigger catches assumptions during Partner phase
+- Working log for progressive documentation
 
-**"Stupid Not To" Test:** Prospect should feel irrational saying no.
+**Transition rule:** Never proceed to Partner without explicit constraint confirmation.
 
 ### prompt-craft
 
@@ -55,29 +57,69 @@ Use when writing, analyzing, or improving prompts for LLMs.
 - **9 Extended**: Decomposition, Compression, Sufficiency, Scope, Format-Spec, Uncertainty, Chaining, Self-Consistency, Tree-of-Thoughts
 
 **Model-Specific Guidance:**
-Claude, OpenAI (GPT-4o, o1/o3), DeepSeek R1, Gemini 3, Kimi K2, Qwen 2.5, Grok
+Claude 4.x, GPT-5.2/5.1, GPT-4o, o1/o3, DeepSeek V3/R1, Gemini 2.0, Kimi K2, Qwen 2.5
 
-### skill-developer
+### setup-linter
 
-Use when creating Claude Code skills, hooks, or triggers.
+Use when user asks to set up automatic linting, add a linter hook, or configure code formatting on completion.
 
-**Two-Hook Architecture:**
-- **UserPromptSubmit**: Proactive suggestions before Claude sees prompt
-- **PostToolUse**: Gentle reminders after tool execution
+**What it does:**
+1. Auto-detects project type from config files
+2. Installs linter if not present (eslint, ruff, etc.)
+3. Creates config file with sensible defaults
+4. Adds lint scripts to package.json (JS projects)
+5. Sets up Stop hook in `.claude/settings.json`
 
-**Skill structure:**
+**Usage:**
+```bash
+~/.claude/skills/setup-linter/scripts/setup.sh           # Auto-detect
+~/.claude/skills/setup-linter/scripts/setup.sh "yarn lint:fix"  # Custom
 ```
-skill-name/
-├── SKILL.md              # Main (loaded when triggered)
-├── reference.md          # Loaded as needed
-└── scripts/
-    └── helper.py         # Executed, not loaded
+
+### systematic-debugging
+
+Use when encountering any bug, test failure, or unexpected behavior—BEFORE proposing fixes.
+
+**Iron Law:** NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
+
+**Four Phases:**
+1. Root cause investigation
+2. Pattern analysis
+3. Hypothesis testing
+4. Implementation
+
+**When to use:** Test failures, bugs, unexpected behavior, performance problems.
+
+### testing-anti-patterns
+
+Use when writing or changing tests, adding mocks, or tempted to add test-only methods to production code.
+
+**Three Iron Laws:**
+1. NEVER test mock behavior
+2. NEVER add test-only methods to production classes
+3. NEVER mock without understanding dependencies
+
+**Core principle:** Test what the code does, not what the mocks do.
+
+---
+
+## Business Skills (ajbm-business)
+
+### hormozi-pitch
+
+Use when creating offers, pitches, pricing, guarantees, or value propositions.
+
+**Value Equation:**
+```
+Value = (Dream Outcome × Perceived Likelihood) / (Time Delay × Effort & Sacrifice)
 ```
 
-**Enforcement levels:**
-- **BLOCK**: Exit code 2, critical only
-- **SUGGEST**: Inject context, most common
-- **WARN**: Advisory, rarely used
+**Frameworks:**
+- **MAGIC Naming**: Make a name, Announce target, Give results, Indicate timeframe, Call out container
+- **Guarantee Types**: Unconditional, Conditional, Anti-guarantee, Implied
+- **Value Stack**: Justify any price point by stacking bonuses
+
+**"Stupid Not To" Test:** Prospect should feel irrational saying no.
 
 ### x-post-writer
 
@@ -99,6 +141,20 @@ Use when writing tweets, Twitter threads, or social media copy.
 - Short paragraphs (1-2 sentences)
 - Bullet points for readability
 - Clear CTA at end
+
+---
+
+## Security Plugin (ajbm-security)
+
+Blocks dangerous bash commands and sensitive file access via the `smart-guard` PreToolUse hook.
+
+**Blocks:**
+- Destructive commands (`rm -rf /`, fork bombs, disk wiping)
+- Sensitive file access (`.env`, `.ssh/`, AWS/GCP/Azure credentials, private keys)
+
+**Enable/Disable:** Use `/plugin` menu in Claude Code.
+
+---
 
 ## Skills Are Model-Invoked
 
