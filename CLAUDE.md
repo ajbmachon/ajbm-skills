@@ -69,6 +69,7 @@ Use when user asks to set up automatic linting, add a linter hook, or configure 
 3. Creates config file with sensible defaults
 4. Adds lint scripts to package.json (JS projects)
 5. Sets up Stop hook in `.claude/settings.json`
+6. Adds clean-code-reviewer instruction to project `CLAUDE.md`
 
 **Usage:**
 ```bash
@@ -100,6 +101,34 @@ Use when writing or changing tests, adding mocks, or tempted to add test-only me
 3. NEVER mock without understanding dependencies
 
 **Core principle:** Test what the code does, not what the mocks do.
+
+### docs-research-specialist (agent)
+
+Use when looking up current documentation, API syntax, library patterns, or best practices. Invoked proactively during interview research phases and general dev work.
+
+**Tool priority:** Exa MCP > Context7 MCP > WebFetch > Local codebase
+
+**Key rules:**
+- Every claim must have inline source URL
+- 30-day cache with changelog-based staleness detection
+- Saves reports with YAML frontmatter (topic, date, expiry, sources)
+
+**When to invoke:** Any time you need current docs for a library, framework, or API.
+
+### clean-code-reviewer (agent)
+
+Use after implementing a working feature to analyze for Clean Code compliance. Activated via project CLAUDE.md instruction added by setup-linter.
+
+**Two-commit workflow:**
+1. First commit: working implementation
+2. Second commit: clean code improvements from review
+
+**Report tiers:**
+- 🟢 SYNTACTIC: Auto-fixable (unused imports, dead code, formatting)
+- 🟡 SEMANTIC: Localized changes (naming, extraction, constants)
+- 🔴 ARCHITECTURAL: Cross-file design (SRP, coupling, blast radius shown)
+
+**Includes:** TDD-Readiness score, refactoring priority matrix, educational "Why This Matters" per violation.
 
 ---
 

@@ -7,8 +7,8 @@
   "plugins": [
     {
       "name": "ajbm-dev",
-      "description": "Skills for software development: debugging, testing, spec writing, linting, prompt engineering, and skill authoring.",
-      "version": "1.0.0",
+      "description": "Skills and agents for software development: debugging, testing, spec writing, linting, prompt engineering, skill authoring, documentation research, and clean code review.",
+      "version": "1.1.0",
       "source": "./plugins/development-skills",
       "author": {
         "name": "Andre Machon"

@@ -235,6 +235,85 @@
         "\\b(contest|attest|protest|detest|fastest|latest|greatest)\\b",
         "test.*?(idea|theory|hypothesis)"
       ]
+    },
+    "docs-research-specialist": {
+      "type": "agent",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 10,
+      "strongPhrases": [
+        "look up the docs",
+        "check the documentation",
+        "what does the API say",
+        "current best practice",
+        "library documentation",
+        "how to use this library",
+        "API reference",
+        "find documentation"
+      ],
+      "exactKeywords": [
+        "documentation",
+        "docs",
+        "API",
+        "syntax",
+        "reference",
+        "changelog",
+        "migration"
+      ],
+      "containsKeywords": [
+        "best practice",
+        "latest version",
+        "breaking change",
+        "deprecated"
+      ],
+      "intentPatterns": [
+        "(look|check|find|search).*?(docs|documentation|API|reference)",
+        "how.*?(use|implement|configure).*?(library|package|module|SDK)",
+        "what.*?(syntax|API|method|function).*?(for|in|of)",
+        "(current|latest|new).*?(version|release|docs)"
+      ],
+      "excludePatterns": [
+        "write.*?documentation",
+        "create.*?docs"
+      ]
+    },
+    "clean-code-reviewer": {
+      "type": "agent",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "threshold": 12,
+      "strongPhrases": [
+        "clean code review",
+        "uncle bob",
+        "robert martin",
+        "code quality review",
+        "refactoring review",
+        "clean code check",
+        "make it clean"
+      ],
+      "exactKeywords": [
+        "refactor",
+        "refactoring",
+        "clean",
+        "SOLID",
+        "SRP"
+      ],
+      "containsKeywords": [
+        "code smell",
+        "code quality",
+        "maintainability",
+        "readability",
+        "technical debt"
+      ],
+      "intentPatterns": [
+        "(review|check|analyze).*?(code|implementation).*?(clean|quality|smell)",
+        "(clean|refactor|improve).*?(code|implementation)",
+        "is.*?code.*?(clean|good|maintainable)"
+      ],
+      "excludePatterns": [
+        "clean.*?(install|build|cache|directory)",
+        "\\b(cleanup|clean up)\\s+(files|directory|folder)\\b"
+      ]
     }
   }
 }

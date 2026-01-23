@@ -12,6 +12,8 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 | **setup-linter** | Auto-detect, install, and configure project-specific linting with a Stop hook. Supports JS/TS, Python, Rust, Go, Deno. |
 | **authoring-skills** | Complete guide for writing skills—covers SKILL.md best practices, plugin development, triggers, hooks, and Anthropic guidelines |
 | **prompt-craft** | 19 research-backed prompting techniques with model-specific guidance (Claude, GPT-4o, o1/o3, DeepSeek, Gemini, Kimi, Qwen, Grok). Modes: Analyze, Craft, Teach, Quick Fix |
+| **docs-research-specialist** | Agent that looks up current software documentation, API syntax, and library best practices. Prevents hallucinated or outdated implementations. |
+| **clean-code-reviewer** | Agent that analyzes code against Robert C. Martin's Clean Code principles. Produces tiered remediation reports (🟢/🟡/🔴). Activated via setup-linter. |
 | **hormozi-pitch** | Alex Hormozi's $100M Offers methodology for creating irresistible offers, pricing, guarantees, and value propositions |
 | **x-post-writer** | Twitter/X copywriting system for high-engagement social media content with viral frameworks and examples |
 
@@ -100,6 +102,8 @@ ACTION: Use Skill tool BEFORE responding
 | "debug", "bug", "fix", "error", "broken" | systematic-debugging |
 | "prompt", "llm", "system prompt" | prompt-craft |
 | "skill", "hook", "plugin", "SKILL.md" | authoring-skills |
+| "docs", "documentation", "API", "reference" | docs-research-specialist |
+| "refactor", "clean code", "SOLID", "code smell" | clean-code-reviewer |
 
 ### Error Detection (PostToolUse)
 
@@ -119,6 +123,10 @@ Detected: Test failure
 ```
 
 This prevents Claude from jumping straight to fixes without understanding the root cause.
+
+### Clean Code Review (via setup-linter)
+
+When you run setup-linter, it also adds a clean-code-reviewer instruction to your project's `CLAUDE.md`. This tells Claude to invoke the `clean-code-reviewer` agent after meaningful code changes (20+ lines), enabling the two-commit workflow: first commit working code, then commit clean code improvements.
 
 ---
 
@@ -218,6 +226,7 @@ Or invoke directly:
 2. Installs the appropriate linter if not present
 3. Creates config files with sensible defaults
 4. Sets up a Stop hook so linting runs automatically after every Claude response
+5. Adds a clean-code-reviewer instruction to your project's `CLAUDE.md`
 
 **Supported projects:**
 - JavaScript/TypeScript → ESLint (with React detection)
@@ -238,6 +247,55 @@ Or ask for a specific mode:
 ```
 Analyze this prompt and tell me what's weak about it
 ```
+
+### Docs Research Specialist Agent
+
+**Best for:** Looking up current API docs, library syntax, migration guides, or any technical documentation
+
+```
+What's the current API for React Server Components?
+```
+
+Or when implementing with a library:
+```
+How do I configure Drizzle ORM with Postgres?
+```
+
+**What it does:**
+1. Checks for existing cached research (< 30 days old)
+2. Searches current documentation via Exa, Context7, or WebFetch
+3. Synthesizes findings with mandatory source attribution
+4. Saves research report with YAML frontmatter and expiration date
+
+**Key features:**
+- Every claim backed by source URL (no hallucinations)
+- 30-day cache with changelog-based staleness detection
+- Auto-creates research directory (docs/research/ or .ai/research/)
+- Self-installs Context7 MCP if needed
+
+### Clean Code Reviewer Agent
+
+**Best for:** Reviewing implementations for Clean Code adherence after getting code working
+
+```
+Review the authentication module I just implemented
+```
+
+Or auto-invoked by Claude when the CLAUDE.md instruction is present (added by setup-linter).
+
+**What it produces:**
+- Executive Summary with Overall Score and TDD Score
+- 🟢 SYNTACTIC issues (auto-fixable, 99%+ safe)
+- 🟡 SEMANTIC issues (localized, needs review)
+- 🔴 ARCHITECTURAL issues (cross-file, shows blast radius)
+- TDD-Readiness Assessment with specific blockers
+- Refactoring Priority matrix (impact vs effort)
+
+**Key features:**
+- 12-point Clean Code checklist (naming, functions, DRY, SRP, SOLID, etc.)
+- Every violation includes "Why This Matters" educational explanation
+- Blast radius shown for architectural issues
+- Positive observations reinforce good patterns
 
 ### Authoring Skills Skill
 
