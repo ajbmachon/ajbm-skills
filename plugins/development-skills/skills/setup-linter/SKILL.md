@@ -28,6 +28,7 @@ Or specify a custom command:
 3. **Creates config file** with sensible defaults
 4. **Adds lint scripts** to package.json (JS projects)
 5. **Sets up Stop hook** in `.claude/settings.json`
+6. **Adds clean-code-reviewer instruction** to project `CLAUDE.md`
 
 ## Supported Project Types
 

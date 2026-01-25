@@ -34,3 +34,4 @@ npm-debug.log
 dist/
 build/
 *.egg
+.ai/

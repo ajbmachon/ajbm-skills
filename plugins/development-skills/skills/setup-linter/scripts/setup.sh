@@ -279,6 +279,32 @@ EOF
 }
 
 #==============================================================================
+# Clean Code Reviewer instruction in project CLAUDE.md
+#==============================================================================
+
+CLEAN_CODE_MARKER="<!-- ajbm-clean-code-reviewer -->"
+
+setup_clean_code_instruction() {
+    local claude_md="$PROJECT_DIR/CLAUDE.md"
+
+    # Skip if marker already present
+    if [ -f "$claude_md" ] && grep -qF -- "$CLEAN_CODE_MARKER" "$claude_md" 2>/dev/null; then
+        echo "Clean code reviewer instruction already in CLAUDE.md"
+        return 0
+    fi
+
+    cat >> "$claude_md" <<EOF
+
+$CLEAN_CODE_MARKER
+## Clean Code Review (auto-added by setup-linter)
+
+After any meaningful code changes (20+ lines), invoke the \`clean-code-reviewer\` agent via Task tool (subagent_type="clean-code-reviewer") to analyze your work for Clean Code compliance. The goal is to always leave code cleaner than you found it — producing a tiered report (green/yellow/red) that enables a focused clean-code commit after the working implementation.
+EOF
+
+    echo "Added clean-code-reviewer instruction to $claude_md"
+}
+
+#==============================================================================
 # Auto-detection
 #==============================================================================
 
@@ -373,7 +399,8 @@ echo "Linter command: $LINTER_CMD"
 echo ""
 
 setup_hook "$LINTER_CMD"
+setup_clean_code_instruction
 
 echo ""
-echo "Done! Hook will run when Claude finishes responding."
+echo "Done! Linter hook and clean-code-reviewer instruction configured."
 echo "Restart Claude Code for changes to take effect."

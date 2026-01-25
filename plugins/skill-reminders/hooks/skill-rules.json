@@ -314,6 +314,71 @@
         "clean.*?(install|build|cache|directory)",
         "\\b(cleanup|clean up)\\s+(files|directory|folder)\\b"
       ]
+    },
+    "hormozi-pitch": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 8,
+      "strongPhrases": [
+        "grand slam offer",
+        "100m offers",
+        "irresistible offer",
+        "value proposition",
+        "value stack",
+        "magic naming",
+        "create an offer",
+        "write a pitch",
+        "build an offer"
+      ],
+      "exactKeywords": [
+        "hormozi",
+        "offer",
+        "pitch",
+        "pricing",
+        "guarantee",
+        "bonuses",
+        "scarcity",
+        "urgency"
+      ],
+      "containsKeywords": [],
+      "intentPatterns": [
+        "(create|write|build|make).*?(offer|pitch|pricing)",
+        "(improve|craft).*?(offer|value proposition)",
+        "how (to|do I).*?(price|guarantee|offer)"
+      ],
+      "excludePatterns": []
+    },
+    "x-post-writer": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 8,
+      "strongPhrases": [
+        "twitter post",
+        "x post",
+        "viral content",
+        "social media copy",
+        "twitter thread",
+        "write a tweet",
+        "create a thread"
+      ],
+      "exactKeywords": [
+        "tweet",
+        "twitter",
+        "thread",
+        "viral",
+        "engagement"
+      ],
+      "containsKeywords": [
+        "social media"
+      ],
+      "intentPatterns": [
+        "(write|create|craft).*?(tweet|thread|post)",
+        "(twitter|x).*?(content|copy|post)",
+        "viral.*?(hook|content|tweet)"
+      ],
+      "excludePatterns": []
     }
   }
 }
