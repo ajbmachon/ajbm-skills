@@ -288,7 +288,7 @@ setup_clean_code_instruction() {
     local claude_md="$PROJECT_DIR/CLAUDE.md"
 
     # Skip if marker already present
-    if [ -f "$claude_md" ] && grep -q "$CLEAN_CODE_MARKER" "$claude_md" 2>/dev/null; then
+    if [ -f "$claude_md" ] && grep -qF -- "$CLEAN_CODE_MARKER" "$claude_md" 2>/dev/null; then
         echo "Clean code reviewer instruction already in CLAUDE.md"
         return 0
     fi
