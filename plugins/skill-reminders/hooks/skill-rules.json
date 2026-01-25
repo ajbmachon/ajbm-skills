@@ -1,0 +1,384 @@
+{
+  "version": "2.0",
+  "skills": {
+    "authoring-skills": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 8,
+      "strongPhrases": [
+        "create a skill",
+        "write a skill",
+        "skill file",
+        "plugin hook",
+        "claude code plugin",
+        "skill.md file"
+      ],
+      "exactKeywords": [
+        "SKILL.md",
+        "skill.md",
+        "hook",
+        "hooks",
+        "trigger",
+        "triggers",
+        "plugin"
+      ],
+      "containsKeywords": [
+        "marketplace",
+        "hook configuration"
+      ],
+      "intentPatterns": [
+        "(create|write|build|make).*?skill",
+        "(create|write|build|make).*?plugin",
+        "how.*(write|create).*?skill"
+      ],
+      "excludePatterns": []
+    },
+    "interview": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 8,
+      "strongPhrases": [
+        "help me plan",
+        "help me figure out",
+        "think through",
+        "flesh out",
+        "gather requirements",
+        "design this",
+        "scope this",
+        "interview me",
+        "write a spec",
+        "create a spec",
+        "planning a feature"
+      ],
+      "exactKeywords": [
+        "spec",
+        "specification",
+        "requirements",
+        "idea",
+        "plan",
+        "planning",
+        "design",
+        "scope",
+        "brainstorm",
+        "approach",
+        "strategy"
+      ],
+      "containsKeywords": [
+        "actionable spec"
+      ],
+      "intentPatterns": [
+        "help.*?(plan|design|figure|think|scope)",
+        "(have|got|new).*?idea",
+        "what.*?(approach|strategy)",
+        "how.*?should.*?(implement|build|design|create)",
+        "(plan|design|scope).*?(feature|system|project)"
+      ],
+      "excludePatterns": []
+    },
+    "prompt-craft": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 8,
+      "strongPhrases": [
+        "improve this prompt",
+        "write a prompt",
+        "prompt for claude",
+        "prompt for gpt",
+        "system prompt",
+        "prompt engineering",
+        "better prompt",
+        "craft a prompt"
+      ],
+      "exactKeywords": [
+        "prompt",
+        "prompting",
+        "llm"
+      ],
+      "containsKeywords": [
+        "subagent",
+        "chatgpt"
+      ],
+      "intentPatterns": [
+        "(improve|write|craft|create|fix).*?prompt",
+        "prompt.*?(engineering|technique|better)"
+      ],
+      "excludePatterns": []
+    },
+    "setup-linter": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "low",
+      "threshold": 10,
+      "strongPhrases": [
+        "setup linter",
+        "add linting",
+        "configure eslint",
+        "configure prettier",
+        "linter hook",
+        "automatic linting",
+        "lint on completion"
+      ],
+      "exactKeywords": [
+        "linter",
+        "linting",
+        "eslint",
+        "prettier"
+      ],
+      "containsKeywords": [
+        "code formatting"
+      ],
+      "intentPatterns": [
+        "(setup|configure|add).*?lint",
+        "lint.*?(hook|automatic)"
+      ],
+      "excludePatterns": []
+    },
+    "systematic-debugging": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 8,
+      "strongPhrases": [
+        "fix this bug",
+        "debug this",
+        "not working",
+        "investigate this",
+        "find the issue",
+        "test failure",
+        "failing test",
+        "unexpected behavior"
+      ],
+      "exactKeywords": [
+        "debug",
+        "debugging",
+        "bug",
+        "fix",
+        "error",
+        "errors",
+        "issue",
+        "issues",
+        "problem",
+        "problems",
+        "crash",
+        "exception",
+        "traceback",
+        "wrong",
+        "unexpected",
+        "broken"
+      ],
+      "containsKeywords": [
+        "stack trace"
+      ],
+      "intentPatterns": [
+        "(debug|fix|investigate).*?(bug|error|issue|failure)",
+        "(test|tests).*?(fail|failing|broken)",
+        "why.*?(not|isn't|doesn't|won't)",
+        "what.*?(wrong|happened|causing)",
+        "how.*?fix"
+      ],
+      "excludePatterns": []
+    },
+    "testing-anti-patterns": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 8,
+      "strongPhrases": [
+        "write tests",
+        "add tests",
+        "create tests",
+        "fix tests",
+        "test this",
+        "unit tests",
+        "integration tests",
+        "e2e tests",
+        "test coverage",
+        "add unit test",
+        "write unit test"
+      ],
+      "exactKeywords": [
+        "test",
+        "tests",
+        "testing",
+        "TDD",
+        "coverage",
+        "mock",
+        "mocking"
+      ],
+      "containsKeywords": [
+        "jest",
+        "vitest",
+        "pytest",
+        "mocha",
+        "chai",
+        "stub",
+        "spy",
+        "fixture",
+        "beforeEach",
+        "afterEach",
+        "describe(",
+        "it(",
+        "expect("
+      ],
+      "intentPatterns": [
+        "(write|create|add|implement|fix)\\s+\\w*\\s*tests?",
+        "test.*?(for|this|the|my)",
+        "how.*?test",
+        "should.*?test",
+        "(add|create|write).*?spec",
+        "(add|create|write).*?mock"
+      ],
+      "excludePatterns": [
+        "\\b(contest|attest|protest|detest|fastest|latest|greatest)\\b",
+        "test.*?(idea|theory|hypothesis)"
+      ]
+    },
+    "docs-research-specialist": {
+      "type": "agent",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 10,
+      "strongPhrases": [
+        "look up the docs",
+        "check the documentation",
+        "what does the API say",
+        "current best practice",
+        "library documentation",
+        "how to use this library",
+        "API reference",
+        "find documentation"
+      ],
+      "exactKeywords": [
+        "documentation",
+        "docs",
+        "API",
+        "syntax",
+        "reference",
+        "changelog",
+        "migration"
+      ],
+      "containsKeywords": [
+        "best practice",
+        "latest version",
+        "breaking change",
+        "deprecated"
+      ],
+      "intentPatterns": [
+        "(look|check|find|search).*?(docs|documentation|API|reference)",
+        "how.*?(use|implement|configure).*?(library|package|module|SDK)",
+        "what.*?(syntax|API|method|function).*?(for|in|of)",
+        "(current|latest|new).*?(version|release|docs)"
+      ],
+      "excludePatterns": [
+        "write.*?documentation",
+        "create.*?docs"
+      ]
+    },
+    "clean-code-reviewer": {
+      "type": "agent",
+      "enforcement": "suggest",
+      "priority": "medium",
+      "threshold": 12,
+      "strongPhrases": [
+        "clean code review",
+        "uncle bob",
+        "robert martin",
+        "code quality review",
+        "refactoring review",
+        "clean code check",
+        "make it clean"
+      ],
+      "exactKeywords": [
+        "refactor",
+        "refactoring",
+        "clean",
+        "SOLID",
+        "SRP"
+      ],
+      "containsKeywords": [
+        "code smell",
+        "code quality",
+        "maintainability",
+        "readability",
+        "technical debt"
+      ],
+      "intentPatterns": [
+        "(review|check|analyze).*?(code|implementation).*?(clean|quality|smell)",
+        "(clean|refactor|improve).*?(code|implementation)",
+        "is.*?code.*?(clean|good|maintainable)"
+      ],
+      "excludePatterns": [
+        "clean.*?(install|build|cache|directory)",
+        "\\b(cleanup|clean up)\\s+(files|directory|folder)\\b"
+      ]
+    },
+    "hormozi-pitch": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 8,
+      "strongPhrases": [
+        "grand slam offer",
+        "100m offers",
+        "irresistible offer",
+        "value proposition",
+        "value stack",
+        "magic naming",
+        "create an offer",
+        "write a pitch",
+        "build an offer"
+      ],
+      "exactKeywords": [
+        "hormozi",
+        "offer",
+        "pitch",
+        "pricing",
+        "guarantee",
+        "bonuses",
+        "scarcity",
+        "urgency"
+      ],
+      "containsKeywords": [],
+      "intentPatterns": [
+        "(create|write|build|make).*?(offer|pitch|pricing)",
+        "(improve|craft).*?(offer|value proposition)",
+        "how (to|do I).*?(price|guarantee|offer)"
+      ],
+      "excludePatterns": []
+    },
+    "x-post-writer": {
+      "type": "domain",
+      "enforcement": "suggest",
+      "priority": "high",
+      "threshold": 8,
+      "strongPhrases": [
+        "twitter post",
+        "x post",
+        "viral content",
+        "social media copy",
+        "twitter thread",
+        "write a tweet",
+        "create a thread"
+      ],
+      "exactKeywords": [
+        "tweet",
+        "twitter",
+        "thread",
+        "viral",
+        "engagement"
+      ],
+      "containsKeywords": [
+        "social media"
+      ],
+      "intentPatterns": [
+        "(write|create|craft).*?(tweet|thread|post)",
+        "(twitter|x).*?(content|copy|post)",
+        "viral.*?(hook|content|tweet)"
+      ],
+      "excludePatterns": []
+    }
+  }
+}
