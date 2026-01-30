@@ -9,6 +9,7 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 | **interview** | Transform rough ideas into implementation-ready specs through rigorous research and questioning. Evolves from Critical Challenger to Expert Partner. |
 | **systematic-debugging** | Four-phase debugging framework: root cause → pattern analysis → hypothesis → implementation. No fixes without understanding. |
 | **testing-anti-patterns** | Prevents common testing mistakes: testing mocks, test-only production methods, mocking without understanding dependencies. |
+| **test-driven-development** | Strict TDD enforcement: write failing test first, watch it fail, write minimal code to pass. No production code without a failing test. |
 | **setup-linter** | Auto-detect, install, and configure project-specific linting with a Stop hook. Supports JS/TS, Python, Rust, Go, Deno. |
 | **authoring-skills** | Complete guide for writing skills—covers SKILL.md best practices, plugin development, triggers, hooks, and Anthropic guidelines |
 | **prompt-craft** | 19 research-backed prompting techniques with model-specific guidance (Claude, GPT-4o, o1/o3, DeepSeek, Gemini, Kimi, Qwen, Grok). Modes: Analyze, Craft, Teach, Quick Fix |
@@ -43,6 +44,9 @@ claude
 
 # Install security guardrails (blocks dangerous commands/file access) - optional
 /plugin install ajbm-security@ajbm
+
+# Install skill reminder hooks (suggests relevant skills based on prompts) - optional
+/plugin install ajbm-skill-reminders@ajbm
 ```
 
 After installation, restart Claude Code to activate the skills.
@@ -63,6 +67,7 @@ claude
 /plugin install ajbm-dev@ajbm
 /plugin install ajbm-business@ajbm
 /plugin install ajbm-security@ajbm
+/plugin install ajbm-skill-reminders@ajbm
 ```
 
 ### Verify Installation
@@ -98,7 +103,8 @@ ACTION: Use Skill tool BEFORE responding
 | Trigger Keywords | Suggested Skill |
 |------------------|-----------------|
 | "plan", "idea", "spec", "design", "scope" | interview |
-| "test", "mock", "coverage", "TDD" | testing-anti-patterns |
+| "test", "mock", "coverage" | testing-anti-patterns |
+| "TDD", "test first", "red green refactor" | test-driven-development |
 | "debug", "bug", "fix", "error", "broken" | systematic-debugging |
 | "prompt", "llm", "system prompt" | prompt-craft |
 | "skill", "hook", "plugin", "SKILL.md" | authoring-skills |
@@ -207,6 +213,34 @@ My test mocks are getting really complicated
 - Adding `destroy()` methods only used in tests
 - Over-mocking that breaks test logic
 - Incomplete mocks that hide bugs
+
+### Test-Driven Development Skill
+
+**Best for:** Any implementation work—features, bug fixes, refactoring
+
+```
+I need to implement a retry mechanism for failed API calls
+```
+
+Or when you've written code without tests:
+```
+I wrote this function but didn't write tests first
+```
+
+**The Iron Law:** NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
+
+**Red-Green-Refactor cycle:**
+1. **RED** — Write one minimal test showing desired behavior
+2. **Verify RED** — Run test, confirm it fails for the right reason (not typos)
+3. **GREEN** — Write simplest code that makes the test pass
+4. **Verify GREEN** — Run test, confirm all tests pass
+5. **REFACTOR** — Clean up while staying green, then repeat
+
+**Key rules:**
+- If you wrote code before a test, delete it and start over
+- If a test passes immediately, you're testing existing behavior—fix the test
+- "Keep it as reference" is rationalization—delete means delete
+- Tests written after pass immediately, proving nothing
 
 ### Setup Linter Skill
 
@@ -382,6 +416,26 @@ Prevents common testing mistakes that cause false confidence:
 
 **Gate functions:** Each anti-pattern has a "gate function" - questions to ask BEFORE taking action that would introduce the anti-pattern.
 
+### test-driven-development
+
+Strict TDD enforcement based on the Red-Green-Refactor cycle:
+
+**The Iron Law:** NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
+
+| Phase | What to Do | Verify |
+|-------|-----------|--------|
+| **RED** | Write minimal failing test | Test fails for expected reason |
+| **GREEN** | Write simplest passing code | All tests pass |
+| **REFACTOR** | Clean up, stay green | Tests still pass |
+
+**Red flags (delete code, start over):**
+- Code written before test
+- Test passes immediately
+- "I'll test after" rationalization
+- Keeping code "as reference"
+
+**Key insight:** If you didn't watch the test fail, you don't know if it tests the right thing. Tests written after code pass immediately—proving nothing.
+
 ### setup-linter
 
 Automated linting setup with Stop hook integration:
@@ -448,16 +502,19 @@ Twitter/X copywriting expertise:
 /plugin disable ajbm-dev@ajbm
 /plugin disable ajbm-business@ajbm
 /plugin disable ajbm-security@ajbm  # Turn off security guardrails
+/plugin disable ajbm-skill-reminders@ajbm  # Turn off skill suggestions
 
 # Re-enable
 /plugin enable ajbm-dev@ajbm
 /plugin enable ajbm-business@ajbm
 /plugin enable ajbm-security@ajbm
+/plugin enable ajbm-skill-reminders@ajbm
 
 # Completely remove
 /plugin uninstall ajbm-dev@ajbm
 /plugin uninstall ajbm-business@ajbm
 /plugin uninstall ajbm-security@ajbm
+/plugin uninstall ajbm-skill-reminders@ajbm
 
 # Update to latest version
 /plugin marketplace update ajbmachon

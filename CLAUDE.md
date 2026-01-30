@@ -102,6 +102,27 @@ Use when writing or changing tests, adding mocks, or tempted to add test-only me
 
 **Core principle:** Test what the code does, not what the mocks do.
 
+### test-driven-development
+
+Use when implementing any feature or bugfix—write the test first, watch it fail, write minimal code to pass.
+
+**The Iron Law:** NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
+
+**Red-Green-Refactor cycle:**
+1. **RED**: Write one minimal failing test
+2. **Verify RED**: Run it, confirm it fails for the right reason
+3. **GREEN**: Write simplest code to pass
+4. **Verify GREEN**: Run it, confirm all tests pass
+5. **REFACTOR**: Clean up while staying green
+
+**Red Flags (stop and start over):**
+- Code written before test
+- Test passes immediately
+- Rationalizing "just this once"
+- "I already manually tested it"
+
+**Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
+
 ### docs-research-specialist (agent)
 
 Use when looking up current documentation, API syntax, library patterns, or best practices. Invoked proactively during interview research phases and general dev work.
