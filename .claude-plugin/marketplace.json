@@ -30,8 +30,9 @@
       "source": "./plugins/security",
       "author": {
         "name": "Andre Machon"
-      },
-      {
+      }
+    },
+    {
       "name": "ajbm-skill-reminders",
       "description": "Hooks to remind for skill user on UserPromptSubmit",
       "version": "1.0.0",
