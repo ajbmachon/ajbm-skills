@@ -86,7 +86,7 @@ Langfuse supports three score data types:
 Continuous float values for measurable metrics.
 
 ```bash
-python scripts/langfuse.py evaluate score <trace-id> \
+python scripts/lf.py evaluate score <trace-id> \
     --name correctness \
     --value 0.85 \
     --data-type numeric
@@ -105,7 +105,7 @@ python scripts/langfuse.py evaluate score <trace-id> \
 Discrete categories for classification-style evaluations.
 
 ```bash
-python scripts/langfuse.py evaluate score <trace-id> \
+python scripts/lf.py evaluate score <trace-id> \
     --name accuracy \
     --value "partially correct" \
     --data-type categorical
@@ -124,7 +124,7 @@ python scripts/langfuse.py evaluate score <trace-id> \
 Binary true/false evaluations.
 
 ```bash
-python scripts/langfuse.py evaluate score <trace-id> \
+python scripts/lf.py evaluate score <trace-id> \
     --name is_helpful \
     --value 1 \
     --data-type boolean

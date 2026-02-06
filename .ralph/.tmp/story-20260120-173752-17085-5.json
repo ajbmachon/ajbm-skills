@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "total": 16,
+  "remaining": 3,
+  "quality_gates": [
+    "ruff check .",
+    "pytest tests/ -v"
+  ]
+}

@@ -266,10 +266,10 @@ Basic listing with the skill:
 
 ```bash
 # List 10 most recent traces
-python scripts/langfuse.py trace list --limit 10
+python scripts/lf.py trace list --limit 10
 
 # List traces by name
-python scripts/langfuse.py trace list --name "chatbot-response"
+python scripts/lf.py trace list --name "chatbot-response"
 ```
 
 ### Filtering
@@ -302,7 +302,7 @@ For large result sets:
 Find bottlenecks in your AI application:
 
 ```bash
-python scripts/langfuse.py trace analyze <trace-id>
+python scripts/lf.py trace analyze <trace-id>
 ```
 
 **What it shows:**
@@ -332,10 +332,10 @@ Find traces with errors:
 
 ```bash
 # Errors in last 24 hours
-python scripts/langfuse.py trace errors --since 24h
+python scripts/lf.py trace errors --since 24h
 
 # All recent errors
-python scripts/langfuse.py trace errors --limit 20
+python scripts/lf.py trace errors --limit 20
 ```
 
 **What it shows:**
@@ -350,13 +350,13 @@ Understand your spending:
 
 ```bash
 # Total costs
-python scripts/langfuse.py trace costs
+python scripts/lf.py trace costs
 
 # By model
-python scripts/langfuse.py trace costs --group-by model
+python scripts/lf.py trace costs --group-by model
 
 # By time period
-python scripts/langfuse.py trace costs --since 7d
+python scripts/lf.py trace costs --since 7d
 ```
 
 **What it shows:**

@@ -37,12 +37,12 @@ LANGFUSE_BASE_URL=https://cloud.langfuse.com  # Use us.cloud.langfuse.com for US
 ### 3. Verify Connection
 
 ```bash
-python scripts/langfuse.py setup check
+python scripts/lf.py setup check
 ```
 
 Expected output: `✓ Connected to Langfuse at https://cloud.langfuse.com`
 
-**Trouble?** Run `python scripts/langfuse.py setup diagnose` for guided troubleshooting.
+**Trouble?** Run `python scripts/lf.py setup diagnose` for guided troubleshooting.
 
 ---
 
@@ -52,7 +52,7 @@ Once connected, see what's happening in your AI app:
 
 ```bash
 # List your 10 most recent traces
-python scripts/langfuse.py trace list --limit 10
+python scripts/lf.py trace list --limit 10
 ```
 
 You'll see something like:
@@ -76,10 +76,10 @@ def456...                            document-qa               2024-01-15T10:28:
 
 ```bash
 # Find bottlenecks in a specific trace
-python scripts/langfuse.py trace analyze <trace-id>
+python scripts/lf.py trace analyze <trace-id>
 
 # Find recent errors
-python scripts/langfuse.py trace errors --since 24h
+python scripts/lf.py trace errors --since 24h
 ```
 
 → Deep dive: [traces.md](traces.md)
@@ -90,10 +90,10 @@ python scripts/langfuse.py trace errors --since 24h
 
 ```bash
 # Design an evaluation strategy
-python scripts/langfuse.py evaluate design
+python scripts/lf.py evaluate design
 
 # Score a trace manually
-python scripts/langfuse.py evaluate score <trace-id> --name quality --value 0.8
+python scripts/lf.py evaluate score <trace-id> --name quality --value 0.8
 ```
 
 Think of scores like **unit tests for AI responses**. They help you measure if your AI is doing well.
@@ -106,10 +106,10 @@ Think of scores like **unit tests for AI responses**. They help you measure if y
 
 ```bash
 # Create a test dataset
-python scripts/langfuse.py experiment create-dataset --name "golden-cases"
+python scripts/lf.py experiment create-dataset --name "golden-cases"
 
 # Run the experiment
-python scripts/langfuse.py experiment run --dataset golden-cases
+python scripts/lf.py experiment run --dataset golden-cases
 ```
 
 Golden datasets are **curated test cases** that represent important scenarios. Use them to catch regressions.
@@ -130,7 +130,7 @@ Golden datasets are **curated test cases** that represent important scenarios. U
 | Score a trace | `evaluate score <id> --name X --value Y` |
 | Design evals | `evaluate design` |
 
-All commands use: `python scripts/langfuse.py <command>`
+All commands use: `python scripts/lf.py <command>`
 
 ---
 
@@ -147,4 +147,4 @@ For detailed documentation:
 
 ---
 
-**Need help?** Run `python scripts/langfuse.py <command> --help` for any command.
+**Need help?** Run `python scripts/lf.py <command> --help` for any command.

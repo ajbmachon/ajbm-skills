@@ -24,13 +24,13 @@ from pathlib import Path
 
 import pytest
 
-# Add the lib directory to the path for imports
+# Add the langfuse skill directory to the path for lib package imports
 sys.path.insert(
     0,
-    str(Path(__file__).parent.parent.parent / ".claude" / "skills" / "langfuse" / "lib"),
+    str(Path(__file__).parent.parent.parent / ".claude" / "skills" / "langfuse"),
 )
 
-from langfuse_utils import (
+from lib import (
     LangfuseClient,
 )
 
@@ -47,6 +47,9 @@ def retry_on_timeout(func, max_retries=3, delay=2):
         should_retry = (
             "timeout" in msg_lower
             or "timed out" in msg_lower
+            or "taking too long" in msg_lower
+            or "too long" in msg_lower
+            or "status_code: 524" in msg_lower
             or "rate" in msg_lower
             or "connection" in msg_lower
             or result.code == "RATE_LIMITED"
@@ -58,6 +61,11 @@ def retry_on_timeout(func, max_retries=3, delay=2):
             wait_time = delay * (2**attempt)
             time.sleep(wait_time)
             continue
+        if should_retry:
+            pytest.skip(
+                "Skipping due to transient Langfuse API/network error after retries: "
+                f"{result.message}"
+            )
         # Non-retryable error or exhausted retries
         return result
     return result

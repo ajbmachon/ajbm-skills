@@ -19,13 +19,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# Add the lib directory to the path for imports
+# Add the langfuse skill directory to the path for imports (allows importing lib package)
 sys.path.insert(
     0,
-    str(Path(__file__).parent.parent / ".claude" / "skills" / "langfuse" / "lib"),
+    str(Path(__file__).parent.parent / ".claude" / "skills" / "langfuse"),
 )
 
-from langfuse_utils import (
+from lib import (
     API_ERROR,
     AUTH_EXPIRED,
     AUTH_INVALID,
@@ -190,7 +190,7 @@ class TestLangfuseClientValidation:
     def clean_env(self, monkeypatch):
         """Clean environment and prevent dotenv from loading the project .env file."""
         # Patch load_dotenv to do nothing (prevents reading from project .env)
-        monkeypatch.setattr("langfuse_utils.load_dotenv", lambda *args, **kwargs: None)
+        monkeypatch.setattr("lib.client.load_dotenv", lambda *args, **kwargs: None)
         # Remove all Langfuse-related env vars completely
         monkeypatch.delenv("LANGFUSE_SECRET_KEY", raising=False)
         monkeypatch.delenv("LANGFUSE_PUBLIC_KEY", raising=False)
@@ -757,6 +757,21 @@ class TestLangfuseClientFetchTraces:
         assert result.code == NOT_FOUND
         assert len(result.traces) == 0
 
+    def test_fetch_traces_handles_524_as_network_timeout(self):
+        """fetch_traces() should classify HTTP 524 as NETWORK_TIMEOUT."""
+        mock_langfuse = MagicMock()
+        mock_langfuse.api.trace.list.side_effect = Exception(
+            "status_code: 524, body: {'error': 'Request is taking too long to process.'}"
+        )
+
+        client = LangfuseClient()
+        client._langfuse = mock_langfuse
+        result = client.fetch_traces()
+
+        assert result.ok is False
+        assert result.code == NETWORK_TIMEOUT
+        assert len(result.traces) == 0
+
     def test_fetch_traces_handles_generic_error(self):
         """fetch_traces() should handle generic errors."""
         mock_langfuse = MagicMock()
@@ -1176,7 +1191,7 @@ class TestTraceAnalyzeDataclasses:
 
     def test_bottleneck_info_fields(self):
         """BottleneckInfo should have required fields."""
-        from langfuse_utils import BottleneckInfo
+        from lib import BottleneckInfo
 
         bottleneck = BottleneckInfo(
             observation_id="obs-123",
@@ -1194,7 +1209,7 @@ class TestTraceAnalyzeDataclasses:
 
     def test_error_info_fields(self):
         """ErrorInfo should have required fields."""
-        from langfuse_utils import ErrorInfo
+        from lib import ErrorInfo
 
         error = ErrorInfo(
             observation_id="obs-err",
@@ -1210,7 +1225,7 @@ class TestTraceAnalyzeDataclasses:
 
     def test_latency_stats_fields(self):
         """LatencyStats should have required fields."""
-        from langfuse_utils import LatencyStats
+        from lib import LatencyStats
 
         stats = LatencyStats(
             total_ms=3200.0,
@@ -1227,7 +1242,7 @@ class TestTraceAnalyzeDataclasses:
 
     def test_trace_analysis_fields(self):
         """TraceAnalysis should have required fields."""
-        from langfuse_utils import LatencyStats, TraceAnalysis
+        from lib import LatencyStats, TraceAnalysis
 
         analysis = TraceAnalysis(
             trace_id="trace-123",
@@ -1247,7 +1262,7 @@ class TestTraceAnalyzeDataclasses:
 
     def test_trace_analyze_result_success(self):
         """TraceAnalyzeResult should represent successful analysis."""
-        from langfuse_utils import LatencyStats, TraceAnalysis, TraceAnalyzeResult
+        from lib import LatencyStats, TraceAnalysis, TraceAnalyzeResult
 
         analysis = TraceAnalysis(
             trace_id="trace-123",
@@ -1273,7 +1288,7 @@ class TestTraceAnalyzeDataclasses:
 
     def test_trace_analyze_result_no_timing_data(self):
         """TraceAnalyzeResult should handle no timing data case."""
-        from langfuse_utils import TraceAnalyzeResult
+        from lib import TraceAnalyzeResult
 
         result = TraceAnalyzeResult(
             ok=False,
@@ -1341,7 +1356,7 @@ class TestLangfuseClientAnalyzeTrace:
         """analyze_trace() should return TraceAnalyzeResult."""
         from datetime import datetime, timedelta
 
-        from langfuse_utils import TraceAnalyzeResult
+        from lib import TraceAnalyzeResult
 
         start = datetime(2026, 1, 20, 10, 0, 0)
         end = start + timedelta(seconds=1)

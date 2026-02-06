@@ -115,7 +115,7 @@ Experiment Run: "gpt-4o-baseline"
 
 ```bash
 # Create a new dataset
-python scripts/langfuse.py experiment create-dataset \
+python scripts/lf.py experiment create-dataset \
     --name "golden-cases" \
     --description "Curated test cases for regression testing"
 ```
@@ -148,10 +148,10 @@ dataset = langfuse.create_dataset(
 
 ```bash
 # Add a single item (interactive mode prompts for input/expected_output)
-python scripts/langfuse.py experiment add-item --dataset golden-cases
+python scripts/lf.py experiment add-item --dataset golden-cases
 
 # Add item with inline JSON
-python scripts/langfuse.py experiment add-item \
+python scripts/lf.py experiment add-item \
     --dataset golden-cases \
     --input '{"question": "How do I reset my password?"}' \
     --expected-output '{"answer": "Click forgot password..."}' \
@@ -213,7 +213,7 @@ The **recommended approach** using the high-level API:
 
 ```bash
 # Via skill
-python scripts/langfuse.py experiment run \
+python scripts/lf.py experiment run \
     --dataset golden-cases \
     --name "gpt-4o-baseline"
 ```
@@ -365,7 +365,7 @@ for trace in traces.data:
 
 ```bash
 # Compare two experiment runs
-python scripts/langfuse.py experiment compare \
+python scripts/lf.py experiment compare \
     --runs "gpt-4o-baseline,gpt-4-turbo-v1"
 ```
 

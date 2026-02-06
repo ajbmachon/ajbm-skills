@@ -24,13 +24,14 @@ import threading
 import time
 from pathlib import Path
 
-# Add lib directory to path for imports
+# Add skill directory to path for lib package imports
 _SCRIPT_DIR = Path(__file__).parent.resolve()
-_LIB_DIR = _SCRIPT_DIR.parent / "lib"
-if str(_LIB_DIR) not in sys.path:
-    sys.path.insert(0, str(_LIB_DIR))
+_SKILL_DIR = _SCRIPT_DIR.parent
+if str(_SKILL_DIR) not in sys.path:
+    sys.path.insert(0, str(_SKILL_DIR))
 
-from langfuse_utils import (  # noqa: E402
+# Import from lib package (modular structure)
+from lib import (  # noqa: E402
     LANGFUSE_REGIONS,
     LangfuseClient,
     LangfuseError,

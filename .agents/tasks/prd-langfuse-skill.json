@@ -208,7 +208,7 @@
       "acceptanceCriteria": [
         "SKILL.md under 200 lines (routing table only)",
         "Description under 1024 chars with trigger keywords: langfuse, traces, spans, generations, evals, scores, datasets, experiments",
-        "Routes to scripts/langfuse.py for actions",
+        "Routes to scripts/lf.py for actions",
         "Routes to references/ for deep-dive documentation",
         "Progressive loading architecture (SKILL.md as router)",
         "Example: User says 'analyze my langfuse traces' -> skill activates",
@@ -228,7 +228,7 @@
       ],
       "description": "As Claude, I want a single Python entry point with subcommands so that I can deterministically execute Langfuse operations.",
       "acceptanceCriteria": [
-        "scripts/langfuse.py created as single entry point",
+        "scripts/lf.py created as single entry point",
         "Subcommands implemented: trace, evaluate, experiment, setup",
         "Uses argparse or click for CLI parsing",
         "Imports from lib/langfuse_utils.py for shared functionality",
@@ -468,7 +468,7 @@
     {
       "id": "US-015",
       "title": "MVP validation and integration testing",
-      "status": "in_progress",
+      "status": "done",
       "dependsOn": [
         "US-005",
         "US-008",
@@ -487,8 +487,8 @@
         "ISC reference: rows 72-77"
       ],
       "startedAt": "2026-01-20T16:56:27.484842+00:00",
-      "completedAt": null,
-      "updatedAt": "2026-01-20T16:56:27.485001+00:00"
+      "completedAt": "2026-01-20T17:03:31.673570+00:00",
+      "updatedAt": "2026-01-20T17:03:31.673413+00:00"
     },
     {
       "id": "US-016",

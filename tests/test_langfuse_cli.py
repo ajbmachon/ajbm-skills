@@ -23,16 +23,16 @@ import pytest
 # Get project root for absolute paths
 PROJECT_ROOT = Path(__file__).parent.parent
 SCRIPTS_DIR = PROJECT_ROOT / ".claude" / "skills" / "langfuse" / "scripts"
-LIB_DIR = PROJECT_ROOT / ".claude" / "skills" / "langfuse" / "lib"
+SKILL_DIR = PROJECT_ROOT / ".claude" / "skills" / "langfuse"
 
-# Add lib directory first so langfuse_utils can be imported
-if str(LIB_DIR) not in sys.path:
-    sys.path.insert(0, str(LIB_DIR))
+# Add skill directory so 'from lib import ...' works
+if str(SKILL_DIR) not in sys.path:
+    sys.path.insert(0, str(SKILL_DIR))
 
 # Load the langfuse.py script as a module using importlib to avoid conflicts
 # with the langfuse SDK package
 spec = importlib.util.spec_from_file_location(
-    "langfuse_cli", SCRIPTS_DIR / "langfuse.py"
+    "langfuse_cli", SCRIPTS_DIR / "lf.py"
 )
 langfuse_cli = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(langfuse_cli)
@@ -43,9 +43,9 @@ class TestCLIEntryPoint:
     """Tests for CLI entry point existence and basic structure (ISC row 7)."""
 
     def test_langfuse_script_exists(self):
-        """scripts/langfuse.py should exist."""
-        script_path = Path(".claude/skills/langfuse/scripts/langfuse.py")
-        assert script_path.exists(), "langfuse.py should exist in scripts/"
+        """scripts/lf.py should exist."""
+        script_path = Path(".claude/skills/langfuse/scripts/lf.py")
+        assert script_path.exists(), "lf.py should exist in scripts/"
 
     def test_main_function_exists(self):
         """main() function should exist as entry point."""
@@ -229,7 +229,7 @@ class TestSetupDiagnoseCommand:
         # Clear credentials
         monkeypatch.delenv("LANGFUSE_SECRET_KEY", raising=False)
         monkeypatch.delenv("LANGFUSE_PUBLIC_KEY", raising=False)
-        monkeypatch.setattr("langfuse_utils.load_dotenv", lambda *args, **kwargs: None)
+        monkeypatch.setattr("lib.client.load_dotenv", lambda *args, **kwargs: None)
 
         exit_code = main(["setup", "diagnose"])
 
@@ -290,7 +290,7 @@ class TestTraceSubcommandActions:
         Acceptance criteria: 'python scripts/langfuse.py trace list' -> fetches traces
         """
         # Import TraceListResult from langfuse_utils
-        from langfuse_utils import TraceListResult
+        from lib import TraceListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -315,7 +315,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_list_shows_traces(self, capsys):
         """'trace list' should display traces in table format (ISC row 14)."""
-        from langfuse_utils import TraceInfo, TraceListResult
+        from lib import TraceInfo, TraceListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -359,7 +359,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_list_accepts_limit(self, capsys):
         """'trace list --limit 5' should pass limit to fetch_traces."""
-        from langfuse_utils import TraceListResult
+        from lib import TraceListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -387,7 +387,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_list_accepts_name_filter(self, capsys):
         """'trace list --name chatbot' should filter by name (ISC row 14)."""
-        from langfuse_utils import TraceInfo, TraceListResult
+        from lib import TraceInfo, TraceListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -422,7 +422,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_list_accepts_user_id_filter(self, capsys):
         """'trace list --user-id user123' should filter by user ID (ISC row 14)."""
-        from langfuse_utils import TraceListResult
+        from lib import TraceListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -449,7 +449,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_list_accepts_session_id_filter(self, capsys):
         """'trace list --session-id sess123' should filter by session ID (ISC row 14)."""
-        from langfuse_utils import TraceListResult
+        from lib import TraceListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -476,7 +476,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_list_handles_api_error(self, capsys):
         """'trace list' should handle API errors gracefully."""
-        from langfuse_utils import TraceListResult
+        from lib import TraceListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -497,7 +497,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_list_shows_pagination_hint(self, capsys):
         """'trace list' should indicate when more traces are available."""
-        from langfuse_utils import TraceInfo, TraceListResult
+        from lib import TraceInfo, TraceListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -538,7 +538,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_get_accepts_trace_id(self, capsys):
         """'trace get <id>' should accept trace ID."""
-        from langfuse_utils import TraceDetail, TraceGetResult
+        from lib import TraceDetail, TraceGetResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -570,7 +570,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_get_displays_observations(self, capsys):
         """'trace get <id>' should display observations with hierarchy (ISC row 20)."""
-        from langfuse_utils import ObservationInfo, TraceDetail, TraceGetResult
+        from lib import ObservationInfo, TraceDetail, TraceGetResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -651,7 +651,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_get_invalid_id_returns_not_found(self, capsys):
         """'trace get <invalid-id>' should return 'Trace not found' (negative case)."""
-        from langfuse_utils import TraceGetResult
+        from lib import TraceGetResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -674,7 +674,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_get_handles_api_error(self, capsys):
         """'trace get' should handle API errors gracefully."""
-        from langfuse_utils import TraceGetResult
+        from lib import TraceGetResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -695,7 +695,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_get_shows_event_observations(self, capsys):
         """'trace get' should display EVENT type observations."""
-        from langfuse_utils import ObservationInfo, TraceDetail, TraceGetResult
+        from lib import ObservationInfo, TraceDetail, TraceGetResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -744,7 +744,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_analyze_accepts_trace_id(self, capsys):
         """'trace analyze <id>' should accept trace ID (ISC row 16)."""
-        from langfuse_utils import (
+        from lib import (
             BottleneckInfo,
             LatencyStats,
             TraceAnalysis,
@@ -796,7 +796,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_analyze_shows_insight_first(self, capsys):
         """'trace analyze' should show key findings before data (ISC row 21, 69)."""
-        from langfuse_utils import (
+        from lib import (
             BottleneckInfo,
             LatencyStats,
             TraceAnalysis,
@@ -852,7 +852,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_analyze_highlights_errors_first(self, capsys):
         """'trace analyze' should highlight errors first (ISC row 16)."""
-        from langfuse_utils import (
+        from lib import (
             BottleneckInfo,
             ErrorInfo,
             LatencyStats,
@@ -915,7 +915,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_analyze_no_timing_data(self, capsys):
         """'trace analyze' with no timing data shows error (negative case ISC row 16)."""
-        from langfuse_utils import TraceAnalysis, TraceAnalyzeResult
+        from lib import TraceAnalysis, TraceAnalyzeResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -948,7 +948,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_analyze_shows_cost_breakdown(self, capsys):
         """'trace analyze' should show cost breakdown when available."""
-        from langfuse_utils import (
+        from lib import (
             BottleneckInfo,
             LatencyStats,
             TraceAnalysis,
@@ -996,7 +996,7 @@ class TestTraceSubcommandActions:
 
     def test_trace_analyze_handles_not_found(self, capsys):
         """'trace analyze' should handle not found error."""
-        from langfuse_utils import TraceAnalyzeResult
+        from lib import TraceAnalyzeResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1027,7 +1027,7 @@ class TestTraceErrorsCommand:
 
     def test_trace_errors_finds_errors(self, capsys):
         """'trace errors' should find traces with errors (ISC row 17)."""
-        from langfuse_utils import TraceErrorInfo, TraceErrorsResult
+        from lib import TraceErrorInfo, TraceErrorsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1078,7 +1078,7 @@ class TestTraceErrorsCommand:
 
     def test_trace_errors_no_errors_found(self, capsys):
         """'trace errors' with no errors shows appropriate message (negative case)."""
-        from langfuse_utils import TraceErrorsResult
+        from lib import TraceErrorsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1101,7 +1101,7 @@ class TestTraceErrorsCommand:
 
     def test_trace_errors_accepts_since(self, capsys):
         """'trace errors --since 7d' should filter by time range."""
-        from langfuse_utils import TraceErrorsResult
+        from lib import TraceErrorsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1127,7 +1127,7 @@ class TestTraceErrorsCommand:
 
     def test_trace_errors_accepts_limit(self, capsys):
         """'trace errors --limit 5' should limit results."""
-        from langfuse_utils import TraceErrorsResult
+        from lib import TraceErrorsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1152,7 +1152,7 @@ class TestTraceErrorsCommand:
 
     def test_trace_errors_handles_api_error(self, capsys):
         """'trace errors' should handle API errors gracefully."""
-        from langfuse_utils import TraceErrorsResult
+        from lib import TraceErrorsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1183,7 +1183,7 @@ class TestTraceCostsCommand:
 
     def test_trace_costs_shows_by_model(self, capsys):
         """'trace costs --group-by model' shows cost breakdown by model (ISC row 18)."""
-        from langfuse_utils import CostByModel, TraceCostsResult
+        from lib import CostByModel, TraceCostsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1216,7 +1216,7 @@ class TestTraceCostsCommand:
 
     def test_trace_costs_shows_by_trace(self, capsys):
         """'trace costs --group-by trace' shows top expensive traces."""
-        from langfuse_utils import CostByTrace, TraceCostsResult
+        from lib import CostByTrace, TraceCostsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1260,7 +1260,7 @@ class TestTraceCostsCommand:
 
     def test_trace_costs_shows_by_day(self, capsys):
         """'trace costs --group-by day' shows cost per day."""
-        from langfuse_utils import CostByDay, TraceCostsResult
+        from lib import CostByDay, TraceCostsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1292,7 +1292,7 @@ class TestTraceCostsCommand:
 
     def test_trace_costs_accepts_since(self, capsys):
         """'trace costs --since 24h' should filter by time range."""
-        from langfuse_utils import TraceCostsResult
+        from lib import TraceCostsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1317,7 +1317,7 @@ class TestTraceCostsCommand:
 
     def test_trace_costs_handles_no_data(self, capsys):
         """'trace costs' with no cost data shows appropriate message."""
-        from langfuse_utils import TraceCostsResult
+        from lib import TraceCostsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1342,7 +1342,7 @@ class TestTraceCostsCommand:
 
     def test_trace_costs_handles_api_error(self, capsys):
         """'trace costs' should handle API errors gracefully."""
-        from langfuse_utils import TraceCostsResult
+        from lib import TraceCostsResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1415,7 +1415,7 @@ class TestEvaluateSubcommandActions:
 
         Example: 'evaluate score abc123 --name quality --value 0.8 --data-type numeric'
         """
-        from langfuse_utils import ScoreCreateResult, ScoreInfo
+        from lib import ScoreCreateResult, ScoreInfo
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1460,7 +1460,7 @@ class TestEvaluateSubcommandActions:
 
     def test_evaluate_score_creates_categorical_score(self, capsys):
         """'evaluate score' should create a categorical score."""
-        from langfuse_utils import ScoreCreateResult, ScoreInfo
+        from lib import ScoreCreateResult, ScoreInfo
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1501,7 +1501,7 @@ class TestEvaluateSubcommandActions:
 
     def test_evaluate_score_creates_boolean_score(self, capsys):
         """'evaluate score' should create a boolean score."""
-        from langfuse_utils import ScoreCreateResult, ScoreInfo
+        from lib import ScoreCreateResult, ScoreInfo
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1542,7 +1542,7 @@ class TestEvaluateSubcommandActions:
 
     def test_evaluate_score_with_comment(self, capsys):
         """'evaluate score' should accept --comment option."""
-        from langfuse_utils import ScoreCreateResult, ScoreInfo
+        from lib import ScoreCreateResult, ScoreInfo
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1585,7 +1585,7 @@ class TestEvaluateSubcommandActions:
 
         Acceptance criteria: Invalid score type -> 'Invalid data-type. Use: numeric, categorical, boolean'
         """
-        from langfuse_utils import ScoreCreateResult
+        from lib import ScoreCreateResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1618,7 +1618,7 @@ class TestEvaluateSubcommandActions:
 
     def test_evaluate_score_trace_not_found(self, capsys):
         """'evaluate score' with invalid trace_id shows not found error."""
-        from langfuse_utils import ScoreCreateResult
+        from lib import ScoreCreateResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1649,7 +1649,7 @@ class TestEvaluateSubcommandActions:
 
     def test_evaluate_scores_lists_scores(self, capsys):
         """'evaluate scores' should list scores for the project (ISC row 24)."""
-        from langfuse_utils import ScoreInfo, ScoreListResult
+        from lib import ScoreInfo, ScoreListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1701,7 +1701,7 @@ class TestEvaluateSubcommandActions:
 
         Example: 'evaluate scores --trace abc123' -> all scores for that trace
         """
-        from langfuse_utils import ScoreInfo, ScoreListResult
+        from lib import ScoreInfo, ScoreListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1736,7 +1736,7 @@ class TestEvaluateSubcommandActions:
 
     def test_evaluate_scores_filters_by_name(self, capsys):
         """'evaluate scores --name quality' should filter by score name."""
-        from langfuse_utils import ScoreListResult
+        from lib import ScoreListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1762,7 +1762,7 @@ class TestEvaluateSubcommandActions:
 
     def test_evaluate_scores_accepts_limit(self, capsys):
         """'evaluate scores --limit 5' should limit results."""
-        from langfuse_utils import ScoreListResult
+        from lib import ScoreListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1787,7 +1787,7 @@ class TestEvaluateSubcommandActions:
 
     def test_evaluate_scores_no_scores_found(self, capsys):
         """'evaluate scores' with no scores shows appropriate message."""
-        from langfuse_utils import ScoreListResult
+        from lib import ScoreListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1809,7 +1809,7 @@ class TestEvaluateSubcommandActions:
 
     def test_evaluate_scores_handles_api_error(self, capsys):
         """'evaluate scores' should handle API errors gracefully."""
-        from langfuse_utils import ScoreListResult
+        from lib import ScoreListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1830,7 +1830,7 @@ class TestEvaluateSubcommandActions:
 
     def test_evaluate_scores_shows_pagination_hint(self, capsys):
         """'evaluate scores' should indicate when more scores are available."""
-        from langfuse_utils import ScoreInfo, ScoreListResult
+        from lib import ScoreInfo, ScoreListResult
 
         with patch.object(langfuse_cli, "LangfuseClient") as MockClient:
             mock_instance = MockClient.return_value
@@ -1899,7 +1899,7 @@ class TestAuthValidationBeforeOperations:
     @pytest.fixture(autouse=True)
     def clean_env(self, monkeypatch):
         """Clean environment - no auth credentials."""
-        monkeypatch.setattr("langfuse_utils.load_dotenv", lambda *args, **kwargs: None)
+        monkeypatch.setattr("lib.client.load_dotenv", lambda *args, **kwargs: None)
         monkeypatch.delenv("LANGFUSE_SECRET_KEY", raising=False)
         monkeypatch.delenv("LANGFUSE_PUBLIC_KEY", raising=False)
 

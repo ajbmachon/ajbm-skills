@@ -11,16 +11,16 @@ AI developer's expert guide for trace analysis, evaluation design, and experimen
 
 | Task | Command | Reference |
 |------|---------|-----------|
-| **Check setup** | `python scripts/langfuse.py setup check` | - |
-| **Diagnose auth issues** | `python scripts/langfuse.py setup diagnose` | - |
-| **List recent traces** | `python scripts/langfuse.py trace list` | [traces.md](references/traces.md) |
-| **Analyze a trace** | `python scripts/langfuse.py trace analyze <id>` | [traces.md](references/traces.md) |
-| **Find errors** | `python scripts/langfuse.py trace errors` | [traces.md](references/traces.md) |
-| **View costs** | `python scripts/langfuse.py trace costs` | [traces.md](references/traces.md) |
-| **Design evaluation** | `python scripts/langfuse.py evaluate design` | [evals.md](references/evals.md) |
-| **Score a trace** | `python scripts/langfuse.py evaluate score <id>` | [evals.md](references/evals.md) |
-| **Create dataset** | `python scripts/langfuse.py experiment create-dataset` | [datasets.md](references/datasets.md) |
-| **Run experiment** | `python scripts/langfuse.py experiment run` | [datasets.md](references/datasets.md) |
+| **Check setup** | `python scripts/lf.py setup check` | - |
+| **Diagnose auth issues** | `python scripts/lf.py setup diagnose` | - |
+| **List recent traces** | `python scripts/lf.py trace list` | [traces.md](references/traces.md) |
+| **Analyze a trace** | `python scripts/lf.py trace analyze <id>` | [traces.md](references/traces.md) |
+| **Find errors** | `python scripts/lf.py trace errors` | [traces.md](references/traces.md) |
+| **View costs** | `python scripts/lf.py trace costs` | [traces.md](references/traces.md) |
+| **Design evaluation** | `python scripts/lf.py evaluate design` | [evals.md](references/evals.md) |
+| **Score a trace** | `python scripts/lf.py evaluate score <id>` | [evals.md](references/evals.md) |
+| **Create dataset** | `python scripts/lf.py experiment create-dataset` | [datasets.md](references/datasets.md) |
+| **Run experiment** | `python scripts/lf.py experiment run` | [datasets.md](references/datasets.md) |
 | **New to Langfuse?** | - | [getting-started.md](references/getting-started.md) |
 
 ---
@@ -31,9 +31,9 @@ AI developer's expert guide for trace analysis, evaluation design, and experimen
 
 When user asks about slow responses, errors, or unexpected behavior:
 
-1. `python scripts/langfuse.py trace list --limit 10` - See recent traces
-2. `python scripts/langfuse.py trace analyze <id>` - Find bottlenecks
-3. `python scripts/langfuse.py trace errors` - Surface failures
+1. `python scripts/lf.py trace list --limit 10` - See recent traces
+2. `python scripts/lf.py trace analyze <id>` - Find bottlenecks
+3. `python scripts/lf.py trace errors` - Surface failures
 
 **Output format:** Key findings first, then supporting data.
 
@@ -41,9 +41,9 @@ When user asks about slow responses, errors, or unexpected behavior:
 
 When user asks about response quality, scoring, or evals:
 
-1. `python scripts/langfuse.py evaluate design` - Interactive eval strategy
-2. `python scripts/langfuse.py evaluate score <id> --name quality --value 0.8` - Score traces
-3. `python scripts/langfuse.py evaluate scores` - Review scores
+1. `python scripts/lf.py evaluate design` - Interactive eval strategy
+2. `python scripts/lf.py evaluate score <id> --name quality --value 0.8` - Score traces
+3. `python scripts/lf.py evaluate scores` - Review scores
 
 **Concept:** Scores are like unit tests for AI responses.
 
@@ -51,10 +51,10 @@ When user asks about response quality, scoring, or evals:
 
 When user asks about testing prompts, comparing models, or experiments:
 
-1. `python scripts/langfuse.py experiment create-dataset --name test-cases` - Create golden dataset
-2. `python scripts/langfuse.py experiment add-item` - Add test cases
-3. `python scripts/langfuse.py experiment run --dataset test-cases` - Run experiment
-4. `python scripts/langfuse.py experiment compare` - Compare results
+1. `python scripts/lf.py experiment create-dataset --name test-cases` - Create golden dataset
+2. `python scripts/lf.py experiment add-item` - Add test cases
+3. `python scripts/lf.py experiment run --dataset test-cases` - Run experiment
+4. `python scripts/lf.py experiment compare` - Compare results
 
 **Concept:** Golden datasets capture known-good input/output pairs for regression testing.
 
@@ -74,10 +74,10 @@ LANGFUSE_BASE_URL=https://cloud.langfuse.com  # EU, or us.cloud.langfuse.com for
 ### Verify Connection
 
 ```bash
-python scripts/langfuse.py setup check
+python scripts/lf.py setup check
 ```
 
-If auth fails, run `python scripts/langfuse.py setup diagnose` for guided troubleshooting.
+If auth fails, run `python scripts/lf.py setup diagnose` for guided troubleshooting.
 
 ---
 
@@ -111,7 +111,7 @@ Load these for deep-dive explanations:
 langfuse/
 ├── SKILL.md           # This routing table
 ├── scripts/
-│   └── langfuse.py    # Single entry point with subcommands
+│   └── lf.py          # Single entry point with subcommands
 ├── lib/
 │   └── langfuse_utils.py  # Shared auth, client, error handling
 └── references/
