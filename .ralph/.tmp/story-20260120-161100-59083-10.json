@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "total": 16,
+  "remaining": 9,
+  "quality_gates": [
+    "ruff check .",
+    "pytest tests/ -v"
+  ],
+  "id": "US-008",
+  "title": "Implement trace analyze command"
+}

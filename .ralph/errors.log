@@ -1,0 +1,53 @@
+# Error Log
+
+> Failures and repeated issues. Use this to add guardrails.
+
+[2026-01-20 16:16:04] ITERATION 1 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-1.md
+[2026-01-20 16:23:03] ITERATION 2 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-2.md
+[2026-01-20 16:26:39] ITERATION 3 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-3.md
+[2026-01-20 16:32:29] ITERATION 4 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-4.md
+[2026-01-20 16:40:09] ITERATION 5 command failed (status=1)
+[2026-01-20 16:40:09] ITERATION 5 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-5.md
+[2026-01-20 16:40:09] ITERATION 5 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-5.log
+[2026-01-20 16:43:30] ITERATION 6 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-6.md
+[2026-01-20 16:48:50] ITERATION 7 command failed (status=1)
+[2026-01-20 16:48:50] ITERATION 7 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-7.md
+[2026-01-20 16:48:50] ITERATION 7 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-7.log
+[2026-01-20 16:51:56] ITERATION 8 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-8.md
+[2026-01-20 16:58:27] ITERATION 9 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-9.md
+[2026-01-20 17:04:48] ITERATION 10 command failed (status=1)
+[2026-01-20 17:04:48] ITERATION 10 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-10.md
+[2026-01-20 17:04:48] ITERATION 10 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-10.log
+[2026-01-20 17:08:36] ITERATION 11 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-11.md
+[2026-01-20 17:15:18] ITERATION 12 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-12.md
+[2026-01-20 17:21:47] ITERATION 13 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-13.md
+[2026-01-20 17:23:32] ITERATION 14 command failed (status=1)
+[2026-01-20 17:23:32] ITERATION 14 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-14.md
+[2026-01-20 17:23:32] ITERATION 14 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-14.log
+[2026-01-20 17:25:09] ITERATION 15 command failed (status=1)
+[2026-01-20 17:25:09] ITERATION 15 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-15.md
+[2026-01-20 17:25:09] ITERATION 15 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-15.log
+[2026-01-20 17:26:37] ITERATION 16 command failed (status=1)
+[2026-01-20 17:26:37] ITERATION 16 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-16.md
+[2026-01-20 17:26:37] ITERATION 16 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-16.log
+[2026-01-20 17:28:05] ITERATION 17 command failed (status=1)
+[2026-01-20 17:28:05] ITERATION 17 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-17.md
+[2026-01-20 17:28:05] ITERATION 17 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-17.log
+[2026-01-20 17:30:19] ITERATION 18 command failed (status=1)
+[2026-01-20 17:30:20] ITERATION 18 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-18.md
+[2026-01-20 17:30:20] ITERATION 18 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-18.log
+[2026-01-20 17:32:26] ITERATION 19 command failed (status=1)
+[2026-01-20 17:32:26] ITERATION 19 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-19.md
+[2026-01-20 17:32:26] ITERATION 19 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-19.log
+[2026-01-20 17:34:48] ITERATION 20 command failed (status=1)
+[2026-01-20 17:34:48] ITERATION 20 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-20.md
+[2026-01-20 17:34:48] ITERATION 20 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-20.log
+[2026-01-20 17:37:26] ITERATION 21 command failed (status=1)
+[2026-01-20 17:37:26] ITERATION 21 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-21.md
+[2026-01-20 17:37:26] ITERATION 21 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-161100-59083-iter-21.log
+[2026-01-20 17:40:59] ITERATION 1 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-1.md
+[2026-01-20 17:47:32] ITERATION 2 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-2.md
+[2026-01-20 17:56:25] ITERATION 3 command failed (status=1)
+[2026-01-20 17:56:25] ITERATION 3 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-3.md
+[2026-01-20 17:56:25] ITERATION 3 exited non-zero; review /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-3.log
+[2026-01-20 18:03:31] ITERATION 4 left uncommitted changes; review run summary at /Users/andremachon/Projects/claude-skills.langfuse-skill-plugin/.ralph/runs/run-20260120-173752-17085-iter-4.md

@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "total": 16,
+  "remaining": 6,
+  "quality_gates": [
+    "ruff check .",
+    "pytest tests/ -v"
+  ],
+  "id": "US-012",
+  "title": "Create getting-started reference"
+}

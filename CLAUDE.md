@@ -213,6 +213,36 @@ These skills activate automatically based on context. You don't need to call the
 - Task type (creating offers, writing prompts, etc.)
 - File patterns being worked on
 
+## Background Agent Output Management
+
+**CRITICAL: Background agents can flood your context if you read their output incorrectly.**
+
+When checking on background agents (Task tool with `run_in_background: true`):
+
+1. **NEVER** read the full `.output` file directly - it contains the entire conversation transcript
+2. **NEVER** use `sleep` commands to poll - you receive automatic notifications when agents complete
+3. **DO** use `tail -20` to see just the final messages if needed
+4. **DO** use `grep` to find specific patterns in output
+
+**For docs-research-specialist agents specifically:**
+- They save their research to `docs/research/` or `.ai/research/`
+- Just read the final output file (e.g., `docs/research/topic-name-YYYY-MM-DD.md`) instead of the agent transcript
+- The research file is token-efficient; the transcript is not
+
+**Examples:**
+```bash
+# WRONG - floods context
+cat /tmp/claude/.../tasks/agent-id.output
+
+# RIGHT - final messages only
+tail -30 /tmp/claude/.../tasks/agent-id.output
+
+# BEST for research agents - read the actual output file
+cat docs/research/langfuse-setup-2026-01-20.md
+```
+
+---
+
 ## Contributing
 
 1. Follow the 500-line rule for SKILL.md files
