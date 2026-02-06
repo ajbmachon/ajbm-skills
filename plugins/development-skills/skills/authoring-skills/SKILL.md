@@ -12,11 +12,15 @@ description: Use when creating skills, plugins, or hooks for Claude Code - cover
 | Task | Resource |
 |------|----------|
 | Write a SKILL.md | [Core Principles](#core-principles) |
+| Understand context limits | [Context Budget Philosophy](#context-budget-philosophy) |
+| Define success criteria | [Verification-First Design](#verification-first-design) |
+| Evolve skills over time | [Skill Evolution](#skill-evolution) |
 | Create a plugin | [references/plugin-development.md](references/plugin-development.md) |
 | Configure triggers | [references/skill-triggers.md](references/skill-triggers.md) |
 | Set up hooks | [references/hook-architecture.md](references/hook-architecture.md) |
 | Debug skill/plugin issues | [references/skill-troubleshooting.md](references/skill-troubleshooting.md) |
-| Find patterns | [references/patterns-library.md](references/patterns-library.md) |
+| Find design patterns | [references/patterns-library.md](references/patterns-library.md) |
+| Compose skills + agents | [references/agent-skill-composition.md](references/agent-skill-composition.md) |
 | Official docs | [references/official-docs.md](references/official-docs.md) |
 
 ---
@@ -66,6 +70,91 @@ Match specificity to task fragility:
 | **Haiku** | Enough guidance? |
 | **Sonnet** | Clear and efficient? |
 | **Opus** | Avoiding over-explanation? |
+
+---
+
+## Context Budget Philosophy
+
+**WHY the 500-line limit matters:**
+
+> "Claude's context window fills up fast, and performance degrades as it fills." — Anthropic Best Practices
+
+**Progressive Disclosure Architecture:**
+1. **Metadata** (~100 tokens): Name + description loaded at startup
+2. **Instructions** (<5k tokens): Full SKILL.md loads when triggered
+3. **Resources** (on-demand): Reference files load only when needed
+
+**Skill Description Budget:**
+- Total budget: ~15,000 characters for ALL skill descriptions
+- Per skill: Keep under 150 chars for 40+ skill collections
+- Front-load trigger keywords in first 50 characters
+
+**Key insight:** Files not read = zero context cost. A 10,000-line reference file costs nothing until Claude reads it.
+
+---
+
+## Verification-First Design
+
+> "Providing verification is the single highest-leverage thing you can do." — Anthropic Best Practices
+
+### Define Success Upfront
+
+```markdown
+## Success Criteria
+- Tests pass: `npm test`
+- Linter clean: `npm run lint`
+- Screenshot matches design
+```
+
+### Linter Over Guide
+
+**Prefer automated enforcement over documentation.**
+
+| Approach | Consistency | Feedback |
+|----------|-------------|----------|
+| Documentation | Variable | Manual review |
+| Linter/Tests | Uniform | Instant |
+
+If a rule can be enforced automatically, it should be. Use the `setup-linter` skill for reference.
+
+### Self-Check Patterns
+
+Skills should enable Claude to verify its own work:
+- Test commands that prove behavior
+- Validation scripts that check output
+- Visual verification via screenshots
+
+---
+
+## Skill Evolution
+
+> "Start simple. Add rules only when you notice the agent making the same mistake repeatedly." — Cursor Best Practices
+
+### Incrementalism Over Perfection
+
+1. **Start minimal** - Claude already knows a lot
+2. **Observe mistakes** - Watch for repeated errors
+3. **Add guidance** - Only when the same mistake occurs twice
+4. **Prune periodically** - Remove stale instructions
+
+### Anti-Pattern: Over-Optimization Early
+
+**Don't:**
+- Document every edge case upfront
+- Add instructions Claude doesn't need
+- Include obvious advice ("write readable code")
+
+**Do:**
+- Create evaluations first
+- Write minimal content that addresses gaps
+- Iterate based on real failures
+
+### Evolution Checklist
+
+- [ ] Tested without any skill first?
+- [ ] Documented only observed gaps?
+- [ ] Removed guidance Claude follows naturally?
+- [ ] Reviewed and pruned recently?
 
 ---
 
@@ -401,5 +490,6 @@ EOF
 
 ---
 
-**Line count:** ~450 (within 500-line budget)
+**Line count:** ~495 (within 500-line budget)
 **Complements:** `superpowers:writing-skills` (TDD testing methodology)
+**New references:** [patterns-library.md](references/patterns-library.md), [agent-skill-composition.md](references/agent-skill-composition.md)
