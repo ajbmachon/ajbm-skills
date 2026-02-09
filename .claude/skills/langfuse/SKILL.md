@@ -51,13 +51,13 @@ Query and analyze Langfuse data directly from Codex without MCP.
 
 # Traces
 "$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace list --limit 10
-"$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace list --limit 50 --page 1 --all --max-pages 20 --json
+"$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace list --limit 50 --page 1 --all --max-pages 20 --page-retries 2 --timeout-seconds 20 --json
 "$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace analyze <trace-id>
 "$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace get <trace-id> --no-observations --json
 "$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace get <trace-id> --max-observations 50 --json
 "$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace errors --since 24h
 "$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace costs --group-by model --since 7d
-"$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace export --limit 20 --page 1 --all --max-pages 10 --mode metadata --no-auth-check --json
+"$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace export --limit 20 --page 1 --all --max-pages 10 --page-retries 2 --timeout-seconds 20 --mode metadata --no-auth-check --json
 "$CODEX_HOME/skills/langfuse/scripts/lf.sh" trace export --limit 20 --page 1 --all --max-pages 10 --mode full --no-observations --exclude-user ilias@gmail.com --json
 
 # Evals
@@ -77,12 +77,12 @@ Query and analyze Langfuse data directly from Codex without MCP.
 - `setup check [--json]`: Validate auth + connectivity.
 - `setup diagnose [--json]`: Diagnose key/region/config issues.
 - `setup guide [--json]`: Return setup instructions.
-- `trace list [--limit N] [--page N] [--name X] [--user-id U] [--session-id S] [--all] [--max-pages N] [--no-auth-check] [--json]`: List traces with optional page-based pagination and filters.
-- `trace get <trace_id> [--no-observations] [--max-observations N] [--no-auth-check] [--json]`: Fetch trace details; skip/limit observations for speed.
-- `trace analyze <trace_id> [--no-auth-check] [--json]`: Latency/error bottleneck analysis.
-- `trace errors [--since 24h|7d|... ] [--limit N] [--no-auth-check] [--json]`: Error traces.
-- `trace costs [--group-by model|trace|day] [--since 7d|... ] [--no-auth-check] [--json]`: Cost breakdown.
-- `trace export [--output-dir DIR] [--limit N] [--page N] [--all] [--max-pages N] [--mode metadata|full] [--no-observations] [--max-observations N] [--exclude-user U] [--include-excluded] [--no-auth-check] [--json]`: Local JSON export with manifest.
+- `trace list [--limit N] [--page N] [--name X] [--user-id U] [--session-id S] [--all] [--max-pages N] [--page-retries N] [--timeout-seconds N] [--no-auth-check] [--json]`: List traces with optional page-based pagination and filters.
+- `trace get <trace_id> [--no-observations] [--max-observations N] [--timeout-seconds N] [--no-auth-check] [--json]`: Fetch trace details; skip/limit observations for speed.
+- `trace analyze <trace_id> [--timeout-seconds N] [--no-auth-check] [--json]`: Latency/error bottleneck analysis.
+- `trace errors [--since 24h|7d|... ] [--limit N] [--timeout-seconds N] [--no-auth-check] [--json]`: Error traces.
+- `trace costs [--group-by model|trace|day] [--since 7d|... ] [--timeout-seconds N] [--no-auth-check] [--json]`: Cost breakdown.
+- `trace export [--output-dir DIR] [--limit N] [--page N] [--all] [--max-pages N] [--page-retries N] [--mode metadata|full] [--no-observations] [--max-observations N] [--exclude-user U] [--include-excluded] [--timeout-seconds N] [--no-auth-check] [--json]`: Local JSON export with manifest.
 - `evaluate design|score|scores ... [--no-auth-check] [--json]`: Eval strategy and score operations.
 - `experiment create-dataset|add-item|run|compare ... [--no-auth-check] [--json]`: Experiment scaffolding.
 
@@ -96,6 +96,7 @@ Query and analyze Langfuse data directly from Codex without MCP.
 - For broad scans, use `trace list --page 1 --all --max-pages <small number>` and increase gradually.
 - For golden datasets, use `trace export --mode metadata` first, then selectively re-run with `--mode full`.
 - If latency is unstable, lower SDK timeout per run via env: `LANGFUSE_TIMEOUT=15 "$CODEX_HOME/skills/langfuse/scripts/lf.sh" <command>`.
+- Prefer command-local timeout control: `--timeout-seconds 15` (same effect as setting `LANGFUSE_TIMEOUT`).
 - If a process appears stuck, terminate lingering Python jobs before retrying.
 
 ## Failure Recovery

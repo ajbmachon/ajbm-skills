@@ -137,6 +137,18 @@ def _add_no_auth_flag(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Skip preflight auth_check call for faster execution",
     )
+    parser.add_argument(
+        "--timeout-seconds",
+        type=int,
+        help="Override Langfuse SDK timeout for this command",
+    )
+
+
+def _apply_runtime_tuning(args: argparse.Namespace) -> None:
+    """Apply per-command runtime tuning before client initialization."""
+    timeout_seconds = getattr(args, "timeout_seconds", None)
+    if timeout_seconds is not None:
+        os.environ["LANGFUSE_TIMEOUT"] = str(max(1, timeout_seconds))
 
 
 def _canonical_user_id(value: str | None) -> str:
@@ -153,6 +165,35 @@ def _write_json_file(path: Path, payload) -> None:
         json.dumps(_to_jsonable(payload), indent=2, default=str),
         encoding="utf-8",
     )
+
+
+def _fetch_traces_page_with_retries(
+    client: LangfuseClient,
+    *,
+    limit: int,
+    page: int,
+    name: str | None = None,
+    user_id: str | None = None,
+    session_id: str | None = None,
+    page_retries: int = 2,
+) -> TraceListResult:
+    """Fetch a trace page with bounded retries on transient API failures."""
+    attempts = max(1, page_retries + 1)
+    last_result: TraceListResult | None = None
+    for attempt in range(1, attempts + 1):
+        result: TraceListResult = client.fetch_traces(
+            limit=limit,
+            page=page,
+            name=name,
+            user_id=user_id,
+            session_id=session_id,
+        )
+        if result.ok:
+            return result
+        last_result = result
+        if attempt < attempts:
+            time.sleep(min(2.0 * attempt, 5.0))
+    return last_result or TraceListResult(ok=False, code="API_ERROR", message="Unknown fetch error")
 
 
 # =============================================================================
@@ -204,6 +245,12 @@ def _setup_trace_parser(subparsers: argparse._SubParsersAction) -> None:
         type=int,
         default=100,
         help="Safety cap for --all pagination (default: 100)",
+    )
+    list_parser.add_argument(
+        "--page-retries",
+        type=int,
+        default=2,
+        help="Retries per page on transient failures (default: 2)",
     )
     _add_no_auth_flag(list_parser)
     _add_json_flag(list_parser)
@@ -317,6 +364,12 @@ def _setup_trace_parser(subparsers: argparse._SubParsersAction) -> None:
         default=100,
         help="Safety cap for all-page export (default: 100)",
     )
+    export_parser.add_argument(
+        "--page-retries",
+        type=int,
+        default=2,
+        help="Retries per page on transient failures (default: 2)",
+    )
     export_parser.add_argument("--name", help="Filter traces by name")
     export_parser.add_argument("--user-id", help="Filter traces by user ID")
     export_parser.add_argument("--session-id", help="Filter traces by session ID")
@@ -406,12 +459,14 @@ def _trace_list(args: argparse.Namespace) -> int:
                     pass
             seen_pages: set[int] = set()
             for _ in range(max(1, args.max_pages)):
-                page: TraceListResult = client.fetch_traces(
+                page = _fetch_traces_page_with_retries(
+                    client,
                     limit=args.limit,
+                    page=current_page,
                     name=args.name,
                     user_id=args.user_id,
                     session_id=args.session_id,
-                    page=current_page,
+                    page_retries=args.page_retries,
                 )
                 if not page.ok:
                     result = page
@@ -447,13 +502,14 @@ def _trace_list(args: argparse.Namespace) -> int:
                 if result is None:
                     result = TraceListResult(ok=False, code="API_ERROR", message="No pages returned")
         else:
-            result = client.fetch_traces(
+            result = _fetch_traces_page_with_retries(
+                client,
                 limit=args.limit,
+                page=args.page,
                 name=args.name,
                 user_id=args.user_id,
                 session_id=args.session_id,
-                page=args.page,
-                cursor=args.cursor,
+                page_retries=args.page_retries,
             )
     finally:
         # Stop progress indicator
@@ -1156,12 +1212,14 @@ def _trace_export(args: argparse.Namespace) -> int:
         current_page = start_page + offset
         pages_attempted += 1
 
-        page_result: TraceListResult = client.fetch_traces(
+        page_result = _fetch_traces_page_with_retries(
+            client,
             limit=args.limit,
             page=current_page,
             name=args.name,
             user_id=args.user_id,
             session_id=args.session_id,
+            page_retries=args.page_retries,
         )
         if not page_result.ok:
             page_errors.append(
@@ -1253,6 +1311,8 @@ def _trace_export(args: argparse.Namespace) -> int:
             "start_page": start_page,
             "all_pages": bool(args.all),
             "max_pages": args.max_pages,
+            "page_retries": args.page_retries,
+            "timeout_seconds": args.timeout_seconds,
             "name": args.name,
             "user_id": args.user_id,
             "session_id": args.session_id,
@@ -2159,10 +2219,12 @@ def main(argv: list[str] | None = None) -> int:
 
     # Command specified but no action (for subcommands with nested actions)
     if hasattr(args, "action") and args.action is None and hasattr(args, "func"):
+        _apply_runtime_tuning(args)
         return args.func(args)
 
     # Execute the command
     if hasattr(args, "func"):
+        _apply_runtime_tuning(args)
         return args.func(args)
 
     # Fallback: show help for the subcommand
