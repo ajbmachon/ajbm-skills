@@ -274,19 +274,37 @@ class LangfuseClient:
         name: str | None = None,
         user_id: str | None = None,
         session_id: str | None = None,
+        page: int | None = None,
+        cursor: str | None = None,
     ) -> Any:
         """Fetch recent traces with optional filters."""
         from .traces import fetch_traces as _fetch_traces
 
         return _fetch_traces(
-            limit=limit, name=name, user_id=user_id, session_id=session_id, langfuse=self.langfuse
+            limit=limit,
+            name=name,
+            user_id=user_id,
+            session_id=session_id,
+            page=page,
+            cursor=cursor,
+            langfuse=self.langfuse,
         )
 
-    def fetch_trace(self, trace_id: str) -> Any:
+    def fetch_trace(
+        self,
+        trace_id: str,
+        include_observations: bool = True,
+        max_observations: int | None = None,
+    ) -> Any:
         """Fetch a single trace with all observations."""
         from .traces import fetch_trace as _fetch_trace
 
-        return _fetch_trace(trace_id, langfuse=self.langfuse)
+        return _fetch_trace(
+            trace_id,
+            include_observations=include_observations,
+            max_observations=max_observations,
+            langfuse=self.langfuse,
+        )
 
     def analyze_trace(self, trace_id: str) -> Any:
         """Analyze a trace for latency bottlenecks and issues."""

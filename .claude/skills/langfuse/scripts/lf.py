@@ -5,7 +5,7 @@ This script provides a command-line interface for interacting with Langfuse,
 enabling trace analysis, evaluation management, experimentation, and setup validation.
 
 Usage:
-    python scripts/langfuse.py <subcommand> <action> [options]
+    python3 "$CODEX_HOME/skills/langfuse/scripts/lf.py" <subcommand> <action> [options]
 
 Subcommands:
     trace       Query and analyze traces
@@ -19,9 +19,14 @@ ISC Reference: rows 7-13
 from __future__ import annotations
 
 import argparse
+import json
+import os
+import re
 import sys
 import threading
 import time
+from dataclasses import asdict, is_dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Add skill directory to path for lib package imports
@@ -31,18 +36,29 @@ if str(_SKILL_DIR) not in sys.path:
     sys.path.insert(0, str(_SKILL_DIR))
 
 # Import from lib package (modular structure)
-from lib import (  # noqa: E402
-    LANGFUSE_REGIONS,
-    LangfuseClient,
-    LangfuseError,
-    ScoreCreateResult,
-    ScoreListResult,
-    TraceAnalyzeResult,
-    TraceCostsResult,
-    TraceErrorsResult,
-    TraceGetResult,
-    TraceListResult,
-)
+try:
+    from lib import (  # noqa: E402
+        LANGFUSE_REGIONS,
+        LangfuseClient,
+        LangfuseError,
+        ScoreCreateResult,
+        ScoreListResult,
+        TraceAnalyzeResult,
+        TraceCostsResult,
+        TraceErrorsResult,
+        TraceGetResult,
+        TraceListResult,
+    )
+except ModuleNotFoundError as exc:  # pragma: no cover - startup guard
+    if exc.name in {"langfuse", "dotenv"}:
+        print(
+            "Missing Python dependency.\n"
+            "Run the uv wrapper instead:\n"
+            "  \"$CODEX_HOME/skills/langfuse/scripts/lf.sh\" --help",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+    raise
 
 
 def _show_progress_indicator(message: str, stop_event: threading.Event) -> None:
@@ -62,7 +78,7 @@ def _show_progress_indicator(message: str, stop_event: threading.Event) -> None:
     print("\r" + " " * (len(message) + 3) + "\r", end="", flush=True)
 
 
-def _require_auth() -> LangfuseClient | None:
+def _require_auth(*, retry: bool = False, skip: bool = False) -> LangfuseClient | None:
     """Validate auth before any operation (ISC row 11).
 
     Returns:
@@ -71,7 +87,10 @@ def _require_auth() -> LangfuseClient | None:
     """
     try:
         client = LangfuseClient()
-        result = client.auth_check()
+        skip_env = os.getenv("LANGFUSE_SKIP_AUTH_CHECK", "").lower() in {"1", "true", "yes", "on"}
+        if skip or skip_env:
+            return client
+        result = client.auth_check(retry=retry)
         if not result.ok:
             print(f"Error: {result.message}", file=sys.stderr)
             return None
@@ -79,6 +98,61 @@ def _require_auth() -> LangfuseClient | None:
     except LangfuseError as e:
         print(f"Error: {e}", file=sys.stderr)
         return None
+
+
+def _json_requested(args: argparse.Namespace) -> bool:
+    """Return whether the caller requested JSON output."""
+    return bool(getattr(args, "json", False))
+
+
+def _to_jsonable(value):
+    """Convert SDK/dataclass objects to JSON-serializable structures."""
+    if is_dataclass(value):
+        return asdict(value)
+    if isinstance(value, dict):
+        return {k: _to_jsonable(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_to_jsonable(v) for v in value]
+    return value
+
+
+def _emit_json(payload) -> None:
+    """Print pretty JSON payload."""
+    print(json.dumps(_to_jsonable(payload), indent=2, default=str))
+
+
+def _add_json_flag(parser: argparse.ArgumentParser) -> None:
+    """Add --json output mode to an action parser."""
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print machine-readable JSON output",
+    )
+
+
+def _add_no_auth_flag(parser: argparse.ArgumentParser) -> None:
+    """Add --no-auth-check flag for low-latency calls."""
+    parser.add_argument(
+        "--no-auth-check",
+        action="store_true",
+        help="Skip preflight auth_check call for faster execution",
+    )
+
+
+def _canonical_user_id(value: str | None) -> str:
+    """Normalize user IDs/emails for robust exclusion matching."""
+    if not value:
+        return ""
+    return re.sub(r"[^a-z0-9]", "", value.strip().lower())
+
+
+def _write_json_file(path: Path, payload) -> None:
+    """Write payload as UTF-8 JSON with stable formatting."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(_to_jsonable(payload), indent=2, default=str),
+        encoding="utf-8",
+    )
 
 
 # =============================================================================
@@ -110,11 +184,29 @@ def _setup_trace_parser(subparsers: argparse._SubParsersAction) -> None:
         "--limit",
         type=int,
         default=10,
-        help="Maximum number of traces to return (default: 10)",
+        help="Maximum number of traces per page (default: 10)",
     )
     list_parser.add_argument("--name", help="Filter by trace name")
     list_parser.add_argument("--user-id", help="Filter by user ID")
     list_parser.add_argument("--session-id", help="Filter by session ID")
+    list_parser.add_argument("--page", type=int, default=1, help="Page number (default: 1)")
+    list_parser.add_argument(
+        "--cursor",
+        help="Deprecated alias for page number; use --page",
+    )
+    list_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Fetch all pages until exhausted (respects filters)",
+    )
+    list_parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=100,
+        help="Safety cap for --all pagination (default: 100)",
+    )
+    _add_no_auth_flag(list_parser)
+    _add_json_flag(list_parser)
     list_parser.set_defaults(func=_trace_list)
 
     # trace get
@@ -124,6 +216,18 @@ def _setup_trace_parser(subparsers: argparse._SubParsersAction) -> None:
         description="Fetch a single trace with all observations.",
     )
     get_parser.add_argument("trace_id", help="The trace ID to fetch")
+    get_parser.add_argument(
+        "--no-observations",
+        action="store_true",
+        help="Skip observation pagination for faster metadata fetch",
+    )
+    get_parser.add_argument(
+        "--max-observations",
+        type=int,
+        help="Limit number of observations returned",
+    )
+    _add_no_auth_flag(get_parser)
+    _add_json_flag(get_parser)
     get_parser.set_defaults(func=_trace_get)
 
     # trace analyze
@@ -133,6 +237,8 @@ def _setup_trace_parser(subparsers: argparse._SubParsersAction) -> None:
         description="Analyze trace for latency bottlenecks and issues.",
     )
     analyze_parser.add_argument("trace_id", help="The trace ID to analyze")
+    _add_no_auth_flag(analyze_parser)
+    _add_json_flag(analyze_parser)
     analyze_parser.set_defaults(func=_trace_analyze)
 
     # trace errors
@@ -152,6 +258,8 @@ def _setup_trace_parser(subparsers: argparse._SubParsersAction) -> None:
         default=20,
         help="Maximum number of error traces to return (default: 20)",
     )
+    _add_no_auth_flag(errors_parser)
+    _add_json_flag(errors_parser)
     errors_parser.set_defaults(func=_trace_errors)
 
     # trace costs
@@ -171,7 +279,77 @@ def _setup_trace_parser(subparsers: argparse._SubParsersAction) -> None:
         default="7d",
         help="Time range to analyze (e.g., '24h', '7d') (default: 7d)",
     )
+    _add_no_auth_flag(costs_parser)
+    _add_json_flag(costs_parser)
     costs_parser.set_defaults(func=_trace_costs)
+
+    # trace export
+    export_parser = trace_subparsers.add_parser(
+        "export",
+        help="Export traces to local JSON files",
+        description="Export traces with optional pagination, filtering, and full trace hydration.",
+    )
+    export_parser.add_argument(
+        "--output-dir",
+        default="./langfuse-export",
+        help="Directory where export files are written (default: ./langfuse-export)",
+    )
+    export_parser.add_argument(
+        "--limit",
+        type=int,
+        default=20,
+        help="Number of traces per page (default: 20)",
+    )
+    export_parser.add_argument(
+        "--page",
+        type=int,
+        default=1,
+        help="Start page for export (default: 1)",
+    )
+    export_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Export all pages from --page onward (bounded by --max-pages)",
+    )
+    export_parser.add_argument(
+        "--max-pages",
+        type=int,
+        default=100,
+        help="Safety cap for all-page export (default: 100)",
+    )
+    export_parser.add_argument("--name", help="Filter traces by name")
+    export_parser.add_argument("--user-id", help="Filter traces by user ID")
+    export_parser.add_argument("--session-id", help="Filter traces by session ID")
+    export_parser.add_argument(
+        "--mode",
+        choices=["metadata", "full"],
+        default="full",
+        help="Export mode: metadata only or full trace payloads (default: full)",
+    )
+    export_parser.add_argument(
+        "--no-observations",
+        action="store_true",
+        help="When mode=full, skip observation hydration for faster exports",
+    )
+    export_parser.add_argument(
+        "--max-observations",
+        type=int,
+        help="When mode=full, cap observations per trace",
+    )
+    export_parser.add_argument(
+        "--exclude-user",
+        action="append",
+        default=[],
+        help="User ID/email to exclude (repeatable)",
+    )
+    export_parser.add_argument(
+        "--include-excluded",
+        action="store_true",
+        help="Disable default exclusion of ilias@gmail.com / ilias-gmail-com",
+    )
+    _add_no_auth_flag(export_parser)
+    _add_json_flag(export_parser)
+    export_parser.set_defaults(func=_trace_export)
 
     trace_parser.set_defaults(func=_trace_help, parser=trace_parser)
 
@@ -196,47 +374,125 @@ def _trace_list(args: argparse.Namespace) -> int:
     - Example: 'trace list --limit 10' -> shows 10 most recent traces
     - Negative case: No traces found -> 'No traces found matching your criteria'
     """
-    client = _require_auth()
+    client = _require_auth(skip=args.no_auth_check)
     if client is None:
         return 1
 
-    # Set up progress indicator for long operations (ISC row 68)
-    # The progress indicator is started before the fetch and shows a spinner
-    # if the operation takes longer than 5 seconds.
+    # Disable spinners in JSON mode to keep output machine-parseable.
+    show_progress = not _json_requested(args)
     stop_event = threading.Event()
-    progress_started = threading.Event()
+    progress_thread: threading.Thread | None = None
 
-    def delayed_progress_start() -> None:
-        """Start progress indicator after 5 second delay."""
-        if not stop_event.wait(5.0):  # Returns True if stopped early
-            progress_started.set()
-            _show_progress_indicator("Fetching traces...", stop_event)
+    if show_progress:
+        # Set up progress indicator for long operations (ISC row 68)
+        def delayed_progress_start() -> None:
+            """Start progress indicator after 5 second delay."""
+            if not stop_event.wait(5.0):  # Returns True if stopped early
+                _show_progress_indicator("Fetching traces...", stop_event)
 
-    # Start background thread that will show progress after 5 seconds
-    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
-    progress_thread.start()
+        # Start background thread that will show progress after 5 seconds
+        progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+        progress_thread.start()
 
     try:
-        result: TraceListResult = client.fetch_traces(
-            limit=args.limit,
-            name=args.name,
-            user_id=args.user_id,
-            session_id=args.session_id,
-        )
+        if args.all:
+            result: TraceListResult | None = None
+            pages: list[TraceListResult] = []
+            current_page = args.page
+            if args.cursor:
+                try:
+                    current_page = int(args.cursor)
+                except ValueError:
+                    pass
+            seen_pages: set[int] = set()
+            for _ in range(max(1, args.max_pages)):
+                page: TraceListResult = client.fetch_traces(
+                    limit=args.limit,
+                    name=args.name,
+                    user_id=args.user_id,
+                    session_id=args.session_id,
+                    page=current_page,
+                )
+                if not page.ok:
+                    result = page
+                    break
+                pages.append(page)
+                if not page.has_more:
+                    break
+                next_page = (page.page or current_page) + 1
+                if next_page in seen_pages:
+                    break
+                seen_pages.add(next_page)
+                current_page = next_page
+                if not page.traces:
+                    break
+
+            if pages:
+                all_traces = []
+                for page in pages:
+                    all_traces.extend(page.traces)
+                last_page = pages[-1]
+                result = TraceListResult(
+                    ok=True,
+                    code="OK",
+                    message=f"Found {len(all_traces)} trace(s)",
+                    traces=all_traces,
+                    has_more=last_page.has_more,
+                    cursor=last_page.cursor,
+                    page=last_page.page,
+                    total_pages=last_page.total_pages,
+                    total_items=last_page.total_items,
+                )
+            else:
+                if result is None:
+                    result = TraceListResult(ok=False, code="API_ERROR", message="No pages returned")
+        else:
+            result = client.fetch_traces(
+                limit=args.limit,
+                name=args.name,
+                user_id=args.user_id,
+                session_id=args.session_id,
+                page=args.page,
+                cursor=args.cursor,
+            )
     finally:
         # Stop progress indicator
         stop_event.set()
-        progress_thread.join(timeout=1.0)
+        if progress_thread is not None:
+            progress_thread.join(timeout=1.0)
 
     # Handle errors
     if not result.ok:
+        if _json_requested(args):
+            _emit_json(result)
+            client.flush()
+            return 1
         print(f"Error: {result.message}", file=sys.stderr)
         client.flush()
         return 1
 
     # Handle no traces found (negative case)
     if not result.traces:
+        if _json_requested(args):
+            _emit_json(result)
+            client.flush()
+            return 0
         print("No traces found matching your criteria.")
+        client.flush()
+        return 0
+
+    if _json_requested(args):
+        payload = _to_jsonable(result)
+        payload["pagination"] = {
+            "requested_all": bool(args.all),
+            "max_pages": args.max_pages,
+            "next_cursor": result.cursor,
+            "has_more": result.has_more,
+            "page": result.page,
+            "total_pages": result.total_pages,
+            "total_items": result.total_items,
+        }
+        _emit_json(payload)
         client.flush()
         return 0
 
@@ -284,40 +540,70 @@ def _trace_get(args: argparse.Namespace) -> int:
     - Example: Valid trace ID -> full trace tree with observations
     - Negative case: Invalid trace ID -> 'Trace not found: [id]'
     """
-    client = _require_auth()
+    client = _require_auth(skip=_args.no_auth_check)
     if client is None:
         return 1
 
-    # Set up progress indicator for long operations
+    show_progress = not _json_requested(args)
     stop_event = threading.Event()
-    progress_started = threading.Event()
+    progress_thread: threading.Thread | None = None
 
-    def delayed_progress_start() -> None:
-        """Start progress indicator after 5 second delay."""
-        if not stop_event.wait(5.0):
-            progress_started.set()
-            _show_progress_indicator("Fetching trace details...", stop_event)
+    if show_progress:
+        def delayed_progress_start() -> None:
+            """Start progress indicator after 5 second delay."""
+            if not stop_event.wait(5.0):
+                _show_progress_indicator("Fetching trace details...", stop_event)
 
-    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
-    progress_thread.start()
+        progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+        progress_thread.start()
 
     try:
-        result: TraceGetResult = client.fetch_trace(args.trace_id)
+        result: TraceGetResult = client.fetch_trace(
+            args.trace_id,
+            include_observations=not args.no_observations,
+            max_observations=args.max_observations,
+        )
     finally:
         stop_event.set()
-        progress_thread.join(timeout=1.0)
+        if progress_thread is not None:
+            progress_thread.join(timeout=1.0)
 
     # Handle errors
     if not result.ok:
+        if _json_requested(args):
+            _emit_json(result)
+            client.flush()
+            return 1
         print(f"Error: {result.message}", file=sys.stderr)
         client.flush()
         return 1
 
     trace = result.trace
     if trace is None:
+        if _json_requested(args):
+            _emit_json(
+                {
+                    "ok": False,
+                    "code": "NOT_FOUND",
+                    "message": f"Trace not found: {args.trace_id}",
+                    "trace_id": args.trace_id,
+                }
+            )
+            client.flush()
+            return 1
         print(f"Error: Trace not found: {args.trace_id}", file=sys.stderr)
         client.flush()
         return 1
+
+    if _json_requested(args):
+        payload = _to_jsonable(result)
+        payload["fetch_options"] = {
+            "include_observations": not args.no_observations,
+            "max_observations": args.max_observations,
+        }
+        _emit_json(payload)
+        client.flush()
+        return 0
 
     # Display trace hierarchy (ISC row 20)
     print("=" * 80)
@@ -464,40 +750,61 @@ def _trace_analyze(args: argparse.Namespace) -> int:
     - Trace with errors -> highlights error observations first
     - Negative case: Trace has no timing data -> 'Cannot analyze: no timing data available'
     """
-    client = _require_auth()
+    client = _require_auth(skip=args.no_auth_check)
     if client is None:
         return 1
 
-    # Set up progress indicator for long operations
+    show_progress = not _json_requested(args)
     stop_event = threading.Event()
-    progress_started = threading.Event()
+    progress_thread: threading.Thread | None = None
 
-    def delayed_progress_start() -> None:
-        """Start progress indicator after 5 second delay."""
-        if not stop_event.wait(5.0):
-            progress_started.set()
-            _show_progress_indicator("Analyzing trace...", stop_event)
+    if show_progress:
+        def delayed_progress_start() -> None:
+            """Start progress indicator after 5 second delay."""
+            if not stop_event.wait(5.0):
+                _show_progress_indicator("Analyzing trace...", stop_event)
 
-    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
-    progress_thread.start()
+        progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+        progress_thread.start()
 
     try:
         result: TraceAnalyzeResult = client.analyze_trace(args.trace_id)
     finally:
         stop_event.set()
-        progress_thread.join(timeout=1.0)
+        if progress_thread is not None:
+            progress_thread.join(timeout=1.0)
 
     # Handle errors
     if not result.ok:
+        if _json_requested(args):
+            _emit_json(result)
+            client.flush()
+            return 1
         print(f"Error: {result.message}", file=sys.stderr)
         client.flush()
         return 1
 
     analysis = result.analysis
     if analysis is None:
+        if _json_requested(args):
+            _emit_json(
+                {
+                    "ok": False,
+                    "code": "NO_ANALYSIS",
+                    "message": f"No analysis returned for trace {args.trace_id}",
+                    "trace_id": args.trace_id,
+                }
+            )
+            client.flush()
+            return 1
         print(f"Error: No analysis returned for trace {args.trace_id}", file=sys.stderr)
         client.flush()
         return 1
+
+    if _json_requested(args):
+        _emit_json(result)
+        client.flush()
+        return 0
 
     # Display analysis results (insight-first per ISC row 21, 69)
     print("=" * 80)
@@ -611,22 +918,22 @@ def _trace_errors(args: argparse.Namespace) -> int:
     - Example: 'trace errors --since 24h' -> errors in last 24 hours
     - Negative case: No errors found -> 'No errors in the specified time range'
     """
-    client = _require_auth()
+    client = _require_auth(skip=args.no_auth_check)
     if client is None:
         return 1
 
-    # Set up progress indicator for long operations
+    show_progress = not _json_requested(args)
     stop_event = threading.Event()
-    progress_started = threading.Event()
+    progress_thread: threading.Thread | None = None
 
-    def delayed_progress_start() -> None:
-        """Start progress indicator after 5 second delay."""
-        if not stop_event.wait(5.0):
-            progress_started.set()
-            _show_progress_indicator("Searching for errors...", stop_event)
+    if show_progress:
+        def delayed_progress_start() -> None:
+            """Start progress indicator after 5 second delay."""
+            if not stop_event.wait(5.0):
+                _show_progress_indicator("Searching for errors...", stop_event)
 
-    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
-    progress_thread.start()
+        progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+        progress_thread.start()
 
     try:
         result: TraceErrorsResult = client.fetch_errors(
@@ -635,17 +942,31 @@ def _trace_errors(args: argparse.Namespace) -> int:
         )
     finally:
         stop_event.set()
-        progress_thread.join(timeout=1.0)
+        if progress_thread is not None:
+            progress_thread.join(timeout=1.0)
 
     # Handle errors
     if not result.ok:
+        if _json_requested(args):
+            _emit_json(result)
+            client.flush()
+            return 1
         print(f"Error: {result.message}", file=sys.stderr)
         client.flush()
         return 1
 
     # Negative case: No errors found
     if not result.errors:
+        if _json_requested(args):
+            _emit_json(result)
+            client.flush()
+            return 0
         print(f"No errors in the specified time range ({result.time_range})")
+        client.flush()
+        return 0
+
+    if _json_requested(args):
+        _emit_json(result)
         client.flush()
         return 0
 
@@ -695,22 +1016,22 @@ def _trace_costs(args: argparse.Namespace) -> int:
     - Shows: total cost, cost per model, cost per trace (top N)
     - Example: 'trace costs --group-by model' -> cost breakdown by model
     """
-    client = _require_auth()
+    client = _require_auth(skip=args.no_auth_check)
     if client is None:
         return 1
 
-    # Set up progress indicator for long operations
+    show_progress = not _json_requested(args)
     stop_event = threading.Event()
-    progress_started = threading.Event()
+    progress_thread: threading.Thread | None = None
 
-    def delayed_progress_start() -> None:
-        """Start progress indicator after 5 second delay."""
-        if not stop_event.wait(5.0):
-            progress_started.set()
-            _show_progress_indicator("Analyzing costs...", stop_event)
+    if show_progress:
+        def delayed_progress_start() -> None:
+            """Start progress indicator after 5 second delay."""
+            if not stop_event.wait(5.0):
+                _show_progress_indicator("Analyzing costs...", stop_event)
 
-    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
-    progress_thread.start()
+        progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+        progress_thread.start()
 
     try:
         result: TraceCostsResult = client.fetch_costs(
@@ -719,13 +1040,23 @@ def _trace_costs(args: argparse.Namespace) -> int:
         )
     finally:
         stop_event.set()
-        progress_thread.join(timeout=1.0)
+        if progress_thread is not None:
+            progress_thread.join(timeout=1.0)
 
     # Handle errors
     if not result.ok:
+        if _json_requested(args):
+            _emit_json(result)
+            client.flush()
+            return 1
         print(f"Error: {result.message}", file=sys.stderr)
         client.flush()
         return 1
+
+    if _json_requested(args):
+        _emit_json(result)
+        client.flush()
+        return 0
 
     # Display costs (ISC row 18)
     print("=" * 80)
@@ -796,6 +1127,188 @@ def _trace_costs(args: argparse.Namespace) -> int:
     return 0
 
 
+def _trace_export(args: argparse.Namespace) -> int:
+    """Export traces to local JSON files."""
+    client = _require_auth(skip=args.no_auth_check)
+    if client is None:
+        return 1
+
+    start_page = max(1, args.page)
+    default_excludes = [] if args.include_excluded else ["ilias@gmail.com", "ilias-gmail-com"]
+    all_excludes = default_excludes + list(args.exclude_user)
+    canonical_excludes = {_canonical_user_id(v) for v in all_excludes}
+
+    run_dir = Path(args.output_dir) / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    traces_dir = run_dir / "traces"
+    traces_dir.mkdir(parents=True, exist_ok=True)
+
+    pages_requested = args.max_pages if args.all else 1
+    pages_attempted = 0
+    pages_succeeded = 0
+    page_errors: list[dict] = []
+    traces_seen: set[str] = set()
+
+    exported: list[dict] = []
+    skipped: list[dict] = []
+    failures: list[dict] = []
+
+    for offset in range(max(1, pages_requested)):
+        current_page = start_page + offset
+        pages_attempted += 1
+
+        page_result: TraceListResult = client.fetch_traces(
+            limit=args.limit,
+            page=current_page,
+            name=args.name,
+            user_id=args.user_id,
+            session_id=args.session_id,
+        )
+        if not page_result.ok:
+            page_errors.append(
+                {
+                    "page": current_page,
+                    "code": page_result.code,
+                    "message": page_result.message,
+                }
+            )
+            continue
+
+        pages_succeeded += 1
+
+        if not page_result.traces:
+            break
+
+        for trace in page_result.traces:
+            if trace.id in traces_seen:
+                continue
+            traces_seen.add(trace.id)
+
+            if _canonical_user_id(trace.user_id) in canonical_excludes:
+                skipped.append(
+                    {
+                        "trace_id": trace.id,
+                        "reason": "excluded_user",
+                        "user_id": trace.user_id,
+                        "timestamp": trace.timestamp,
+                    }
+                )
+                continue
+
+            try:
+                if args.mode == "metadata":
+                    payload = {
+                        "trace": _to_jsonable(trace),
+                        "export_metadata": {
+                            "exported_at": datetime.now(timezone.utc).isoformat(),
+                            "mode": args.mode,
+                        },
+                    }
+                else:
+                    full_result: TraceGetResult = client.fetch_trace(
+                        trace.id,
+                        include_observations=not args.no_observations,
+                        max_observations=args.max_observations,
+                    )
+                    if not full_result.ok or full_result.trace is None:
+                        failures.append(
+                            {
+                                "trace_id": trace.id,
+                                "code": full_result.code,
+                                "message": full_result.message,
+                            }
+                        )
+                        continue
+                    payload = {
+                        "trace": _to_jsonable(full_result.trace),
+                        "export_metadata": {
+                            "exported_at": datetime.now(timezone.utc).isoformat(),
+                            "mode": args.mode,
+                            "include_observations": not args.no_observations,
+                            "max_observations": args.max_observations,
+                        },
+                    }
+
+                trace_path = traces_dir / f"{trace.id}.json"
+                _write_json_file(trace_path, payload)
+                exported.append(
+                    {
+                        "trace_id": trace.id,
+                        "file": str(trace_path),
+                        "user_id": trace.user_id,
+                        "timestamp": trace.timestamp,
+                    }
+                )
+            except Exception as exc:  # pragma: no cover - defensive
+                failures.append({"trace_id": trace.id, "message": str(exc)})
+
+        if args.all and not page_result.has_more:
+            break
+
+    manifest = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "output_root": str(run_dir),
+        "mode": args.mode,
+        "filters": {
+            "limit": args.limit,
+            "start_page": start_page,
+            "all_pages": bool(args.all),
+            "max_pages": args.max_pages,
+            "name": args.name,
+            "user_id": args.user_id,
+            "session_id": args.session_id,
+        },
+        "exclusion": {
+            "raw": all_excludes,
+            "canonical": sorted(canonical_excludes),
+            "include_excluded": bool(args.include_excluded),
+        },
+        "pages_attempted": pages_attempted,
+        "pages_succeeded": pages_succeeded,
+        "page_errors": page_errors,
+        "trace_candidates": len(traces_seen),
+        "exported_count": len(exported),
+        "skipped_count": len(skipped),
+        "failed_count": len(failures),
+        "exported": exported,
+        "skipped": skipped,
+        "failures": failures,
+    }
+
+    manifest_path = run_dir / "manifest.json"
+    _write_json_file(manifest_path, manifest)
+
+    if _json_requested(args):
+        _emit_json(
+            {
+                "ok": True,
+                "code": "OK",
+                "message": "Trace export completed",
+                "manifest": str(manifest_path),
+                "summary": {
+                    "trace_candidates": len(traces_seen),
+                    "exported_count": len(exported),
+                    "skipped_count": len(skipped),
+                    "failed_count": len(failures),
+                    "pages_attempted": pages_attempted,
+                    "pages_succeeded": pages_succeeded,
+                },
+            }
+        )
+    else:
+        print("=" * 80)
+        print("TRACE EXPORT")
+        print("=" * 80)
+        print(f"Output:   {run_dir}")
+        print(f"Manifest: {manifest_path}")
+        print(f"Mode:     {args.mode}")
+        print(f"Pages:    {pages_succeeded}/{pages_attempted} succeeded")
+        print(f"Traces:   candidates={len(traces_seen)} exported={len(exported)} skipped={len(skipped)} failed={len(failures)}")
+        print("=" * 80)
+
+    client.flush()
+    return 0
+
+
 # =============================================================================
 # EVALUATE SUBCOMMAND
 # =============================================================================
@@ -821,6 +1334,8 @@ def _setup_evaluate_parser(subparsers: argparse._SubParsersAction) -> None:
         help="Design evaluation strategy",
         description="Interactive guide to design an evaluation strategy.",
     )
+    _add_no_auth_flag(design_parser)
+    _add_json_flag(design_parser)
     design_parser.set_defaults(func=_evaluate_design)
 
     # evaluate score
@@ -839,6 +1354,8 @@ def _setup_evaluate_parser(subparsers: argparse._SubParsersAction) -> None:
         help="Score data type (default: numeric)",
     )
     score_parser.add_argument("--comment", help="Optional comment explaining the score")
+    _add_no_auth_flag(score_parser)
+    _add_json_flag(score_parser)
     score_parser.set_defaults(func=_evaluate_score)
 
     # evaluate scores
@@ -855,6 +1372,8 @@ def _setup_evaluate_parser(subparsers: argparse._SubParsersAction) -> None:
         default=20,
         help="Maximum number of scores to return (default: 20)",
     )
+    _add_no_auth_flag(scores_parser)
+    _add_json_flag(scores_parser)
     scores_parser.set_defaults(func=_evaluate_scores)
 
     eval_parser.set_defaults(func=_evaluate_help, parser=eval_parser)
@@ -873,9 +1392,27 @@ def _evaluate_design(_args: argparse.Namespace) -> int:
     - 'evaluate design' helps design evaluation strategy interactively
     - Provides guidance on score types, methods, and best practices
     """
-    client = _require_auth()
+    client = _require_auth(skip=_args.no_auth_check)
     if client is None:
         return 1
+
+    if _json_requested(_args):
+        _emit_json(
+            {
+                "ok": True,
+                "code": "OK",
+                "message": "Evaluation strategy guidance",
+                "recommended_workflow": [
+                    "Start with manual scoring for pattern discovery",
+                    "Define score configs for consistency",
+                    "Add LLM-as-a-judge for scale",
+                    "Use annotation queues for ground truth",
+                    "Compare human vs automated scores in analytics",
+                ],
+            }
+        )
+        client.flush()
+        return 0
 
     print("=" * 80)
     print("EVALUATION STRATEGY DESIGN GUIDE")
@@ -967,7 +1504,7 @@ def _evaluate_score(args: argparse.Namespace) -> int:
     - Example: 'evaluate score abc123 --name quality --value 0.8 --data-type numeric'
     - Negative case: Invalid score type -> 'Invalid data-type. Use: numeric, categorical, boolean'
     """
-    client = _require_auth()
+    client = _require_auth(skip=args.no_auth_check)
     if client is None:
         return 1
 
@@ -982,9 +1519,18 @@ def _evaluate_score(args: argparse.Namespace) -> int:
 
     # Handle errors
     if not result.ok:
+        if _json_requested(args):
+            _emit_json(result)
+            client.flush()
+            return 1
         print(f"Error: {result.message}", file=sys.stderr)
         client.flush()
         return 1
+
+    if _json_requested(args):
+        _emit_json(result)
+        client.flush()
+        return 0
 
     # Success output
     print("=" * 60)
@@ -1016,22 +1562,22 @@ def _evaluate_scores(args: argparse.Namespace) -> int:
     - Supports filtering by trace ID and score name
     - Example: 'evaluate scores --trace abc123' -> all scores for that trace
     """
-    client = _require_auth()
+    client = _require_auth(skip=args.no_auth_check)
     if client is None:
         return 1
 
-    # Set up progress indicator for long operations
+    show_progress = not _json_requested(args)
     stop_event = threading.Event()
-    progress_started = threading.Event()
+    progress_thread: threading.Thread | None = None
 
-    def delayed_progress_start() -> None:
-        """Start progress indicator after 5 second delay."""
-        if not stop_event.wait(5.0):
-            progress_started.set()
-            _show_progress_indicator("Fetching scores...", stop_event)
+    if show_progress:
+        def delayed_progress_start() -> None:
+            """Start progress indicator after 5 second delay."""
+            if not stop_event.wait(5.0):
+                _show_progress_indicator("Fetching scores...", stop_event)
 
-    progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
-    progress_thread.start()
+        progress_thread = threading.Thread(target=delayed_progress_start, daemon=True)
+        progress_thread.start()
 
     try:
         result: ScoreListResult = client.fetch_scores(
@@ -1041,22 +1587,36 @@ def _evaluate_scores(args: argparse.Namespace) -> int:
         )
     finally:
         stop_event.set()
-        progress_thread.join(timeout=1.0)
+        if progress_thread is not None:
+            progress_thread.join(timeout=1.0)
 
     # Handle errors
     if not result.ok:
+        if _json_requested(args):
+            _emit_json(result)
+            client.flush()
+            return 1
         print(f"Error: {result.message}", file=sys.stderr)
         client.flush()
         return 1
 
     # Handle no scores found
     if not result.scores:
+        if _json_requested(args):
+            _emit_json(result)
+            client.flush()
+            return 0
         filter_desc = ""
         if args.trace:
             filter_desc = f" for trace {args.trace}"
         elif args.name:
             filter_desc = f" with name '{args.name}'"
         print(f"No scores found{filter_desc}.")
+        client.flush()
+        return 0
+
+    if _json_requested(args):
+        _emit_json(result)
         client.flush()
         return 0
 
@@ -1141,6 +1701,8 @@ def _setup_experiment_parser(subparsers: argparse._SubParsersAction) -> None:
     )
     create_dataset_parser.add_argument("--name", required=True, help="Dataset name")
     create_dataset_parser.add_argument("--description", help="Dataset description")
+    _add_no_auth_flag(create_dataset_parser)
+    _add_json_flag(create_dataset_parser)
     create_dataset_parser.set_defaults(func=_experiment_create_dataset)
 
     # experiment add-item
@@ -1152,6 +1714,8 @@ def _setup_experiment_parser(subparsers: argparse._SubParsersAction) -> None:
     add_item_parser.add_argument("--dataset", required=True, help="Dataset name")
     add_item_parser.add_argument("--input", required=True, help="Input value (JSON string)")
     add_item_parser.add_argument("--expected-output", help="Expected output (JSON string)")
+    _add_no_auth_flag(add_item_parser)
+    _add_json_flag(add_item_parser)
     add_item_parser.set_defaults(func=_experiment_add_item)
 
     # experiment run
@@ -1162,6 +1726,8 @@ def _setup_experiment_parser(subparsers: argparse._SubParsersAction) -> None:
     )
     run_parser.add_argument("--dataset", required=True, help="Dataset name to use")
     run_parser.add_argument("--name", help="Experiment run name")
+    _add_no_auth_flag(run_parser)
+    _add_json_flag(run_parser)
     run_parser.set_defaults(func=_experiment_run)
 
     # experiment compare
@@ -1176,6 +1742,8 @@ def _setup_experiment_parser(subparsers: argparse._SubParsersAction) -> None:
         nargs="+",
         help="Run names to compare (if not specified, compares all runs)",
     )
+    _add_no_auth_flag(compare_parser)
+    _add_json_flag(compare_parser)
     compare_parser.set_defaults(func=_experiment_compare)
 
     exp_parser.set_defaults(func=_experiment_help, parser=exp_parser)
@@ -1189,9 +1757,22 @@ def _experiment_help(args: argparse.Namespace) -> int:
 
 def _experiment_create_dataset(args: argparse.Namespace) -> int:
     """Create a new dataset."""
-    client = _require_auth()
+    client = _require_auth(skip=args.no_auth_check)
     if client is None:
         return 1
+
+    if _json_requested(args):
+        _emit_json(
+            {
+                "ok": True,
+                "code": "NOT_IMPLEMENTED",
+                "message": "experiment create-dataset pending (US-011)",
+                "name": args.name,
+                "description": args.description,
+            }
+        )
+        client.flush()
+        return 0
 
     print("experiment create-dataset: Command implementation pending (US-011)")
     print(f"  --name: {args.name}")
@@ -1204,9 +1785,23 @@ def _experiment_create_dataset(args: argparse.Namespace) -> int:
 
 def _experiment_add_item(args: argparse.Namespace) -> int:
     """Add item to dataset."""
-    client = _require_auth()
+    client = _require_auth(skip=args.no_auth_check)
     if client is None:
         return 1
+
+    if _json_requested(args):
+        _emit_json(
+            {
+                "ok": True,
+                "code": "NOT_IMPLEMENTED",
+                "message": "experiment add-item pending (US-011)",
+                "dataset": args.dataset,
+                "input": args.input,
+                "expected_output": args.expected_output,
+            }
+        )
+        client.flush()
+        return 0
 
     print("experiment add-item: Command implementation pending (US-011)")
     print(f"  --dataset: {args.dataset}")
@@ -1220,9 +1815,22 @@ def _experiment_add_item(args: argparse.Namespace) -> int:
 
 def _experiment_run(args: argparse.Namespace) -> int:
     """Run experiment."""
-    client = _require_auth()
+    client = _require_auth(skip=args.no_auth_check)
     if client is None:
         return 1
+
+    if _json_requested(args):
+        _emit_json(
+            {
+                "ok": True,
+                "code": "NOT_IMPLEMENTED",
+                "message": "experiment run pending (US-011)",
+                "dataset": args.dataset,
+                "name": args.name,
+            }
+        )
+        client.flush()
+        return 0
 
     print("experiment run: Command implementation pending (US-011)")
     print(f"  --dataset: {args.dataset}")
@@ -1235,9 +1843,22 @@ def _experiment_run(args: argparse.Namespace) -> int:
 
 def _experiment_compare(args: argparse.Namespace) -> int:
     """Compare experiment runs."""
-    client = _require_auth()
+    client = _require_auth(skip=args.no_auth_check)
     if client is None:
         return 1
+
+    if _json_requested(args):
+        _emit_json(
+            {
+                "ok": True,
+                "code": "NOT_IMPLEMENTED",
+                "message": "experiment compare pending (US-011)",
+                "dataset": args.dataset,
+                "runs": args.runs or [],
+            }
+        )
+        client.flush()
+        return 0
 
     print("experiment compare: Command implementation pending (US-011)")
     print(f"  --dataset: {args.dataset}")
@@ -1273,6 +1894,7 @@ def _setup_setup_parser(subparsers: argparse._SubParsersAction) -> None:
         help="Verify auth and connection",
         description="Verify authentication and connection to Langfuse.",
     )
+    _add_json_flag(check_parser)
     check_parser.set_defaults(func=_setup_check)
 
     # setup diagnose
@@ -1281,6 +1903,7 @@ def _setup_setup_parser(subparsers: argparse._SubParsersAction) -> None:
         help="Diagnose common issues",
         description="Diagnose common auth and connection issues.",
     )
+    _add_json_flag(diagnose_parser)
     diagnose_parser.set_defaults(func=_setup_diagnose)
 
     # setup guide
@@ -1289,6 +1912,7 @@ def _setup_setup_parser(subparsers: argparse._SubParsersAction) -> None:
         help="Step-by-step setup guide",
         description="Walk through Langfuse setup step-by-step.",
     )
+    _add_json_flag(guide_parser)
     guide_parser.set_defaults(func=_setup_guide)
 
     setup_parser.set_defaults(func=_setup_help, parser=setup_parser)
@@ -1310,20 +1934,44 @@ def _setup_check(_args: argparse.Namespace) -> int:
     try:
         client = LangfuseClient()
     except LangfuseError as e:
+        if _json_requested(_args):
+            _emit_json({"ok": False, "code": e.code, "message": e.message})
+            return 1
         print(f"Setup check failed: {e}", file=sys.stderr)
         print("\nNext step: Run 'setup guide' for step-by-step setup instructions.", file=sys.stderr)
         return 1
 
-    print(f"Checking connection to {client.base_url}...")
+    if not _json_requested(_args):
+        print(f"Checking connection to {client.base_url}...")
     result = client.auth_check(retry=True)
 
     if result.ok:
+        if _json_requested(_args):
+            _emit_json(
+                {
+                    "ok": True,
+                    "code": "OK",
+                    "base_url": client.base_url,
+                    "message": "Connected to Langfuse",
+                }
+            )
+            return 0
         print(f"\n✓ Connected to Langfuse at {client.base_url}")
         print("✓ Authentication: OK")
         # Note: Project name would require additional API call which isn't in basic auth_check
         # The SDK doesn't expose project info in auth_check response
         return 0
     else:
+        if _json_requested(_args):
+            _emit_json(
+                {
+                    "ok": False,
+                    "code": result.code,
+                    "base_url": client.base_url,
+                    "message": result.message,
+                }
+            )
+            return 1
         print(f"\n✗ Connection failed: {result.message}", file=sys.stderr)
         print("\nNext step: Run 'setup diagnose' to identify the issue.", file=sys.stderr)
         return 1
@@ -1336,12 +1984,16 @@ def _setup_diagnose(_args: argparse.Namespace) -> int:
     - 'setup diagnose' detects common issues: wrong region (EU vs US), expired keys, invalid keys
     - Example: Wrong region -> 'Your keys appear to be for EU cloud, but LANGFUSE_BASE_URL points to US'
     """
-    print("Running diagnostics...\n")
+    if not _json_requested(_args):
+        print("Running diagnostics...\n")
 
     try:
         client = LangfuseClient()
     except LangfuseError as e:
         # Even if client creation fails, we can still diagnose
+        if _json_requested(_args):
+            _emit_json({"healthy": False, "code": e.code, "message": e.message, "issues": []})
+            return 1
         print(f"⚠ Cannot create client: {e.code}")
         print(f"  {e.message}\n")
 
@@ -1359,8 +2011,15 @@ def _setup_diagnose(_args: argparse.Namespace) -> int:
     diagnosis = client.diagnose()
 
     if diagnosis.healthy:
+        if _json_requested(_args):
+            _emit_json(diagnosis)
+            return 0
         print("✓ " + diagnosis.summary)
         return 0
+
+    if _json_requested(_args):
+        _emit_json(diagnosis)
+        return 1
 
     print("✗ " + diagnosis.summary + "\n")
 
@@ -1388,6 +2047,22 @@ def _setup_guide(_args: argparse.Namespace) -> int:
     - 'setup guide' walks through setup step-by-step
     - Clear next steps provided on any failure
     """
+    if _json_requested(_args):
+        _emit_json(
+            {
+                "ok": True,
+                "code": "OK",
+                "message": "Langfuse setup guide",
+                "regions": LANGFUSE_REGIONS,
+                "required_env": [
+                    "LANGFUSE_SECRET_KEY",
+                    "LANGFUSE_PUBLIC_KEY",
+                    "LANGFUSE_BASE_URL",
+                ],
+            }
+        )
+        return 0
+
     print("=" * 60)
     print("Langfuse Setup Guide")
     print("=" * 60)
@@ -1427,13 +2102,14 @@ def _setup_guide(_args: argparse.Namespace) -> int:
         print()
     print("Step 5: Verify Setup")
     print("-" * 40)
+    lf_cmd = '"$CODEX_HOME/skills/langfuse/scripts/lf.sh"'
     print("Run the following command to verify your setup:")
     print()
-    print("  python scripts/langfuse.py setup check")
+    print(f"  {lf_cmd} setup check")
     print()
     print("If you encounter issues, run:")
     print()
-    print("  python scripts/langfuse.py setup diagnose")
+    print(f"  {lf_cmd} setup diagnose")
     print()
     print("=" * 60)
     print("For more information: https://langfuse.com/docs/get-started")

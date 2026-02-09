@@ -85,6 +85,8 @@ def fetch_traces(
     name: str | None = None,
     user_id: str | None = None,
     session_id: str | None = None,
+    page: int | None = None,
+    cursor: str | None = None,
     *,
     langfuse: Any = None,
 ) -> TraceListResult:
@@ -110,19 +112,30 @@ def fetch_traces(
             kwargs["user_id"] = user_id
         if session_id:
             kwargs["session_id"] = session_id
+        if page is not None:
+            kwargs["page"] = page
+        if cursor:
+            # Backward compatibility: some callers may pass a numeric cursor.
+            try:
+                kwargs["page"] = int(cursor)
+            except (TypeError, ValueError):
+                kwargs["cursor"] = cursor
 
         response = langfuse.api.trace.list(**kwargs)
         traces = _parse_trace_list(response.data)
 
-        cursor, has_more = _extract_pagination(response)
+        pagination = _extract_pagination(response)
 
         return TraceListResult(
             ok=True,
             code="OK",
             message=f"Found {len(traces)} trace(s)",
             traces=traces,
-            has_more=has_more,
-            cursor=cursor,
+            has_more=pagination["has_more"],
+            cursor=pagination["cursor"],
+            page=pagination["page"],
+            total_pages=pagination["total_pages"],
+            total_items=pagination["total_items"],
         )
     except Exception as e:
         return TraceListResult(ok=False, code=_classify_error(e), message=str(e))
@@ -146,17 +159,45 @@ def _parse_trace_list(data: Any) -> list[TraceInfo]:
     return traces
 
 
-def _extract_pagination(response: Any) -> tuple[str | None, bool]:
-    """Extract cursor and has_more from response metadata."""
+def _extract_pagination(response: Any) -> dict[str, Any]:
+    """Extract pagination details from response metadata.
+
+    Supports both page-based and cursor-based metadata variants.
+    """
+    page = None
+    total_pages = None
+    total_items = None
     cursor = None
     has_more = False
-    if hasattr(response, "meta") and response.meta:
-        cursor = getattr(response.meta, "cursor", None)
-        has_more = cursor is not None
-    return cursor, has_more
+
+    meta = getattr(response, "meta", None)
+    if meta:
+        page = _safe_get(meta, "page")
+        total_pages = _safe_get(meta, "total_pages")
+        total_items = _safe_get(meta, "total_items")
+        cursor = _safe_get(meta, "cursor")
+
+        if isinstance(page, int) and isinstance(total_pages, int):
+            has_more = page < total_pages
+        elif cursor is not None:
+            has_more = True
+
+    return {
+        "page": page,
+        "total_pages": total_pages,
+        "total_items": total_items,
+        "cursor": cursor,
+        "has_more": has_more,
+    }
 
 
-def fetch_trace(trace_id: str, *, langfuse: Any = None) -> TraceGetResult:
+def fetch_trace(
+    trace_id: str,
+    include_observations: bool = True,
+    max_observations: int | None = None,
+    *,
+    langfuse: Any = None,
+) -> TraceGetResult:
     """Fetch a single trace with all observations.
 
     Args:
@@ -170,7 +211,13 @@ def fetch_trace(trace_id: str, *, langfuse: Any = None) -> TraceGetResult:
         if langfuse is None:
             langfuse = get_langfuse()
         trace = langfuse.api.trace.get(trace_id)
-        observations = _fetch_all_observations(langfuse, trace_id)
+        observations: list[ObservationInfo] = []
+        if include_observations:
+            observations = _fetch_all_observations(
+                langfuse,
+                trace_id,
+                max_observations=max_observations,
+            )
 
         trace_detail = _build_trace_detail(trace, trace_id, observations)
 
@@ -184,13 +231,26 @@ def fetch_trace(trace_id: str, *, langfuse: Any = None) -> TraceGetResult:
         return _handle_trace_error(e, trace_id)
 
 
-def _fetch_all_observations(langfuse: Any, trace_id: str) -> list[ObservationInfo]:
+def _fetch_all_observations(
+    langfuse: Any,
+    trace_id: str,
+    *,
+    max_observations: int | None = None,
+) -> list[ObservationInfo]:
     """Fetch all observations for a trace with pagination."""
     observations = []
     cursor = None
 
+    seen_cursors: set[str] = set()
     while True:
-        obs_kwargs: dict[str, Any] = {"trace_id": trace_id, "limit": 100}
+        if max_observations is not None and len(observations) >= max_observations:
+            break
+
+        page_limit = 100
+        if max_observations is not None:
+            page_limit = max(1, min(100, max_observations - len(observations)))
+
+        obs_kwargs: dict[str, Any] = {"trace_id": trace_id, "limit": page_limit}
         if cursor:
             obs_kwargs["cursor"] = cursor
 
@@ -199,8 +259,14 @@ def _fetch_all_observations(langfuse: Any, trace_id: str) -> list[ObservationInf
         for obs in obs_response.data:
             observations.append(_parse_observation(obs))
 
-        cursor, _ = _extract_pagination(obs_response)
+        pagination = _extract_pagination(obs_response)
+        cursor = pagination["cursor"]
         if not cursor:
+            break
+        if cursor in seen_cursors:
+            break
+        seen_cursors.add(cursor)
+        if not obs_response.data:
             break
 
     return observations

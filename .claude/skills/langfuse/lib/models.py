@@ -146,6 +146,9 @@ class TraceListResult(Result):
     traces: list[TraceInfo] = field(default_factory=list)
     has_more: bool = False
     cursor: str | None = None
+    page: int | None = None
+    total_pages: int | None = None
+    total_items: int | None = None
 
 
 @dataclass
