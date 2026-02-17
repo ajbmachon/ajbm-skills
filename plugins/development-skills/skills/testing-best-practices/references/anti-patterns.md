@@ -2,6 +2,24 @@
 
 15 anti-patterns with detailed signals, corrections, and code examples. Patterns 13-15 are AI-specific.
 
+## Table of Contents
+
+- [1. Mock Behavior Testing](#1-mock-behavior-testing)
+- [2. Over-Mocking Dependency Chains](#2-over-mocking-dependency-chains)
+- [3. Unrealistic Fixtures](#3-unrealistic-fixtures)
+- [4. Test-Only Production Methods](#4-test-only-production-methods)
+- [5. Implementation-Detail Assertions](#5-implementation-detail-assertions)
+- [6. Snapshot Overreach](#6-snapshot-overreach)
+- [7. Flaky Async/Time Tests](#7-flaky-asynctime-tests)
+- [8. Silent Failures](#8-silent-failures)
+- [9. Skip Debt](#9-skip-debt)
+- [10. Coverage Theater](#10-coverage-theater)
+- [11. Missing Regression Tests](#11-missing-regression-tests)
+- [12. Missing Boundary Contract Tests](#12-missing-boundary-contract-tests)
+- [13. Assertion Roulette (AI-Specific)](#13-assertion-roulette-ai-specific)
+- [14. Circular Oracle (AI-Specific)](#14-circular-oracle-ai-specific)
+- [15. Conditional Test Logic (AI-Specific)](#15-conditional-test-logic-ai-specific)
+
 ---
 
 ## 1. Mock Behavior Testing

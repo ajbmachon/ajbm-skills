@@ -51,7 +51,7 @@ Confidence-per-effort, highest to lowest:
 
 ```
           ┌───────┐
-          │  E2E  │  Few: critical user journeys only
+          │  e2e  │  Few: critical user journeys only
         ┌─┴───────┴─┐
         │Integration │  Most: contracts, persistence, boundaries
       ┌─┴────────────┴─┐
@@ -68,7 +68,7 @@ Confidence-per-effort, highest to lowest:
 
 Prefer integration tests when uncertain. They catch real bugs with fewer mocks.
 
-For property-based testing, contract testing, and when E2E is worth the cost, see [references/testing-trophy.md](references/testing-trophy.md).
+For property-based testing, contract testing, and when e2e is worth the cost, see [references/testing-trophy.md](references/testing-trophy.md).
 
 ## The 15 Principles
 
@@ -169,28 +169,28 @@ For full details with code examples, signals, and corrections, see [references/a
 
 ### Plan Mode
 
-1. **Build risk map:** Identify behaviors changed, affected user paths, high-risk failure modes (data loss, auth, money, security, concurrency).
-2. **Apply Testing Trophy:** Select test levels using the decision heuristic.
-3. **Define minimum test depth** before writing any tests.
-4. Apply Tier A principles (P1-P4: Mostly Integration, Beyonce Rule, Boundaries, Hermetic).
+- [ ] **Build risk map:** Identify behaviors changed, affected user paths, high-risk failure modes (data loss, auth, money, security, concurrency).
+- [ ] **Apply Testing Trophy:** Select test levels using the decision heuristic.
+- [ ] **Define minimum test depth** before writing any tests.
+- [ ] **Apply Tier A principles** (P1-P4: Mostly Integration, Beyonce Rule, Boundaries, Hermetic).
 
 ### Write Mode
 
-1. **Define observable outcomes:** Return values, persisted state, emitted events, API output, user-visible behavior.
-2. **For each non-trivial change:** Write one happy path + one failure path + one boundary/edge case.
-3. **For bug fixes:** Include a regression test that fails before the fix.
-4. **Oracle Check (mandatory):** Run each test against current code. If it passes on first run, follow the Oracle Guard protocol above.
-5. **DAMP structure:** Keep tests descriptive, self-contained, straight-line. Each test tells a complete story.
-6. **Clear failure messages:** Every assertion failure should identify what went wrong without reading the test source.
-7. Apply Tier B principles (P5-P11).
+- [ ] **Define observable outcomes:** Return values, persisted state, emitted events, API output, user-visible behavior.
+- [ ] **For each non-trivial change:** Write one happy path + one failure path + one boundary/edge case.
+- [ ] **For bug fixes:** Include a regression test that fails before the fix.
+- [ ] **Oracle Check (mandatory):** Run each test against current code. If it passes on first run, follow the Oracle Guard protocol above.
+- [ ] **DAMP structure:** Keep tests descriptive, self-contained, straight-line. Each test tells a complete story.
+- [ ] **Clear failure messages:** Every assertion failure should identify what went wrong without reading the test source.
+- [ ] **Apply Tier B principles** (P5-P11).
 
 ### Review Mode
 
-1. **Anti-pattern scan:** Check each test against the anti-pattern catalog.
-2. **Mutation smell check:** For each assertion, ask: "Would this test still pass if the value were wrong by 1, null, or empty string?" If yes, the assertion is too weak.
-3. **Refactoring resilience check:** "Would refactoring internals break this test without changing behavior?" If yes, it tests implementation details.
-4. **Determinism check:** Identify time, randomness, network, or ordering dependencies.
-5. Apply Tier C principles (P12-P15).
+- [ ] **Anti-pattern scan:** Check each test against the anti-pattern catalog.
+- [ ] **Mutation smell check:** For each assertion, ask: "Would this test still pass if the value were wrong by 1, null, or empty string?" If yes, the assertion is too weak.
+- [ ] **Refactoring resilience check:** "Would refactoring internals break this test without changing behavior?" If yes, it tests implementation details.
+- [ ] **Determinism check:** Identify time, randomness, network, or ordering dependencies.
+- [ ] **Apply Tier C principles** (P12-P15).
 
 ### Report Mode
 

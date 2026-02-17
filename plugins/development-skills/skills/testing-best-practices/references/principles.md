@@ -2,6 +2,27 @@
 
 Code examples, exceptions, and language-specific guidance for each principle.
 
+## Table of Contents
+
+- [Tier A — Strategy (Plan Mode)](#tier-a--strategy-plan-mode)
+  - [P1: Mostly Integration](#p1-mostly-integration)
+  - [P2: The Beyonce Rule](#p2-the-beyonce-rule)
+  - [P3: Test Boundaries and Error Paths](#p3-test-boundaries-and-error-paths)
+  - [P4: Hermetic Tests](#p4-hermetic-tests)
+- [Tier B — Design (Write Mode)](#tier-b--design-write-mode)
+  - [P5: Test Behavior, Not Implementation](#p5-test-behavior-not-implementation)
+  - [P6: Real Over Mock](#p6-real-over-mock)
+  - [P7: One Behavior Per Test](#p7-one-behavior-per-test)
+  - [P8: Test State, Not Interactions](#p8-test-state-not-interactions)
+  - [P9: DAMP Over DRY](#p9-damp-over-dry)
+  - [P10: Straight-Line Tests](#p10-straight-line-tests)
+  - [P11: Clear Failure Messages](#p11-clear-failure-messages)
+- [Tier C — Verification (Review Mode)](#tier-c--verification-review-mode)
+  - [P12: Deterministic Always](#p12-deterministic-always)
+  - [P13: Tests Are Documentation](#p13-tests-are-documentation)
+  - [P14: Investigate First-Run Passes](#p14-investigate-first-run-passes)
+  - [P15: Survive Refactoring](#p15-survive-refactoring)
+
 ---
 
 ## Tier A — Strategy (Plan Mode)

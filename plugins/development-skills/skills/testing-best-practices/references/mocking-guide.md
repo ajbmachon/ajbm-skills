@@ -2,6 +2,17 @@
 
 When to mock, what to mock, and how to do it right across frameworks.
 
+## Table of Contents
+
+- [The Mocking Hierarchy](#the-mocking-hierarchy)
+- [The Five-Question Gate](#the-five-question-gate)
+- [Framework-Specific Patterns](#framework-specific-patterns)
+  - [JavaScript/TypeScript (Jest/Vitest)](#javascripttypescript-jestvitest)
+  - [Python (pytest)](#python-pytest)
+  - [Go](#go)
+- [Mock Audit Checklist](#mock-audit-checklist)
+- [Common Mock Smells](#common-mock-smells)
+
 ---
 
 ## The Mocking Hierarchy
