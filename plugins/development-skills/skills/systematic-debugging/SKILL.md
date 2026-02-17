@@ -285,7 +285,7 @@ If systematic investigation reveals issue is truly environmental, timing-depende
 - **test-driven-development** - required for creating a failing test case before implementing the fix (see Phase 4, Step 1)
 
 **Complementary skills:**
-- **testing-anti-patterns** - ensures fixes are validated with trustworthy assertions and honest reporting
+- **testing-best-practices** - ensures fixes are validated with trustworthy assertions and honest reporting
 - **prompt-craft** - useful when debugging prompts/tool instructions rather than application runtime behavior
 
 ## Real-World Impact

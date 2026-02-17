@@ -5,7 +5,7 @@ Monitors Bash tool output for test failures, build errors, and runtime exception
 
 Suggests:
 - systematic-debugging: Always when errors detected (investigate before fixing)
-- testing-anti-patterns: When test failures detected (avoid common testing mistakes)
+- testing-best-practices: When test failures detected (apply testing best practices)
 """
 
 import json
@@ -135,7 +135,7 @@ def format_suggestion(error_info: dict) -> str:
     lines.append("  ⚡ systematic-debugging (investigate root cause FIRST)")
 
     if error_info["test_failure"]:
-        lines.append("  ⚡ testing-anti-patterns (avoid common testing mistakes)")
+        lines.append("  ⚡ testing-best-practices (apply testing best practices)")
 
     lines.extend([
         "",

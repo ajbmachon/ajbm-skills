@@ -181,7 +181,7 @@
       ],
       "excludePatterns": []
     },
-    "testing-anti-patterns": {
+    "testing-best-practices": {
       "type": "domain",
       "enforcement": "suggest",
       "priority": "high",
@@ -197,7 +197,10 @@
         "e2e tests",
         "test coverage",
         "add unit test",
-        "write unit test"
+        "write unit test",
+        "test strategy",
+        "test quality",
+        "testing trophy"
       ],
       "exactKeywords": [
         "test",
@@ -206,7 +209,9 @@
         "TDD",
         "coverage",
         "mock",
-        "mocking"
+        "mocking",
+        "assertion",
+        "fixture"
       ],
       "containsKeywords": [
         "jest",
@@ -221,7 +226,9 @@
         "afterEach",
         "describe(",
         "it(",
-        "expect("
+        "expect(",
+        "property-based",
+        "hermetic"
       ],
       "intentPatterns": [
         "(write|create|add|implement|fix)\\s+\\w*\\s*tests?",
@@ -229,7 +236,8 @@
         "how.*?test",
         "should.*?test",
         "(add|create|write).*?spec",
-        "(add|create|write).*?mock"
+        "(add|create|write).*?mock",
+        "test.*?(strategy|quality|level|trophy)"
       ],
       "excludePatterns": [
         "\\b(contest|attest|protest|detest|fastest|latest|greatest)\\b",

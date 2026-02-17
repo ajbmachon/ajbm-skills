@@ -428,7 +428,7 @@ Skills can auto-activate based on triggers. See [references/skill-triggers.md](r
 
 ## Testing (Quick Reference)
 
-**Full methodology:** Use `test-driven-development` plus `testing-anti-patterns` for test design and verification.
+**Full methodology:** Use `test-driven-development` plus `testing-best-practices` for test design and verification.
 
 **Minimum:**
 1. Create 3+ evaluation scenarios
@@ -491,5 +491,5 @@ EOF
 ---
 
 **Line count:** ~495 (within 500-line budget)
-**Complements:** `test-driven-development`, `testing-anti-patterns`
+**Complements:** `test-driven-development`, `testing-best-practices`
 **New references:** [patterns-library.md](references/patterns-library.md), [agent-skill-composition.md](references/agent-skill-composition.md)

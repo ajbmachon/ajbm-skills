@@ -8,7 +8,7 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 |-------|-------------|
 | **interview** | Transform rough ideas into implementation-ready specs through rigorous research and questioning. Evolves from Critical Challenger to Expert Partner. |
 | **systematic-debugging** | Four-phase debugging framework: root cause → pattern analysis → hypothesis → implementation. No fixes without understanding. |
-| **testing-anti-patterns** | Prevents common testing mistakes: testing mocks, test-only production methods, mocking without understanding dependencies. |
+| **testing-best-practices** | Comprehensive testing quality: 15 evidence-based principles, Testing Trophy strategy, AI oracle prevention, disciplined mocking, and honest reporting. |
 | **test-driven-development** | Strict TDD enforcement: write failing test first, watch it fail, write minimal code to pass. No production code without a failing test. |
 | **setup-linter** | Auto-detect, install, and configure project-specific linting with a Stop hook. Supports JS/TS, Python, Rust, Go, Deno. |
 | **authoring-skills** | Complete guide for writing skills—covers SKILL.md best practices, plugin development, triggers, hooks, and Anthropic guidelines |
@@ -103,7 +103,7 @@ ACTION: Use Skill tool BEFORE responding
 | Trigger Keywords | Suggested Skill |
 |------------------|-----------------|
 | "plan", "idea", "spec", "design", "scope" | interview |
-| "test", "mock", "coverage" | testing-anti-patterns |
+| "test", "mock", "coverage" | testing-best-practices |
 | "TDD", "test first", "red green refactor" | test-driven-development |
 | "debug", "bug", "fix", "error", "broken" | systematic-debugging |
 | "prompt", "llm", "system prompt" | prompt-craft |
@@ -122,7 +122,7 @@ Detected: Test failure
 
 📚 RECOMMENDED SKILLS:
   ⚡ systematic-debugging (investigate root cause FIRST)
-  ⚡ testing-anti-patterns (avoid common testing mistakes)
+  ⚡ testing-best-practices (apply testing best practices)
 
 ⛔ DO NOT attempt quick fixes without investigation!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -401,20 +401,24 @@ Four-phase framework that ensures understanding before fixes:
 - "Just try changing X and see if it works"
 - Each fix reveals new problem in different place
 
-### testing-anti-patterns
+### testing-best-practices
 
-Prevents common testing mistakes that cause false confidence:
+Comprehensive testing quality skill with 15 evidence-based principles, the Testing Trophy strategy, and AI-specific guidance:
 
-**Anti-patterns caught:**
-| Anti-Pattern | What's Wrong | Fix |
-|--------------|--------------|-----|
-| Testing mock behavior | Verifies mock exists, not real behavior | Test real component or unmock |
-| Test-only production methods | Pollutes production with test code | Move to test utilities |
-| Mocking without understanding | Over-mocking breaks test logic | Understand dependencies first |
-| Incomplete mocks | Partial mocks hide structural assumptions | Mirror real API completely |
-| Tests as afterthought | Can't claim complete without tests | TDD - tests first |
+**Five Iron Laws:**
+1. ALWAYS investigate when a test passes on first run (AI oracle prevention)
+2. ALWAYS assert on real system behavior, not mock wiring
+3. ALWAYS keep tests as straight-line code
+4. ALWAYS execute tests and report concrete evidence
+5. ALWAYS keep production APIs clean
 
-**Gate functions:** Each anti-pattern has a "gate function" - questions to ask BEFORE taking action that would introduce the anti-pattern.
+**Key features:**
+- Testing Trophy strategy (Static > Unit > Integration > E2E)
+- 15 principles in 3 tiers: Strategy, Design, Verification
+- AI Oracle Guard protocol (prevents circular oracle problem)
+- Mocking Decision Gate (5-question framework)
+- 15 anti-patterns with signals and corrections (including 3 AI-specific)
+- Honesty contract for transparent test reporting
 
 ### test-driven-development
 

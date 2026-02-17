@@ -26,7 +26,7 @@ SOFTWARE.
 
 The following skills are included from the superpowers plugin by Jesse Vincent:
 - `plugins/development-skills/skills/systematic-debugging/` - MIT License
-- `plugins/development-skills/skills/testing-anti-patterns/` - MIT License
+- `plugins/development-skills/skills/testing-best-practices/` - MIT License
 
 See individual skill LICENSE files for details.
 Origin: https://github.com/obra/superpowers

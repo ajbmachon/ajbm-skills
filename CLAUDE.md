@@ -91,16 +91,18 @@ Use when encountering any bug, test failure, or unexpected behavior—BEFORE pro
 
 **When to use:** Test failures, bugs, unexpected behavior, performance problems.
 
-### testing-anti-patterns
+### testing-best-practices
 
-Use when writing or changing tests, adding mocks, or tempted to add test-only methods to production code.
+Use when writing, reviewing, or reporting tests. Comprehensive testing quality skill.
 
-**Three Iron Laws:**
-1. NEVER test mock behavior
-2. NEVER add test-only methods to production classes
-3. NEVER mock without understanding dependencies
+**Five Iron Laws:**
+1. ALWAYS investigate when a test passes on first run
+2. ALWAYS assert on real system behavior, not mock wiring
+3. ALWAYS keep tests as straight-line code
+4. ALWAYS execute tests and report concrete evidence
+5. ALWAYS keep production APIs clean
 
-**Core principle:** Test what the code does, not what the mocks do.
+**Core principle:** Evidence is the product. Test behavior, not implementation.
 
 ### test-driven-development
 
