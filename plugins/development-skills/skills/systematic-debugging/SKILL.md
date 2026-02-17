@@ -111,7 +111,11 @@ You MUST complete each phase before proceeding to the next.
 
    **WHEN error is deep in call stack:**
 
-   **REQUIRED SUB-SKILL:** Use superpowers:root-cause-tracing for backward tracing technique
+   Apply backward tracing explicitly:
+   - start at the failing frame
+   - identify the bad value/state
+   - trace each caller until origin is found
+   - fix the earliest incorrect source, not downstream symptoms
 
    **Quick version:**
    - Where does bad value originate?
@@ -176,7 +180,7 @@ You MUST complete each phase before proceeding to the next.
    - Automated test if possible
    - One-off test script if no framework
    - MUST have before fixing
-   - **REQUIRED SUB-SKILL:** Use superpowers:test-driven-development for writing proper failing tests
+   - **REQUIRED SKILL:** Use `test-driven-development` for writing proper failing tests
 
 2. **Implement Single Fix**
    - Address the root cause identified
@@ -277,14 +281,12 @@ If systematic investigation reveals issue is truly environmental, timing-depende
 
 ## Integration with Other Skills
 
-**This skill requires using:**
-- **root-cause-tracing** - REQUIRED when error is deep in call stack (see Phase 1, Step 5)
-- **test-driven-development** - REQUIRED for creating failing test case (see Phase 4, Step 1)
+**Required skill:**
+- **test-driven-development** - required for creating a failing test case before implementing the fix (see Phase 4, Step 1)
 
 **Complementary skills:**
-- **defense-in-depth** - Add validation at multiple layers after finding root cause
-- **condition-based-waiting** - Replace arbitrary timeouts identified in Phase 2
-- **verification-before-completion** - Verify fix worked before claiming success
+- **testing-anti-patterns** - ensures fixes are validated with trustworthy assertions and honest reporting
+- **prompt-craft** - useful when debugging prompts/tool instructions rather than application runtime behavior
 
 ## Real-World Impact
 

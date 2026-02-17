@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design Style Explorer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f0f0;
+      color: #333;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      grid-template-rows: 1fr auto;
+      height: 100vh;
+      gap: 1px;
+      background: #e0e0e0;
+    }
+
+    /* ── Controls sidebar ── */
+    .controls {
+      background: #fafafa;
+      grid-row: 1 / 3;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #ccc transparent;
+      border-right: 1px solid #e5e5e5;
+    }
+
+    .controls::-webkit-scrollbar {
+      width: 6px;
+    }
+    .controls::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .controls::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 3px;
+    }
+    .controls::-webkit-scrollbar-thumb:hover {
+      background: #aaa;
+    }
+
+    .controls-header {
+      padding: 24px 24px 0 24px;
+      position: sticky;
+      top: 0;
+      background: #fafafa;
+      z-index: 10;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .controls h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: -0.3px;
+    }
+
+    .controls .subtitle {
+      font-size: 12px;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .controls-body {
+      padding: 0 24px 24px 24px;
+    }
+
+    /* ── Collapsible Sections ── */
+    .section {
+      border-bottom: 1px solid #eee;
+    }
+
+    .section:last-child {
+      border-bottom: none;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0 12px 0;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .section-header:hover .section-title {
+      color: #333;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      transition: color 0.15s;
+    }
+
+    .section-chevron {
+      width: 16px;
+      height: 16px;
+      color: #bbb;
+      transition: transform 0.2s;
+    }
+
+    .section.collapsed .section-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .section.collapsed .section-content {
+      display: none;
+    }
+
+    .section-content {
+      padding-bottom: 8px;
+    }
+
+    /* ── Preset grid ── */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .preset-btn {
+      background: #fff;
+      border: 1px solid #ddd;
+      color: #555;
+      padding: 10px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .preset-btn:hover {
+      background: #f5f5f5;
+      border-color: #bbb;
+      color: #333;
+    }
+
+    .preset-btn.active {
+      background: rgba(59, 130, 246, 0.08);
+      border-color: #3b82f6;
+      color: #2563eb;
+    }
+
+    /* ── Compare mode toggle ── */
+    .compare-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0 4px 0;
+    }
+
+    .compare-toggle label {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #ddd;
+      border-radius: 10px;
+      transition: 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: #3b82f6;
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(16px);
+      background: #fff;
+    }
+
+    /* ── Form controls ── */
+    .control-group {
+      margin-bottom: 14px;
+    }
+
+    .controls label {
+      display: block;
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 4px;
+      background: #e0e0e0;
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+      margin-top: 2px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: #999;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      background: #3b82f6;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      background: #999;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+
+    input[type="color"] {
+      width: 100%;
+      height: 32px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      padding: 2px;
+    }
+
+    .controls select {
+      width: 100%;
+      padding: 8px 10px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      color: #333;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .controls select:focus {
+      border-color: #3b82f6;
+    }
+
+    .value-display {
+      display: inline-block;
+      float: right;
+      color: #999;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+
+    /* ── Preview area ── */
+    .preview-area {
+      background: #e8e8e8;
+      padding: 40px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      background-image: radial-gradient(circle, #d8d8d8 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    .preview-area::-webkit-scrollbar {
+      width: 8px;
+    }
+    .preview-area::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .preview-area::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 4px;
+    }
+
+    /* ── Single preview ── */
+    .preview-section {
+      background: var(--bg-color, #ffffff);
+      padding: 48px;
+      border-radius: 12px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05);
+    }
+
+    .preview-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid;
+      border-color: var(--border-color, #e5e5e5);
+      color: var(--text-muted, #999);
+    }
+
+    .preview-block {
+      margin-bottom: 48px;
+    }
+
+    .preview-block:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ── Compare grid ── */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .compare-grid .preview-section {
+      padding: 28px;
+    }
+
+    .compare-grid .preview-label {
+      font-size: 9px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+    }
+
+    .compare-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text-color, #1a1a1a);
+      font-family: var(--font-family, 'Inter', sans-serif);
+    }
+
+    .compare-grid .preview-block {
+      margin-bottom: 24px;
+    }
+
+    .compare-grid .nav-bar {
+      padding: 10px 14px;
+    }
+
+    .compare-grid .nav-logo {
+      font-size: 13px;
+    }
+
+    .compare-grid .nav-link {
+      font-size: 11px;
+    }
+
+    .compare-grid .nav-cta {
+      font-size: 10px;
+      padding: 5px 10px;
+    }
+
+    .compare-grid .stat-card {
+      padding: 16px;
+    }
+
+    .compare-grid .stat-number {
+      font-size: calc(var(--h2-size, 32px) * 0.65);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ── Typography showcase elements (inside preview) ── */
+    .typography-showcase {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .preview-section blockquote {
+      border-left: 3px solid var(--primary-color, #3b82f6);
+      padding: 12px 20px;
+      margin: 4px 0;
+      font-style: italic;
+      color: var(--text-muted, #666);
+      font-family: var(--font-family, 'Inter', sans-serif);
+      font-size: var(--body-size, 16px);
+      line-height: 1.6;
+      background: rgba(0,0,0,0.02);
+      border-radius: 0 var(--border-radius, 8px) var(--border-radius, 8px) 0;
+    }
+
+    .preview-section code.inline-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875em;
+      background: rgba(0,0,0,0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--primary-color, #3b82f6);
+    }
+
+    /* ── UI elements ── */
+    .ui-elements-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .ui-element-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .ui-element-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted, #999);
+      font-family: var(--font-family, 'Inter', sans-serif);
+    }
+
+    .sample-button {
+      padding: var(--btn-padding, 12px 24px);
+      border-radius: var(--border-radius, 8px);
+      border: var(--border-width, 1px) solid transparent;
+      background: var(--primary-color, #3b82f6);
+      color: var(--text-on-primary, #ffffff);
+      font-size: var(--body-size, 16px);
+      font-weight: var(--btn-weight, 600);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: var(--font-family, 'Inter', sans-serif);
+      box-shadow: var(--shadow, none);
+      letter-spacing: var(--btn-letter-spacing, 0);
+      text-transform: var(--btn-text-transform, none);
+    }
+
+    .sample-button:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .sample-button.secondary {
+      background: transparent;
+      border: var(--border-width, 1px) solid var(--primary-color, #3b82f6);
+      color: var(--primary-color, #3b82f6);
+      box-shadow: none;
+    }
+
+    .sample-button.ghost {
+      background: transparent;
+      border: none;
+      color: var(--primary-color, #3b82f6);
+      box-shadow: none;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      padding-left: 0;
+      padding-right: 0;
+    }
+
+    .sample-input-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .sample-input-label {
+      font-size: var(--small-size, 14px);
+      font-weight: 500;
+      color: var(--text-color, #1a1a1a);
+      font-family: var(--font-family, 'Inter', sans-serif);
+    }
+
+    .sample-input {
+      padding: var(--input-padding, 10px 12px);
+      border-radius: var(--border-radius, 8px);
+      border: var(--border-width, 1px) solid var(--border-color, #e5e5e5);
+      background: var(--input-bg, #fafafa);
+      color: var(--text-color, #1a1a1a);
+      font-size: var(--body-size, 16px);
+      font-family: var(--font-family, 'Inter', sans-serif);
+      min-width: 200px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .sample-input:focus {
+      border-color: var(--primary-color, #3b82f6);
+    }
+
+    .sample-input::placeholder {
+      color: var(--text-muted, #999);
+    }
+
+    /* Toggle switch in preview */
+    .preview-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .preview-toggle-track {
+      width: 44px;
+      height: 24px;
+      background: var(--border-color, #e5e5e5);
+      border-radius: 12px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .preview-toggle-track.active {
+      background: var(--primary-color, #3b82f6);
+    }
+
+    .preview-toggle-knob {
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .preview-toggle-track.active .preview-toggle-knob {
+      transform: translateX(20px);
+    }
+
+    .preview-toggle-label {
+      font-size: var(--body-size, 16px);
+      color: var(--text-color, #1a1a1a);
+      font-family: var(--font-family, 'Inter', sans-serif);
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      font-size: calc(var(--small-size, 14px) * 0.85);
+      font-weight: 600;
+      border-radius: 999px;
+      background: var(--primary-color, #3b82f6);
+      color: var(--text-on-primary, #fff);
+      font-family: var(--font-family, 'Inter', sans-serif);
+      letter-spacing: 0.3px;
+    }
+
+    .badge.outline {
+      background: transparent;
+      border: 1px solid var(--primary-color, #3b82f6);
+      color: var(--primary-color, #3b82f6);
+    }
+
+    /* Link */
+    .sample-link {
+      font-size: var(--body-size, 16px);
+      color: var(--primary-color, #3b82f6);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-family: var(--font-family, 'Inter', sans-serif);
+      cursor: pointer;
+    }
+
+    /* ── Card showcase ── */
+    .cards-row {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .sample-card {
+      background: var(--card-bg, #fafafa);
+      border-radius: var(--border-radius, 8px);
+      border: var(--border-width, 1px) solid var(--border-color, #e5e5e5);
+      box-shadow: var(--shadow, none);
+      overflow: hidden;
+      max-width: 300px;
+      flex: 1;
+      min-width: 240px;
+    }
+
+    .card-image {
+      width: 100%;
+      height: 140px;
+      background: var(--primary-color, #3b82f6);
+      opacity: 0.15;
+    }
+
+    .card-body {
+      padding: var(--card-padding, 24px);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card-title {
+      font-size: var(--h4-size, 18px);
+      font-weight: var(--heading-weight, 700);
+      color: var(--text-color, #1a1a1a);
+      font-family: var(--font-family, 'Inter', sans-serif);
+    }
+
+    .card-text {
+      font-size: var(--body-size, 16px);
+      color: var(--text-muted, #666);
+      line-height: 1.5;
+      font-family: var(--font-family, 'Inter', sans-serif);
+    }
+
+    .stat-card {
+      background: var(--card-bg, #fafafa);
+      border-radius: var(--border-radius, 8px);
+      border: var(--border-width, 1px) solid var(--border-color, #e5e5e5);
+      box-shadow: var(--shadow, none);
+      padding: var(--card-padding, 24px);
+      text-align: center;
+      min-width: 140px;
+      flex: 1;
+      max-width: 180px;
+    }
+
+    .stat-number {
+      font-size: var(--h2-size, 32px);
+      font-weight: var(--heading-weight, 700);
+      color: var(--primary-color, #3b82f6);
+      font-family: var(--font-family, 'Inter', sans-serif);
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: var(--small-size, 14px);
+      color: var(--text-muted, #666);
+      font-family: var(--font-family, 'Inter', sans-serif);
+      margin-top: 4px;
+    }
+
+    /* ── Navigation bar ── */
+    .nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
+      background: var(--card-bg, #fafafa);
+      border-radius: var(--border-radius, 8px);
+      border: var(--border-width, 1px) solid var(--border-color, #e5e5e5);
+      box-shadow: var(--shadow, none);
+      font-family: var(--font-family, 'Inter', sans-serif);
+    }
+
+    .nav-logo {
+      font-size: var(--h4-size, 18px);
+      font-weight: var(--heading-weight, 700);
+      color: var(--text-color, #1a1a1a);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-link {
+      font-size: var(--body-size, 16px);
+      color: var(--text-muted, #666);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .nav-link:hover {
+      color: var(--text-color, #1a1a1a);
+    }
+
+    .nav-cta {
+      padding: 8px 16px;
+      font-size: var(--small-size, 14px);
+      font-weight: var(--btn-weight, 600);
+      background: var(--primary-color, #3b82f6);
+      color: var(--text-on-primary, #fff);
+      border: none;
+      border-radius: var(--border-radius, 8px);
+      cursor: pointer;
+      font-family: var(--font-family, 'Inter', sans-serif);
+      letter-spacing: var(--btn-letter-spacing, 0);
+      text-transform: var(--btn-text-transform, none);
+    }
+
+    /* ── Prompt area ── */
+    .prompt-area {
+      background: #fafafa;
+      padding: 16px 24px;
+      border-top: 1px solid #e5e5e5;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .prompt-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #999;
+    }
+
+    #prompt-output {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      color: #555;
+      white-space: pre-wrap;
+      min-height: 40px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .button-row button {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .button-row .copy-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+    }
+
+    .button-row .copy-btn:hover {
+      background: #2563eb;
+    }
+
+    .button-row #send-btn {
+      background: #fff;
+      border: 1px solid #ddd;
+      color: #555;
+    }
+
+    .button-row #send-btn:hover {
+      border-color: #bbb;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="controls">
+      <div class="controls-header">
+        <h1>Design Explorer</h1>
+        <div class="subtitle">Choose a direction for your site</div>
+      </div>
+
+      <div class="controls-body">
+        <!-- Presets Section -->
+        <div class="section" id="section-presets">
+          <div class="section-header" onclick="toggleSection('section-presets')">
+            <span class="section-title">Style Presets</span>
+            <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>
+          </div>
+          <div class="section-content">
+            <div class="preset-grid">
+              <button class="preset-btn" data-preset="minimal" onclick="applyPreset('minimal')">Minimal Modern</button>
+              <button class="preset-btn" data-preset="bold" onclick="applyPreset('bold')">Bold Vibrant</button>
+              <button class="preset-btn" data-preset="soft" onclick="applyPreset('soft')">Soft Elegant</button>
+              <button class="preset-btn" data-preset="brutalist" onclick="applyPreset('brutalist')">Raw Industrial</button>
+            </div>
+            <div class="compare-toggle">
+              <label class="toggle-switch">
+                <input type="checkbox" id="compareMode" onchange="toggleCompareMode(this.checked)">
+                <span class="toggle-slider"></span>
+              </label>
+              <label for="compareMode">Compare all styles</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typography Section -->
+        <div class="section" id="section-typography">
+          <div class="section-header" onclick="toggleSection('section-typography')">
+            <span class="section-title">Typography</span>
+            <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>
+          </div>
+          <div class="section-content">
+            <div class="control-group">
+              <label>Font Family</label>
+              <select id="fontFamily" onchange="updateState('fontFamily', this.value)">
+                <option value="'Inter', sans-serif">Inter (Modern Sans)</option>
+                <option value="'Merriweather', serif">Merriweather (Serif)</option>
+                <option value="'Space Grotesk', sans-serif">Space Grotesk (Geometric)</option>
+                <option value="'JetBrains Mono', monospace">JetBrains Mono (Mono)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Base Size <span class="value-display" id="baseSizeVal">16px</span></label>
+              <input type="range" id="baseSize" min="14" max="22" value="16" step="1" oninput="updateState('baseSize', this.value)">
+            </div>
+            <div class="control-group">
+              <label>Heading Weight <span class="value-display" id="headingWeightVal">700</span></label>
+              <input type="range" id="headingWeight" min="300" max="900" value="700" step="100" oninput="updateState('headingWeight', this.value)">
+            </div>
+            <div class="control-group">
+              <label>Button Weight <span class="value-display" id="btnWeightVal">600</span></label>
+              <input type="range" id="btnWeight" min="400" max="800" value="600" step="100" oninput="updateState('btnWeight', this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Colors Section -->
+        <div class="section" id="section-colors">
+          <div class="section-header" onclick="toggleSection('section-colors')">
+            <span class="section-title">Colors</span>
+            <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>
+          </div>
+          <div class="section-content">
+            <div class="control-group">
+              <label>Primary Color</label>
+              <input type="color" id="primaryColor" value="#3b82f6" oninput="updateState('primaryColor', this.value)">
+            </div>
+            <div class="control-group">
+              <label>Background</label>
+              <input type="color" id="bgColor" value="#ffffff" oninput="updateState('bgColor', this.value)">
+            </div>
+            <div class="control-group">
+              <label>Text Color</label>
+              <input type="color" id="textColor" value="#1a1a1a" oninput="updateState('textColor', this.value)">
+            </div>
+            <div class="control-group">
+              <label>Border Color</label>
+              <input type="color" id="borderColor" value="#e5e5e5" oninput="updateState('borderColor', this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Spacing Section -->
+        <div class="section" id="section-spacing">
+          <div class="section-header" onclick="toggleSection('section-spacing')">
+            <span class="section-title">Spacing & Borders</span>
+            <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>
+          </div>
+          <div class="section-content">
+            <div class="control-group">
+              <label>Border Radius <span class="value-display" id="borderRadiusVal">8px</span></label>
+              <input type="range" id="borderRadius" min="0" max="32" value="8" step="1" oninput="updateState('borderRadius', this.value)">
+            </div>
+            <div class="control-group">
+              <label>Border Width <span class="value-display" id="borderWidthVal">1px</span></label>
+              <input type="range" id="borderWidth" min="0" max="4" value="1" step="0.5" oninput="updateState('borderWidth', this.value)">
+            </div>
+            <div class="control-group">
+              <label>Button Padding <span class="value-display" id="btnPaddingVal">12px 24px</span></label>
+              <input type="range" id="btnPadding" min="8" max="24" value="12" step="2" oninput="updateState('btnPadding', this.value)">
+            </div>
+            <div class="control-group">
+              <label>Card Padding <span class="value-display" id="cardPaddingVal">24px</span></label>
+              <input type="range" id="cardPadding" min="12" max="48" value="24" step="4" oninput="updateState('cardPadding', this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Shadows Section -->
+        <div class="section" id="section-shadows">
+          <div class="section-header" onclick="toggleSection('section-shadows')">
+            <span class="section-title">Shadows</span>
+            <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4 4 4-4"/></svg>
+          </div>
+          <div class="section-content">
+            <div class="control-group">
+              <label>Shadow Intensity <span class="value-display" id="shadowIntensityVal">Medium</span></label>
+              <input type="range" id="shadowIntensity" min="0" max="3" value="1" step="1" oninput="updateState('shadowIntensity', this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview area - single mode -->
+    <div class="preview-area" id="preview-single">
+      <div class="preview-section" id="preview">
+        <!-- Navigation -->
+        <div class="preview-block" id="nav-block">
+          <div class="preview-label">Navigation</div>
+          <div class="nav-bar">
+            <span class="nav-logo">Acme</span>
+            <div class="nav-links">
+              <span class="nav-link">Features</span>
+              <span class="nav-link">Pricing</span>
+              <span class="nav-link">About</span>
+              <button class="nav-cta">Get Started</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typography -->
+        <div class="preview-block" id="typo-block">
+          <div class="preview-label">Typography Scale</div>
+          <div class="typography-showcase">
+            <h1 style="font-size: var(--h1-size); font-weight: var(--heading-weight); color: var(--text-color); font-family: var(--font-family); line-height: 1.15; letter-spacing: var(--heading-letter-spacing, -0.02em);">The quick brown fox</h1>
+            <h2 style="font-size: var(--h2-size); font-weight: var(--heading-weight); color: var(--text-color); font-family: var(--font-family); line-height: 1.2; letter-spacing: var(--heading-letter-spacing, -0.01em);">The quick brown fox jumps over</h2>
+            <h3 style="font-size: var(--h3-size); font-weight: var(--heading-weight); color: var(--text-color); font-family: var(--font-family); line-height: 1.3;">A heading at the third level</h3>
+            <h4 style="font-size: var(--h4-size); font-weight: var(--heading-weight); color: var(--text-color); font-family: var(--font-family); line-height: 1.35;">Fourth-level heading for subsections</h4>
+            <p style="font-size: var(--body-size); color: var(--text-color); line-height: 1.65; font-family: var(--font-family); max-width: 640px;">Body text with a comfortable reading rhythm. Good typography creates hierarchy and flow, guiding the reader through content naturally. This is what your paragraphs look like.</p>
+            <p style="font-size: var(--small-size); color: var(--text-muted); font-family: var(--font-family); line-height: 1.5;">Small text for captions, labels, and metadata -- often used for timestamps and secondary info.</p>
+            <blockquote>Design is not just what it looks like and feels like. Design is how it works.</blockquote>
+            <p style="font-size: var(--body-size); color: var(--text-color); font-family: var(--font-family); line-height: 1.65;">You can use <code class="inline-code">inline code</code> for technical references within body text.</p>
+          </div>
+        </div>
+
+        <!-- UI Elements -->
+        <div class="preview-block" id="ui-block">
+          <div class="preview-label">UI Elements</div>
+          <div class="ui-elements-grid">
+            <div class="ui-element-group">
+              <button class="sample-button">Primary</button>
+            </div>
+            <div class="ui-element-group">
+              <button class="sample-button secondary">Secondary</button>
+            </div>
+            <div class="ui-element-group">
+              <button class="sample-button ghost">Text Link</button>
+            </div>
+            <div class="sample-input-wrap">
+              <span class="sample-input-label">Email address</span>
+              <input type="text" class="sample-input" placeholder="you@example.com">
+            </div>
+            <div class="ui-element-group">
+              <div class="preview-toggle" onclick="this.querySelector('.preview-toggle-track').classList.toggle('active')">
+                <div class="preview-toggle-track active"><div class="preview-toggle-knob"></div></div>
+                <span class="preview-toggle-label">Enabled</span>
+              </div>
+            </div>
+            <div class="ui-element-group" style="display: flex; flex-direction: row; gap: 8px; align-items: center;">
+              <span class="badge">New</span>
+              <span class="badge outline">Beta</span>
+            </div>
+            <div class="ui-element-group">
+              <a class="sample-link">Learn more</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cards -->
+        <div class="preview-block" id="card-block">
+          <div class="preview-label">Card Components</div>
+          <div class="cards-row">
+            <div class="sample-card">
+              <div class="card-image"></div>
+              <div class="card-body">
+                <div class="card-title">Card Title</div>
+                <div class="card-text">A sample card showing containers with your chosen spacing, borders, and shadows.</div>
+                <div style="margin-top: 4px;">
+                  <button class="sample-button" style="padding: 8px 16px; font-size: 14px;">Action</button>
+                </div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">2.4k</div>
+              <div class="stat-label">Active Users</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-number">98%</div>
+              <div class="stat-label">Uptime</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview area - compare mode -->
+    <div class="preview-area hidden" id="preview-compare">
+      <div class="compare-grid" id="compare-grid"></div>
+    </div>
+
+    <div class="prompt-area">
+      <div class="prompt-label">Generated Prompt</div>
+      <div id="prompt-output"></div>
+      <div class="button-row">
+        <button class="copy-btn" onclick="copyPrompt()">Copy Prompt</button>
+        <button id="send-btn" onclick="sendToClaude()">Send to Claude</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── State ──────────────────────────────────────────────
+
+    const PRESETS = {
+      minimal: {
+        name: 'Minimal Modern',
+        mood: 'Clean, confident, and restrained. Every pixel earns its place.',
+        fontFamily: "'Inter', sans-serif",
+        baseSize: 16,
+        headingWeight: 500,
+        btnWeight: 500,
+        primaryColor: '#000000',
+        bgColor: '#ffffff',
+        textColor: '#1a1a1a',
+        borderColor: '#e5e5e5',
+        borderRadius: 4,
+        borderWidth: 1,
+        btnPadding: 10,
+        cardPadding: 20,
+        shadowIntensity: 0
+      },
+      bold: {
+        name: 'Bold Vibrant',
+        mood: 'Loud, energetic, and unapologetic. Designed to stop the scroll.',
+        fontFamily: "'Space Grotesk', sans-serif",
+        baseSize: 18,
+        headingWeight: 800,
+        btnWeight: 700,
+        primaryColor: '#ff6b35',
+        bgColor: '#fefefe',
+        textColor: '#0a0a0a',
+        borderColor: '#0a0a0a',
+        borderRadius: 0,
+        borderWidth: 3,
+        btnPadding: 16,
+        cardPadding: 32,
+        shadowIntensity: 0
+      },
+      soft: {
+        name: 'Soft Elegant',
+        mood: 'Warm, inviting, and refined. Whispers rather than shouts.',
+        fontFamily: "'Merriweather', serif",
+        baseSize: 16,
+        headingWeight: 400,
+        btnWeight: 400,
+        primaryColor: '#a78bfa',
+        bgColor: '#faf8f5',
+        textColor: '#3a3532',
+        borderColor: '#e8e3df',
+        borderRadius: 20,
+        borderWidth: 0,
+        btnPadding: 14,
+        cardPadding: 28,
+        shadowIntensity: 2
+      },
+      brutalist: {
+        name: 'Raw Industrial',
+        mood: 'Brutalist, technical, and no-nonsense. Concrete meets code.',
+        fontFamily: "'JetBrains Mono', monospace",
+        baseSize: 14,
+        headingWeight: 700,
+        btnWeight: 700,
+        primaryColor: '#2563eb',
+        bgColor: '#f1f0ee',
+        textColor: '#1a1a1a',
+        borderColor: '#1a1a1a',
+        borderRadius: 0,
+        borderWidth: 2,
+        btnPadding: 12,
+        cardPadding: 20,
+        shadowIntensity: 0
+      }
+    };
+
+    let state = { ...PRESETS.minimal };
+    let currentPreset = 'minimal';
+    let compareMode = false;
+
+    // ── Collapsible sections ──────────────────────────────
+
+    function toggleSection(id) {
+      document.getElementById(id).classList.toggle('collapsed');
+    }
+
+    // ── State management ─────────────────────────────────
+
+    function updateState(key, value) {
+      if (key === 'fontFamily') {
+        state[key] = value;
+      } else {
+        state[key] = parseFloat(value);
+      }
+      currentPreset = detectPreset();
+      updateActivePreset();
+      updateAll();
+    }
+
+    function detectPreset() {
+      for (const [name, preset] of Object.entries(PRESETS)) {
+        const keys = Object.keys(preset).filter(k => k !== 'name' && k !== 'mood');
+        const match = keys.every(k => {
+          if (typeof state[k] === 'string') return state[k] === preset[k];
+          return state[k] === preset[k];
+        });
+        if (match) return name;
+      }
+      return null;
+    }
+
+    function applyPreset(name) {
+      const p = PRESETS[name];
+      Object.keys(p).forEach(k => {
+        if (k !== 'name' && k !== 'mood') state[k] = p[k];
+      });
+      currentPreset = name;
+      syncControlsToState();
+      updateActivePreset();
+      updateAll();
+    }
+
+    function syncControlsToState() {
+      Object.keys(state).forEach(key => {
+        const el = document.getElementById(key);
+        if (!el) return;
+        if (el.tagName === 'SELECT') {
+          // Match by comparing option values
+          const options = el.options;
+          for (let i = 0; i < options.length; i++) {
+            if (options[i].value === state[key]) {
+              el.selectedIndex = i;
+              break;
+            }
+          }
+        } else {
+          el.value = state[key];
+        }
+      });
+    }
+
+    function updateActivePreset() {
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.preset === currentPreset);
+      });
+    }
+
+    function updateAll() {
+      renderPreview();
+      if (compareMode) renderCompare();
+      updatePrompt();
+      updateValueDisplays();
+    }
+
+    // ── Preview rendering ────────────────────────────────
+
+    function computeDerived(s) {
+      const h1 = s.baseSize * 2.5;
+      const h2 = s.baseSize * 1.875;
+      const h3 = s.baseSize * 1.5;
+      const h4 = s.baseSize * 1.25;
+      const small = s.baseSize * 0.875;
+      const textOnPrimary = getContrastColor(s.primaryColor);
+      const textMuted = blendColors(s.textColor, s.bgColor, 0.5);
+      const cardBg = blendColors(s.bgColor, s.textColor, 0.02);
+      const inputBg = blendColors(s.bgColor, s.textColor, 0.03);
+
+      const shadows = [
+        'none',
+        '0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)',
+        '0 4px 12px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06)',
+        '0 10px 30px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.08)'
+      ];
+      const shadowsHover = [
+        'none',
+        '0 2px 6px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)',
+        '0 8px 20px rgba(0,0,0,0.14), 0 2px 6px rgba(0,0,0,0.08)',
+        '0 16px 40px rgba(0,0,0,0.2), 0 6px 14px rgba(0,0,0,0.1)'
+      ];
+
+      // Style-specific extras
+      let btnLetterSpacing = '0';
+      let btnTextTransform = 'none';
+      let headingLetterSpacing = '-0.02em';
+
+      if (s.fontFamily.includes('JetBrains')) {
+        btnLetterSpacing = '0.05em';
+        btnTextTransform = 'uppercase';
+        headingLetterSpacing = '0';
+      } else if (s.fontFamily.includes('Space Grotesk')) {
+        btnLetterSpacing = '0.02em';
+        btnTextTransform = 'uppercase';
+        headingLetterSpacing = '-0.03em';
+      } else if (s.fontFamily.includes('Merriweather')) {
+        headingLetterSpacing = '-0.01em';
+      }
+
+      return { h1, h2, h3, h4, small, textOnPrimary, textMuted, cardBg, inputBg,
+               shadow: shadows[s.shadowIntensity], shadowHover: shadowsHover[s.shadowIntensity],
+               btnLetterSpacing, btnTextTransform, headingLetterSpacing };
+    }
+
+    function applyVarsToElement(el, s, d) {
+      const vars = {
+        '--font-family': s.fontFamily,
+        '--base-size': s.baseSize + 'px',
+        '--h1-size': d.h1 + 'px',
+        '--h2-size': d.h2 + 'px',
+        '--h3-size': d.h3 + 'px',
+        '--h4-size': d.h4 + 'px',
+        '--body-size': s.baseSize + 'px',
+        '--small-size': d.small + 'px',
+        '--heading-weight': s.headingWeight,
+        '--btn-weight': s.btnWeight,
+        '--primary-color': s.primaryColor,
+        '--bg-color': s.bgColor,
+        '--text-color': s.textColor,
+        '--text-on-primary': d.textOnPrimary,
+        '--text-muted': d.textMuted,
+        '--border-color': s.borderColor,
+        '--card-bg': d.cardBg,
+        '--input-bg': d.inputBg,
+        '--border-radius': s.borderRadius + 'px',
+        '--border-width': s.borderWidth + 'px',
+        '--btn-padding': s.btnPadding + 'px ' + (s.btnPadding * 2) + 'px',
+        '--input-padding': (s.btnPadding - 2) + 'px ' + s.btnPadding + 'px',
+        '--card-padding': s.cardPadding + 'px',
+        '--shadow': d.shadow,
+        '--shadow-hover': d.shadowHover,
+        '--btn-letter-spacing': d.btnLetterSpacing,
+        '--btn-text-transform': d.btnTextTransform,
+        '--heading-letter-spacing': d.headingLetterSpacing
+      };
+      Object.entries(vars).forEach(([k, v]) => el.style.setProperty(k, v));
+    }
+
+    function renderPreview() {
+      const preview = document.getElementById('preview');
+      const d = computeDerived(state);
+      applyVarsToElement(preview, state, d);
+    }
+
+    // ── Compare mode ─────────────────────────────────────
+
+    function toggleCompareMode(on) {
+      compareMode = on;
+      document.getElementById('preview-single').classList.toggle('hidden', on);
+      document.getElementById('preview-compare').classList.toggle('hidden', !on);
+      if (on) renderCompare();
+    }
+
+    function renderCompare() {
+      const grid = document.getElementById('compare-grid');
+      grid.innerHTML = '';
+
+      Object.entries(PRESETS).forEach(([key, preset]) => {
+        const s = { ...preset };
+        const d = computeDerived(s);
+        const isActive = key === currentPreset;
+
+        const section = document.createElement('div');
+        section.className = 'preview-section';
+        if (isActive) { section.style.outline = '2px solid #3b82f6'; section.style.outlineOffset = '2px'; }
+        section.style.cursor = 'pointer';
+        section.onclick = () => applyPreset(key);
+
+        applyVarsToElement(section, s, d);
+
+        section.innerHTML = `
+          <div class="compare-name">${preset.name}</div>
+          <div class="preview-block">
+            <div class="preview-label">Typography</div>
+            <h2 style="font-size: var(--h3-size); font-weight: var(--heading-weight); color: var(--text-color); font-family: var(--font-family); margin-bottom: 6px;">Quick brown fox</h2>
+            <p style="font-size: var(--body-size); color: var(--text-muted); font-family: var(--font-family); line-height: 1.5;">Body text example for this style direction.</p>
+          </div>
+          <div class="preview-block">
+            <div class="preview-label">Elements</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+              <button class="sample-button" style="font-size:13px; padding:8px 14px;">Primary</button>
+              <button class="sample-button secondary" style="font-size:13px; padding:8px 14px;">Secondary</button>
+              <span class="badge">Tag</span>
+            </div>
+          </div>
+          <div class="preview-block">
+            <div class="nav-bar">
+              <span class="nav-logo">Acme</span>
+              <div class="nav-links">
+                <span class="nav-link">Pricing</span>
+                <button class="nav-cta">CTA</button>
+              </div>
+            </div>
+          </div>
+          <div class="preview-block" style="margin-bottom:0;">
+            <div style="display: flex; gap: 10px;">
+              <div class="stat-card">
+                <div class="stat-number">42</div>
+                <div class="stat-label">Metric</div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        grid.appendChild(section);
+      });
+    }
+
+    // ── Prompt generation ────────────────────────────────
+
+    function updatePrompt() {
+      const s = state;
+      const d = computeDerived(s);
+      const fontName = s.fontFamily.split(',')[0].replace(/'/g, '').trim();
+      const preset = currentPreset ? PRESETS[currentPreset] : null;
+
+      let lines = [];
+
+      // Title & mood
+      if (preset) {
+        lines.push(`DESIGN DIRECTION: ${preset.name}`);
+        lines.push(`Personality: ${preset.mood}`);
+      } else {
+        lines.push('DESIGN DIRECTION: Custom');
+        lines.push('Personality: A custom blend of design choices.');
+      }
+
+      lines.push('');
+
+      // Typography
+      lines.push('TYPOGRAPHY');
+      lines.push(`  Font: ${fontName}`);
+      lines.push(`  Base size: ${s.baseSize}px`);
+      lines.push(`  Scale: H1 ${d.h1}px / H2 ${d.h2}px / H3 ${d.h3}px / H4 ${d.h4}px`);
+      lines.push(`  Heading weight: ${s.headingWeight}`);
+      lines.push(`  Button weight: ${s.btnWeight}`);
+      lines.push(`  Line height: 1.65 (body), 1.15-1.35 (headings)`);
+
+      lines.push('');
+
+      // Colors
+      lines.push('COLORS');
+      lines.push(`  Primary: ${s.primaryColor}`);
+      lines.push(`  Background: ${s.bgColor}`);
+      lines.push(`  Text: ${s.textColor}`);
+      lines.push(`  Muted text: ${d.textMuted}`);
+      lines.push(`  Borders: ${s.borderColor}`);
+      lines.push(`  Text on primary: ${d.textOnPrimary}`);
+
+      lines.push('');
+
+      // Spacing
+      lines.push('SPACING & BORDERS');
+      const radiusDesc = s.borderRadius === 0 ? 'Sharp corners (0px)' :
+                         s.borderRadius <= 6 ? `Subtle rounding (${s.borderRadius}px)` :
+                         s.borderRadius >= 16 ? `Very rounded (${s.borderRadius}px)` :
+                         `Medium rounding (${s.borderRadius}px)`;
+      lines.push(`  Border radius: ${radiusDesc}`);
+      lines.push(`  Border width: ${s.borderWidth}px`);
+      lines.push(`  Button padding: ${s.btnPadding}px ${s.btnPadding * 2}px`);
+      lines.push(`  Card padding: ${s.cardPadding}px`);
+
+      lines.push('');
+
+      // Components
+      lines.push('COMPONENTS');
+      const shadowDesc = ['No shadows - flat design', 'Subtle shadows for depth', 'Medium shadows for elevation', 'Pronounced shadows for layered feel'];
+      lines.push(`  Shadows: ${shadowDesc[s.shadowIntensity]}`);
+      if (d.btnTextTransform === 'uppercase') {
+        lines.push('  Buttons: UPPERCASE labels');
+      }
+      if (s.borderWidth === 0) {
+        lines.push('  Borders: Borderless elements, rely on shadows/spacing');
+      } else if (s.borderWidth >= 3) {
+        lines.push(`  Borders: Bold ${s.borderWidth}px strokes for structural emphasis`);
+      }
+      lines.push(`  Cards: ${s.borderWidth > 0 ? 'Bordered' : 'Borderless'} containers with ${s.cardPadding}px internal padding`);
+      lines.push(`  Inputs: ${s.borderRadius}px radius, ${s.borderWidth}px border`);
+
+      document.getElementById('prompt-output').textContent = lines.join('\n');
+    }
+
+    // ── Value displays ───────────────────────────────────
+
+    function updateValueDisplays() {
+      document.getElementById('baseSizeVal').textContent = state.baseSize + 'px';
+      document.getElementById('headingWeightVal').textContent = state.headingWeight;
+      document.getElementById('btnWeightVal').textContent = state.btnWeight;
+      document.getElementById('borderRadiusVal').textContent = state.borderRadius + 'px';
+      document.getElementById('borderWidthVal').textContent = state.borderWidth + 'px';
+      document.getElementById('btnPaddingVal').textContent = state.btnPadding + 'px ' + (state.btnPadding * 2) + 'px';
+      document.getElementById('cardPaddingVal').textContent = state.cardPadding + 'px';
+      const shadowLabels = ['None', 'Subtle', 'Medium', 'Strong'];
+      document.getElementById('shadowIntensityVal').textContent = shadowLabels[state.shadowIntensity];
+    }
+
+    // ── Color utilities ──────────────────────────────────
+
+    function getContrastColor(hex) {
+      const rgb = hexToRgb(hex);
+      const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+      return luminance > 0.5 ? '#000000' : '#ffffff';
+    }
+
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 0, g: 0, b: 0 };
+    }
+
+    function blendColors(color1, color2, ratio) {
+      const c1 = hexToRgb(color1);
+      const c2 = hexToRgb(color2);
+      const r = Math.round(c1.r * (1 - ratio) + c2.r * ratio);
+      const g = Math.round(c1.g * (1 - ratio) + c2.g * ratio);
+      const b = Math.round(c1.b * (1 - ratio) + c2.b * ratio);
+      return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+    }
+
+    // ── Clipboard ────────────────────────────────────────
+
+    function copyPrompt() {
+      const text = document.getElementById('prompt-output').textContent;
+      navigator.clipboard.writeText(text);
+      const btn = event.target.closest('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy Prompt', 2000);
+    }
+
+    // ── Claude Sync ──────────────────────────────────────
+
+    const SYNC_URL = 'http://localhost:4242';
+
+    async function sendToClaude() {
+      const prompt = document.getElementById('prompt-output').textContent;
+      const btn = document.getElementById('send-btn');
+      btn.textContent = 'Sending...';
+      try {
+        await fetch(SYNC_URL + '/prompt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, url: location.href, pathname: location.pathname })
+        });
+        btn.textContent = 'Sent \u2713';
+        setTimeout(() => btn.textContent = 'Send to Claude', 2000);
+      } catch {
+        btn.textContent = 'No server';
+        setTimeout(() => btn.textContent = 'Send to Claude', 3000);
+      }
+    }
+
+    try {
+      const es = new EventSource(SYNC_URL + '/events');
+      es.addEventListener('status', e => {
+        const d = JSON.parse(e.data);
+        const btn = document.getElementById('send-btn');
+        if (d.status === 'processing') btn.textContent = 'Claude working...';
+        if (d.status === 'done') { btn.textContent = 'Done \u2713'; setTimeout(() => btn.textContent = 'Send to Claude', 2000); }
+      });
+    } catch {}
+
+    // ── Initialize ───────────────────────────────────────
+
+    applyPreset('minimal');
+  </script>
+</body>
+</html>

@@ -7,24 +7,34 @@ description: Use when writing, changing, reviewing, or reporting tests. Enforces
 
 ## Purpose
 
-This skill turns testing from "check the box" into reliable engineering evidence.
+Use this skill to produce test evidence that is trustworthy, reproducible, and useful for decisions.
 
-Use it whenever you:
-- add or modify code with behavior changes
-- write or update tests
+Apply it whenever you:
+- add or modify behavior
+- write or revise tests
 - review test quality
-- report test results to a human partner
+- report test status to a human partner
 
-## Outcomes
+## Claude 4.x Execution Rules
 
-By the end of a testing task, you should have:
-- tests that validate real behavior, not scaffolding
-- failure cases and edge cases covered for risky paths
-- minimal brittle mocks
-- explicit test evidence (what ran, what passed/failed)
-- no misleading claims
+Claude 4.x is concise and literal. Use explicit actions and deterministic output.
 
-## The Non-Negotiables
+- Execute testing work, do not just suggest it.
+- State unknowns explicitly instead of implying confidence.
+- Follow the output contract exactly when reporting.
+- Prefer positive directives: what to do next, not just what to avoid.
+
+## Operating Modes
+
+Pick one mode immediately, then run the matching workflow:
+- `plan` - build risk map and test strategy before writing tests
+- `write` - implement or update tests for changed behavior
+- `review` - audit existing tests for anti-patterns and coverage gaps
+- `report` - summarize exactly what was executed and what remains
+
+If the user intent is mixed, run `plan` then continue with `write`.
+
+## Non-Negotiables
 
 ```text
 1. Never claim a test passed unless you ran it.
@@ -34,249 +44,231 @@ By the end of a testing task, you should have:
 5. Never skip uncertainty: state what you could not verify.
 ```
 
-## Honesty Contract (Agent Reporting)
+## Honesty Contract (Required In Every Report)
 
-When reporting testing, always include:
+Always include:
 - exact command(s) run
-- scope (which test files/suites)
+- scope (files/suites/packages)
 - result summary (passed/failed/skipped)
-- whether full suite was run or only targeted tests
-- any environment limitations
+- whether execution was targeted or full-suite
+- environment limits that affected confidence
 
-### Required phrasing rules
+Required phrases:
+- If tests were not run: `I did not run tests.`
+- If only partial scope ran: `I ran targeted tests only.`
+- If failures remain: `Tests are currently failing:` followed by the list.
 
-- If you did not run tests, say: `I did not run tests.`
-- If only targeted tests ran, say: `I ran targeted tests only.`
-- If failures remain, say: `Tests are currently failing:` and list them.
-- Do not say "should pass", "looks good", or "likely fixed" without evidence.
+Never use: "should pass", "looks good", "probably fixed", "ready" without evidence.
 
-## Testing Workflow
+## Workflow
 
-### Step 1: Risk map before writing tests
+### Step 1: Build Risk Map (`plan`)
 
 Identify:
-- core behavior changed
-- critical user journeys affected
+- behavior changed
+- affected user paths
 - high-risk failure modes (data loss, auth, money, security, concurrency)
 
-Use this to decide test depth.
+Define minimum test depth before writing tests.
 
-### Step 2: Choose the right test level
+### Step 2: Select Test Level
 
-Prefer this mix:
-- unit tests for pure logic and branching
-- integration tests for component boundaries, contracts, persistence, API calls
-- end-to-end tests for top workflows only
+Use the lowest level that still proves behavior:
+- unit: pure logic and branching
+- integration: contracts, persistence, boundaries, API/DB semantics
+- e2e: critical user journeys only
 
-Do not force all behavior into unit tests with heavy mocks.
+Do not force everything into unit tests with deep mocks.
 
-### Step 3: Define observable behavior
+### Step 3: Define Observable Outcomes
 
-Write assertions against externally meaningful outcomes:
+Assert externally meaningful outcomes:
 - returned values
 - persisted state
 - emitted events
-- user-visible output
-- protocol/API responses
+- API/protocol output
+- user-visible behavior
 
-Avoid assertions on internal implementation unless that internal behavior is itself the contract.
+Avoid implementation-detail assertions unless internals are part of contract.
 
-### Step 4: Write or update tests
+### Step 4: Implement Tests (`write`)
 
-Minimum expectation for non-trivial behavior:
-- happy path
-- at least one failure path
-- at least one boundary/edge case
+For non-trivial changes include:
+- one happy path
+- one failure path
+- one boundary/edge case
 
-For bug fixes:
-- add a regression test that fails before the fix and passes after.
+For bug fixes include a regression test that fails before the fix.
 
-### Step 5: Run tests in layers
+### Step 5: Run In Layers
 
-Order:
+Run in this order:
 1. targeted tests for changed area
-2. broader suite (module/package)
-3. full suite when feasible before handoff/merge
+2. broader package/module suite
+3. full suite when feasible before handoff
 
-### Step 6: Report evidence honestly
+### Step 6: Audit Against Anti-Patterns (`review`)
 
-Use the Honesty Contract format above.
+Check mock scope, fixture realism, assertion quality, flaky behavior, and regression coverage.
+
+### Step 7: Report Evidence (`report`)
+
+Use the required template exactly.
 
 ## Anti-Pattern Catalog
 
-## Anti-pattern 1: Testing mock behavior
+### 1) Testing mock behavior instead of system behavior
 
-Bad:
-- asserting mock placeholder nodes (`*-mock`)
-- proving stub wiring instead of behavior
+Signals:
+- assertions on `*-mock` artifacts
+- proving stub wiring only
 
-Fix:
-- assert real output/side effects
-- unmock if mock obscures behavior under test
+Correction:
+- assert outputs or side effects from real system behavior
+- reduce mocks until assertions target true contract
 
-## Anti-pattern 2: Over-mocking dependency chains
+### 2) Over-mocking dependency chains
 
-Bad:
-- mocking multiple layers "to be safe"
-- mock setup larger than test intent
+Signals:
+- multiple stacked mocks for one behavior
+- setup larger than assertion intent
 
-Fix:
-- mock only true external boundaries (network, filesystem, clock, randomness)
+Correction:
+- mock only external or nondeterministic boundaries
 - keep domain logic real
 
-## Anti-pattern 3: Incomplete or unrealistic mocks
+### 3) Incomplete or unrealistic fixtures
 
-Bad:
-- partial objects that omit fields used downstream
-- impossible states that production never emits
+Signals:
+- partial objects missing required fields
+- impossible state combinations
 
-Fix:
-- model realistic contract-complete fixtures
-- include required metadata and failure variants
+Correction:
+- use contract-complete fixtures
+- include realistic success and failure variants
 
-## Anti-pattern 4: Test-only methods in production code
+### 4) Test-only methods in production code
 
-Bad:
-- adding `resetForTests`, `destroyForTest`, etc. to production objects
+Signals:
+- `resetForTests`, `destroyForTest`, etc.
 
-Fix:
-- use test fixtures/helpers/harnesses in test code
-- keep production API clean
+Correction:
+- move lifecycle helpers to test harness/fixtures
+- keep production APIs clean
 
-## Anti-pattern 5: Implementation-detail assertions
+### 5) Implementation-detail assertions
 
-Bad:
-- asserting private method calls, internal class names, incidental sequence
+Signals:
+- private method call checks
+- incidental sequencing checks that are not contractual
 
-Fix:
-- assert contract behavior and observable outcomes
+Correction:
+- assert behavior and outcomes users depend on
 
-## Anti-pattern 6: Snapshot overreach
+### 6) Snapshot overreach
 
-Bad:
-- huge snapshots used as primary correctness signal
-- blind snapshot updates
+Signals:
+- huge snapshots as primary correctness signal
+- blind snapshot refreshes
 
-Fix:
-- use focused assertions for critical fields
-- keep snapshots small and reviewed intentionally
+Correction:
+- assert critical fields explicitly
+- keep snapshots small and intentionally reviewed
 
-## Anti-pattern 7: Flaky async/time tests
+### 7) Flaky async/time tests
 
-Bad:
-- real-time sleeps, race-prone assertions, timezone/locale assumptions
+Signals:
+- sleep-based waits
+- race-prone assertions
+- timezone/locale assumptions
 
-Fix:
-- control clock/timeouts
-- await deterministic conditions
+Correction:
+- control time/clock
+- wait on deterministic conditions
 - isolate nondeterministic dependencies
 
-## Anti-pattern 8: Silent failure handling
+### 8) Silent failures
 
-Bad:
+Signals:
 - catch-and-ignore in tests
-- `expect(true).toBe(true)` style placeholder checks
+- placeholder assertions (`expect(true).toBe(true)`)
 
-Fix:
-- fail loudly with clear diagnostics
-- assert specific error messages/codes when relevant
+Correction:
+- fail loudly with actionable diagnostics
+- assert specific error codes/messages when relevant
 
-## Anti-pattern 9: Skips as debt hiding
+### 9) Skip debt hiding
 
-Bad:
-- skipping flaky tests without issue tracking
-- permanent quarantine with no owner
+Signals:
+- skipped tests without issue reference or owner
 
-Fix:
-- skip only with explicit reason and tracking reference
-- define re-enable conditions
+Correction:
+- skip only with explicit reason + tracking ticket
+- define re-enable criteria
 
-## Anti-pattern 10: Coverage theater
+### 10) Coverage theater
 
-Bad:
-- chasing percentage without meaningful assertions
-- high line coverage, low behavior coverage
+Signals:
+- high line coverage but weak behavior coverage
 
-Fix:
-- prioritize decision branches, invariants, and negative paths
+Correction:
+- prioritize branch decisions, invariants, and negative cases
 
-## Anti-pattern 11: Missing regression test for bugfix
+### 11) Missing regression tests for bug fixes
 
-Bad:
-- fixing code without pinning failure mode in tests
+Signals:
+- bug fixed without pinning original failure in tests
 
-Fix:
-- write regression test first (or same change) so bug cannot silently return
+Correction:
+- add regression test before or with fix
 
-## Anti-pattern 12: No contract tests at boundaries
+### 12) Missing boundary contract tests
 
-Bad:
-- relying only on unit mocks for external schemas/services
+Signals:
+- only unit mocks around APIs/schemas/storage
 
-Fix:
-- add integration/contract tests for serialization, API shape, DB semantics
+Correction:
+- add integration/contract tests for boundary semantics
 
 ## Mocking Decision Gate
 
 Before adding a mock, answer all:
 1. Is this dependency external or nondeterministic?
-2. Does real behavior make test slow/flaky/non-hermetic?
-3. What behavior do I lose if I mock here?
-4. Can I mock one layer lower and preserve domain behavior?
+2. Will real dependency make test flaky, slow, or non-hermetic?
+3. What behavior visibility is lost by mocking here?
+4. Can mocking happen one layer lower while preserving domain behavior?
 
-If you cannot answer clearly, do not mock yet.
+If answers are unclear, do not mock yet.
 
-## Completion Gate (Before Declaring Done)
+## Completion Gate
 
-A task is not complete until all are true:
-- tests added/updated for changed behavior
-- at least one negative or edge case included where risk exists
+Do not mark complete until all are true:
+- tests updated for changed behavior
+- failure/edge coverage added for risky paths
 - targeted tests executed successfully
-- broader tests executed or explicitly deferred with reason
-- result report is explicit and evidence-based
+- broader/full execution done or explicitly deferred
+- report includes concrete evidence and limitations
 
-## Review Checklist (Use In PR/Code Review)
-
-Check each item:
-- tests validate behavior, not internals
-- mock usage is minimal and justified
-- fixtures resemble real contracts
-- regression tests exist for bug fixes
-- assertions are specific and meaningful
-- flaky patterns (sleep/race/time) addressed
-- failures are informative
-- test report is honest and reproducible
-
-## Strong Output Template For Agents
+## Required Output Template
 
 ```text
 Testing Summary
+- Mode: <plan|write|review|report>
 - Commands run:
-  - <command 1>
-  - <command 2>
+  - <command>
 - Scope:
   - <files/suites>
 - Results:
   - <N passed, M failed, K skipped>
-- Coverage of change:
-  - <what behavior is validated>
+- Risks covered:
+  - <behaviors validated>
 - Gaps / limitations:
-  - <what was not run or not verified>
+  - <what was not verified>
 ```
-
-## Red Flag Phrases (Do Not Use Without Evidence)
-
-- "This should work"
-- "Looks good to me"
-- "Probably fixed"
-- "Tests seem fine"
-- "Ready" (without execution evidence)
-
-Replace with precise, verifiable statements.
 
 ## Bottom Line
 
-Good tests create trust. Honest reporting preserves it.
+Evidence is the product.
 
 If evidence is weak, improve tests.
 If evidence is missing, say so directly.
