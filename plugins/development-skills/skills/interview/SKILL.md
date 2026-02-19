@@ -164,7 +164,7 @@ Your job shifts from:
 
 But you're still rigorous - you fact-check, you verify, you enforce constraints.
 
-**Use `AskUserQuestion` tool. 4 questions at a time.**
+**Use `AskUserQuestion` tool. Up to 4 questions at a time.** See [references/question-guidelines.md](references/question-guidelines.md) for markdown preview and header guidance.
 
 **Research is now BACKGROUND (async):**
 - While user answers, launch background agents to verify claims
@@ -332,6 +332,8 @@ Use TodoWrite throughout:
 8. **Interview Record + Constraint Registry in every spec** - Makes specs self-contained and auditable.
 
 9. **PROGRESSIVE LOGGING IS NOT OPTIONAL** - Write to working log AS things happen, not at the end. The log prevents memory drift and creates accountability. If you haven't updated the log after a Q&A exchange, you're doing it wrong.
+
+10. **USE MARKDOWN PREVIEWS FOR FORK DECISIONS** - When the interview hits a structural fork where two devs could imagine different shapes from text alone, use a single AskUserQuestion with markdown previews showing each option visually. Max 3-4 per interview. Phase 3 only. See [references/question-guidelines.md](references/question-guidelines.md) > Visual Decision Questions.
 
 **The most dangerous failure mode:** Understanding constraints perfectly during Devil's Advocate, then contradicting them during Partner phase by applying "standard patterns" without verification. The Verification Gate exists specifically to prevent this.
 

@@ -72,13 +72,48 @@ When the trigger fires, surface the assumption explicitly:
 
 > "I'm assuming [X]. Is that correct, or did you have something different in mind?"
 
-### Pattern: Offer Alternatives
+### Pattern: Offer Alternatives (Text)
+
+For **preference or approach** assumptions, text alternatives are sufficient:
 
 > "There are a few ways to interpret 'packages' here:
 > A) Packages within a shared monorepo
 > B) Packages published to npm for separate repos
 > C) Code copied into each customer's repo
 > Which did you mean?"
+
+### Pattern: Offer Alternatives (Showpiece)
+
+For **structural** assumptions — where the ambiguity is about the *shape* of files, schemas, or architecture — use a single Showpiece question with markdown previews to make each interpretation visually concrete:
+
+```json
+{
+  "questions": [{
+    "question": "When you say 'packages', which structure are you picturing?",
+    "header": "Structure",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Monorepo internal",
+        "description": "Packages live inside one repo, imported by path. Shared tooling, single lockfile.",
+        "markdown": "repo/\n├── packages/\n│   ├── auth/       # @company/auth\n│   ├── ui/         # @company/ui\n│   └── utils/      # @company/utils\n├── apps/\n│   └── web/        # imports from packages/\n└── package.json    # single lockfile"
+      },
+      {
+        "label": "Published to npm",
+        "description": "Each package is its own repo, published to npm. Independent versioning and release cycles.",
+        "markdown": "auth-pkg/           # separate repo\n├── src/\n├── package.json    # published @company/auth\n└── CHANGELOG.md\n\nui-pkg/             # separate repo\n├── src/\n├── package.json    # published @company/ui\n└── CHANGELOG.md\n\nweb-app/            # consumer repo\n├── package.json    # depends on @company/*\n└── node_modules/\n    └── @company/auth  ← installed from npm"
+      },
+      {
+        "label": "Copied per project",
+        "description": "Shared code copied into each project. No package management, but drift risk over time.",
+        "markdown": "project-a/\n├── lib/\n│   ├── auth.ts     # copied from shared\n│   └── utils.ts    # copied from shared\n└── src/\n\nproject-b/\n├── lib/\n│   ├── auth.ts     # copied (may drift)\n│   └── utils.ts    # copied (may drift)\n└── src/"
+      }
+    ]
+  }]
+}
+```
+
+**Guideline:** If the assumption involves **structure** (files, schemas, architecture), use a Showpiece question with previews. If it's about **preference or approach**, text alternatives are fine.
 
 ### Pattern: Check Before Elaborating
 

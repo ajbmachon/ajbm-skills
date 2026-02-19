@@ -112,7 +112,10 @@ Key architectural constraints should be captured:
 ## Display Protocol
 
 ### At Partner Phase Transition
-Show the full Constraint Registry and require acknowledgment:
+
+Show the full Constraint Registry and require acknowledgment.
+
+**Simple constraint set (few constraints)** — use inline text:
 
 > "Before we proceed, here are the constraints I'll honor throughout our discussion:
 >
@@ -124,6 +127,29 @@ Show the full Constraint Registry and require acknowledgment:
 > - S1: Prefer TypeScript
 >
 > Is this complete and accurate?"
+
+**Complex constraint set (5+ constraints)** — use a Showpiece question with the registry formatted in the markdown preview pane for easy scanning:
+
+```json
+{
+  "questions": [{
+    "question": "Here are the constraints I captured. Are they complete and accurate?",
+    "header": "Constraints",
+    "multiSelect": false,
+    "options": [
+      {
+        "label": "Confirmed",
+        "description": "All constraints are correct. Proceed to deep interview.",
+        "markdown": "CONSTRAINT REGISTRY\n══════════════════════════════\n\nHARD (immutable)\n  H1: Separate repo per customer\n  H2: Team of 2 developers\n  H3: Must work offline\n  H4: No third-party auth services\n\nSOFT (preferences)\n  S1: Prefer TypeScript\n  S2: Prefer Tailwind for styling\n  S3: Deploy to Vercel if possible\n\nBOUNDARIES (out of scope)\n  B1: Mobile — desktop only for now\n  B2: i18n — English only initially\n\nCaptured from: Devil's Advocate phase"
+      },
+      {
+        "label": "Needs changes",
+        "description": "Some constraints are wrong, missing, or need reclassification. I'll specify what to fix."
+      }
+    ]
+  }]
+}
+```
 
 ### Before Major Structural Decisions
 Reference relevant constraints:
