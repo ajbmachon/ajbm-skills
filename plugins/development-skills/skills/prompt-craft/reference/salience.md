@@ -366,7 +366,7 @@ Salience mechanisms differ by model:
 
 | Model | Best Marker Style |
 |-------|-------------------|
-| **Claude** | XML tags (excellent parsing) |
+| **Claude** | Markdown headers preferred (4.6+); XML also works |
 | **GPT-4o** | Markdown headers or XML |
 | **o1/o3** | Add "Formatting re-enabled" for markdown output |
 | **DeepSeek** | XML tags work well |
