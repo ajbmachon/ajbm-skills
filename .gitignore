@@ -26,6 +26,7 @@ npm-debug.log
 # Claude Code sessions (local state)
 .claude/sessions/
 .claude/settings.local.json
+.ralph/
 
 # Beads database (jsonl is tracked, db is not)
 .beads/beads.db
