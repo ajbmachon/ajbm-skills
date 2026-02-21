@@ -321,7 +321,7 @@ Modern models need FEWER instructions, not more:
 ### Model-Specific Adjustments
 
 When targeting a specific model, load `reference/models/{model}.md` and apply adjustments.
-Key differences: Claude prefers directive language; GPT-4o needs explicit constraints;
+Key differences: Claude prefers directive language; GPT-5.x uses reasoning effort + verbosity controls;
 o1/o3 uses developer role (no CoT prompts); DeepSeek R1 uses user message only;
 Gemini places query at END; Kimi is goal-oriented; Qwen uses ChatML format.
 
@@ -385,7 +385,7 @@ Available in `reference/extended/`:
 
 **Command:** `*model [name]` or ask about prompting for a specific model.
 
-**Available:** Claude, OpenAI (GPT-4o, o1/o3), DeepSeek, Gemini, Kimi, Qwen
+**Available:** Claude, OpenAI (GPT-5.x, o1/o3), DeepSeek, Gemini, Kimi, Qwen
 
 **Location:** `reference/models/{name}.md` (per-model files for JIT loading)
 
@@ -393,7 +393,7 @@ Available in `reference/extended/`:
 
 | Model Type | Chain-of-Thought | Few-Shot | System Prompt |
 |------------|------------------|----------|---------------|
-| Standard (Claude, GPT-4o) | Add manually | Helpful | Yes |
+| Standard (Claude, GPT-5.x) | Add manually / use `reasoning.effort` | Helpful | Yes |
 | Reasoning (o1/o3, R1) | **Built-in - don't add** | **Hurts performance** | Developer role |
 | Agentic (Kimi K2) | Automatic | Varies | Goal-oriented |
 

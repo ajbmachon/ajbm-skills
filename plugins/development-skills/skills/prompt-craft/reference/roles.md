@@ -307,7 +307,7 @@ Role prompting has **diminishing returns on modern models:**
 | Model | Role Assignment Notes |
 |-------|----------------------|
 | **Claude** | Responds well; use specific expertise and behavioral guidelines |
-| **GPT-4o** | Responds well; system message is ideal location for roles |
+| **GPT-5.x** | Responds well; system/developer message for roles |
 | **o1/o3** | Use `developer` message; keep role concise |
 | **DeepSeek R1** | Put role in user message (no system prompt) |
 | **Gemini** | Works well; system instruction slot available |

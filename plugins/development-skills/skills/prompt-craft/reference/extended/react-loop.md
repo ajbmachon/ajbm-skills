@@ -79,7 +79,7 @@ Execute ONLY step {N}. Use tools as needed. Output your result.
 ## Model-Specific Notes
 
 - **Claude:** Natively handles ReAct through tool use. No need for explicit Thought/Action/Observation formatting -- just provide tools and a clear system prompt. Claude auto-delegates reasoning internally.
-- **GPT-4o / GPT-5:** Benefits from explicit ReAct structure in the prompt. Use the Thought/Action/Observation template for best results.
+- **GPT-5.x:** Benefits from explicit ReAct structure in the prompt. Use the Thought/Action/Observation template for best results. Prefer Responses API for tool-heavy workflows.
 - **o1 / o3:** Extended thinking handles reasoning internally. Provide tools but skip the explicit "Thought:" stage -- the model reasons in its hidden chain.
 - **Open-source (Qwen, DeepSeek):** Require explicit ReAct formatting. Include few-shot examples of the loop.
 

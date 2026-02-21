@@ -366,7 +366,7 @@ If invalid, fix and explain.
 | Model | Self-Reflection Notes |
 |-------|----------------------|
 | **Claude** | Good at genuine critique when prompted properly |
-| **GPT-4o** | Works well; explicit criteria important |
+| **GPT-5.x** | Works well; explicit criteria important |
 | **o1/o3** | Reasons internally; can still add explicit verification step |
 | **DeepSeek R1** | Already reflects in reasoning_content |
 | **Gemini** | Works well; structured prompts help |

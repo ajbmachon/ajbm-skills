@@ -1,10 +1,21 @@
 # DeepSeek
 
-## DeepSeek V3
+## DeepSeek V3.2 (Current Production)
 
-**Architecture:** 671B MoE (37B active)
+**Released:** December 1, 2025
+**Architecture:** 671B MoE (37B active) — same base as V3
 **Context:** 128K tokens
-**Best for:** General chat, code generation
+**API IDs:** `deepseek-chat` (non-thinking), `deepseek-reasoner` (thinking mode)
+**Max Output:** 8K (chat) / 64K (reasoner)
+**Pricing:** $0.028/M input (cache hit), $0.28/M (cache miss), $0.42/M output
+
+### What Changed from V3
+
+- DeepSeek Sparse Attention for improved efficiency
+- Thinking-in-tool-use: reasons while using tools
+- Agentic training across 1,800+ environments
+- **V3.2-Speciale** variant: gold-medal math/coding olympiad performance
+- DeepSeek-Coder merged into V3.2 (no separate coder model)
 
 ### Temperature Settings
 
@@ -28,7 +39,9 @@ messages = [
 
 ---
 
-## DeepSeek R1
+## DeepSeek R1 (Reasoning — Being Superseded)
+
+**Note:** The `deepseek-reasoner` API endpoint now serves V3.2 in thinking mode. R1 guidance still applies to that endpoint.
 
 **Critical:** Requires FUNDAMENTALLY different prompting.
 
@@ -82,29 +95,44 @@ for message in conversation_history:
 
 ---
 
-## DeepSeek V4 (Upcoming)
+## DeepSeek V4 (Imminent — Not Officially Released)
 
-**Status:** Expected mid-February 2026 (imminent or already released)
+**Status as of Feb 21, 2026:** NOT officially released. Expected mid-February 2026. Multiple confirmed technical breakthroughs.
 
-**Key specs (projected/leaked):**
-- 1T total parameters, 32B active (sparse MoE)
-- 1M token context window (silently upgraded from 128K on Feb 11, 2026)
-- Engram architecture: hash-based O(1) memory retrieval
-- ~$0.10/1M input tokens (projected ~50x cheaper than GPT-5.2)
-- Open weights expected (MIT license, continuing V3 pattern)
+### What's Confirmed vs Leaked
 
-**Architectural innovations:**
-- Engram memory (O(1) retrieval in DRAM)
-- Modified Hopfield Continuum (mHC) for bounded attention
-- Dynamic Sparse Attention (DSA) with Lightning Indexer
+| Claim | Status | Source |
+|-------|--------|--------|
+| Engram conditional memory | **CONFIRMED** | Published paper + open-source code |
+| 1M token context window | **CONFIRMED** | Observed in production (Feb 11, 2026) |
+| 1T parameter MoE architecture | LEAKED | GitHub code leak ("MODEL1") |
+| ~32B active parameters | LEAKED | Architecture analysis |
+| 90% HumanEval | LEAKED | Internal benchmark leak |
+| >80% SWE-bench | LEAKED | Internal benchmark leak |
+| Consumer GPU support | CLAIMED | Third-party reports |
+| Open-source release (MIT) | EXPECTED | Based on V3 track record |
 
-**Hybrid model:** Supports both reasoning and non-reasoning tasks in one model (no separate R2 model expected).
+### Architectural Innovations
 
-**Prompting guidance:** Not yet available. Monitor for release notes. Expect standard prompting to work given the hybrid approach.
+- **Engram memory:** Hash-based O(1) retrieval in DRAM — 1M token context costs roughly same compute as 128K
+- **Modified Hopfield Continuum (mHC):** Bounded attention mechanism
+- **Dynamic Sparse Attention (DSA):** Lightning Indexer for efficient long-context processing
+
+### Projected Specs
+
+- 1T total parameters, ~32B active (sparse MoE)
+- 1M token context window (already live)
+- ~$0.10/M input tokens (~50x cheaper than GPT-5.2)
+- Hybrid reasoning/non-reasoning in one model — **R2 absorbed into V4** (CEO stalled separate R2 in June 2025 due to unsatisfactory performance)
+- Target: autonomous coding — managing entire software repositories
+
+**Prompting guidance:** Not yet available. Monitor for release notes. Expect standard prompting given the hybrid approach.
 
 **Sources:**
 - https://www.digitalapplied.com/blog/deepseek-v4-engram-architecture-coding-model-guide
-- https://www.ai-supremacy.com/p/deepseeks-next-move-what-v4-will-like-model1
+- https://introl.com/blog/deepseek-v4-trillion-parameter-coding-model-february-2026
+- https://www.nxcode.io/resources/news/deepseek-v4-engram-memory-1t-model-guide-2026
+- https://aitoolsreview.co.uk/insights/deepseek-v4-everything-we-know
 
 ---
 
@@ -112,7 +140,7 @@ for message in conversation_history:
 
 | Model | CoT Prompting | Few-Shot | System Prompt |
 |-------|---------------|----------|---------------|
-| DeepSeek V3 | Manual | Helpful | Yes |
+| DeepSeek V3.2 | Manual / thinking mode | Helpful | Yes |
 | DeepSeek R1 | **NEVER** | **Hurts** | **NO** |
 | DeepSeek V4 | TBD (hybrid) | TBD | TBD |
 

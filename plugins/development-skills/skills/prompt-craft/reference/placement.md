@@ -239,7 +239,7 @@ Only cite the documents provided. Do not invent case law.
 | Model | Placement Sensitivity |
 |-------|----------------------|
 | **Claude** | Moderate; handles long context well but still benefits from good placement |
-| **GPT-4o** | Moderate; 128K context but lost-in-middle still applies |
+| **GPT-5.x** | 400K context; lost-in-middle reduced but still benefits from good placement |
 | **Gemini 2.0** | **Place query at END** - official recommendation for long contexts |
 | **DeepSeek** | Standard sensitivity |
 | **Kimi K2** | **Put critical constraints EARLY** - instruction drift after ~900 words |

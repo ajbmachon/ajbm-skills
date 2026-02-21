@@ -299,7 +299,7 @@ Formatted:
 | Model | Few-Shot Behavior |
 |-------|-------------------|
 | **Claude 4.x** | Works well; 3-5 examples optimal |
-| **GPT-4o** | Works well; consistent format important |
+| **GPT-5.x** | Helpful at `none`/`low` reasoning effort; less needed at `medium+` |
 | **o1/o3** | **Avoid few-shot - hurts performance** |
 | **DeepSeek R1** | **Avoid few-shot - degrades quality** |
 | **DeepSeek V3** | Works normally |

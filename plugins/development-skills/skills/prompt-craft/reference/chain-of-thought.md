@@ -166,12 +166,12 @@ Before using CoT, ask yourself:
 | Model | CoT Behavior |
 |-------|--------------|
 | **Claude 4.x** | Works well; can use extended thinking for complex problems |
-| **GPT-4o** | Works well; standard CoT prompting |
+| **GPT-5.x** | Works well; use `reasoning.effort` to control depth |
 | **o1/o3** | **Built-in - do NOT prompt for CoT** |
 | **DeepSeek R1** | **Built-in - do NOT prompt for CoT** |
-| **Gemini 2.0** | Works well; can enable thinking mode |
+| **Gemini 3.x** | Thinking mode (low/medium/high); simplify prompts at high |
 | **Kimi K2** | Automatic for K2-Thinking; standard for K2-Instruct |
-| **Qwen 2.5** | Works well; include "step by step" for complex tasks |
+| **Qwen 3.5** | Hybrid thinking mode; automatic for complex tasks |
 
 ---
 

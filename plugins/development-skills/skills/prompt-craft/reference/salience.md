@@ -353,8 +353,8 @@ Salience mechanisms differ by model:
 | Model Family | Primary Salience | Notes |
 |---|---|---|
 | Claude 4.x | **Markdown headers** | Claude prefers markdown over XML. Use ## headers for section breaks, **bold** for emphasis, CAPS for critical terms. |
-| GPT-4o / GPT-5.x | **XML tags or delimiters** | Responds well to <context>, <instructions> tags and triple-quoted delimiters. |
-| Gemini 2.0 | **Markdown or XML** | Both work. Place query at END for long contexts. |
+| GPT-5.x | **XML tags or delimiters** | Responds well to <context>, <instructions> tags and triple-quoted delimiters. |
+| Gemini 3.x | **Markdown or XML** | Both work. Place query at END for long contexts. Temperature must stay at 1.0. |
 | o1/o3 | **Delimiters and headings** | Use structure to separate task, context, constraints. |
 | DeepSeek R1 | **Markdown headers** | All instructions in user message. Use ## headers for structure. |
 
@@ -367,7 +367,7 @@ Salience mechanisms differ by model:
 | Model | Best Marker Style |
 |-------|-------------------|
 | **Claude** | Markdown headers preferred (4.6+); XML also works |
-| **GPT-4o** | Markdown headers or XML |
+| **GPT-5.x** | XML tags, delimiters, or markdown headers |
 | **o1/o3** | Add "Formatting re-enabled" for markdown output |
 | **DeepSeek** | XML tags work well |
 | **Gemini** | Markdown headers; section titles |

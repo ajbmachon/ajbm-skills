@@ -1,14 +1,16 @@
 # OpenAI
 
-## GPT-5.2
+## GPT-5.2 (Current Flagship)
 
-**Status:** Current flagship (replaces GPT-5.1)
-**Best for:** Complex reasoning, broad world knowledge, agentic/tool-heavy workflows, and code-heavy tasks
+**Released:** December 11, 2025
+**Best for:** Complex reasoning, broad world knowledge, agentic/tool-heavy workflows, code-heavy tasks
 **Knowledge cutoff:** 2025-08-31
 **Context (API):** 400K tokens | **Max output:** 128K tokens
 **Chat model:** `gpt-5.2-chat-latest` (128K context | 16,384 max output)
+**Pricing:** $1.75/M input ($0.175 cached), $14/M output
+**Three variants:** Instant (speed), Thinking (reasoning), Pro (enterprise)
 
-### What changed vs GPT-5.1
+### What Changed vs GPT-5.1
 
 - Better general intelligence and instruction following
 - More accurate and token-efficient answers
@@ -16,12 +18,16 @@
 - Better tool calling + context management in the API
 - New context management capability via **compaction**
 - Adds **`xhigh` reasoning effort** and **concise reasoning summaries**
+- 38% reduction in hallucinations vs GPT-5.1
+- 98.7% tool-calling reliability (Tau2 benchmark)
+- Benchmarks: GPQA Diamond 93.2%, AIME 2025 100%, SWE-Bench Verified 80%
 
-### The knobs that matter
+### The Knobs That Matter
 
 **1) `reasoning.effort` (quality vs latency/cost)**
-- Default is `none` (fast / low-latency).
-- Increase gradually (`medium` -> `high` -> `xhigh`) for harder reasoning.
+- Six levels: `none` (default) → `minimal` → `low` → `medium` → `high` → `xhigh` (Pro only)
+- Default is `none` (fast / low-latency). No internal reasoning.
+- Increase gradually for harder reasoning. Temperature/top_p only work at `none`.
 - With `none`, prompting matters more: explicitly ask for a *brief plan / outline* before the final answer.
 
 **2) `text.verbosity` (response length / "how much to say")**
@@ -35,7 +41,7 @@
 - Use for long-running workflows (many turns / tool calls) to extend effective context.
 - Output is **opaque/encrypted**: treat as "state to continue with", not data to parse.
 
-### Prompting patterns that reliably improve results
+### Prompting Patterns That Reliably Improve Results
 
 **Output-shape + length clamps (high ROI)**
 Give concrete constraints: bullet caps, section names, snippet limits, etc.
@@ -55,13 +61,14 @@ For big inputs, force re-grounding:
 If underspecified: ask 1-3 clarifying questions *or* give 2-3 interpretations with labeled assumptions.
 Never invent exact figures/links when uncertain; prefer "based on provided context..."
 
-### Tools & agent workflows
+### Tools & Agent Workflows
 
 - Prefer **Responses API** for tool-heavy workflows; it supports better conversation state handling.
 - GPT-5.2 is post-trained on specific tools (notably `apply_patch` and `shell`) and supports **custom tools** (freeform tool inputs + optional constrained outputs).
 - For long task chains, compact after milestones (not every turn), then continue with the compacted state.
+- MCP (Model Context Protocol) support available.
 
-### Common gotchas
+### Common Gotchas
 
 - Some sampling controls (e.g., temperature/top_p/logprobs) are only supported when `reasoning.effort` is `none`.
 - For hard problems, you usually get better reliability by:
@@ -77,6 +84,62 @@ Never invent exact figures/links when uncertain; prefer "based on provided conte
 
 ---
 
+## GPT-5.3 Codex (Latest Coding Model)
+
+**Released:** February 5, 2026
+**Optimized for:** Agentic coding — the most capable coding model to date
+**Context (API):** 400K tokens | **Max output:** 128K tokens
+**Pricing:** $1.75/M input ($0.175 cached), $14/M output
+
+### What Changed vs GPT-5.2 Codex
+
+- 25% faster inference
+- **Mid-task steering:** Interact with and guide the agent in real-time during complex projects
+- **Deep diffs:** Reasoning transparency for code changes
+- Improved codebase coherence across multi-file edits
+- Fixes for lint loops, weak bug explanations, and flaky-test premature completion
+- First model classified **High for cybersecurity** under OpenAI's Preparedness Framework
+
+### Key Benchmarks
+
+| Benchmark | GPT-5.3 Codex | GPT-5.2 Codex |
+|-----------|---------------|---------------|
+| SWE-Bench Pro Public | 56.8% | 56.4% |
+| Terminal-Bench 2.0 | 77.3% | 64.0% |
+| OSWorld-Verified | 64.7% | — |
+
+### When to Use
+
+- **GPT-5.3 Codex** for sustained, multi-file engineering, terminal tasks, and deployment workflows
+- **GPT-5.2** for general-purpose work, mixed workloads, or when you need `none` reasoning effort
+
+**Sources:**
+- GPT-5.3 Codex launch: https://www.digitalapplied.com/blog/gpt-5-3-codex-release-features-benchmarks-guide
+- Pricing: https://www.eesel.ai/blog/gpt-53-codex-pricing
+- Benchmarks: https://automatio.ai/models/gpt-5-3-codex
+
+---
+
+## GPT-5.2 Codex (Previous Coding Model)
+
+**Released:** January 14, 2026
+**Status:** Superseded by GPT-5.3 Codex, still available
+**Context (API):** 400K tokens | **Max output:** 128K tokens
+**Pricing:** $1.75/M input ($0.175 cached), $14/M output
+
+### Key Capabilities
+
+- Post-trained on `apply_patch` (structured diffs) and `shell` (plan-execute loops)
+- Context compaction for long coding sessions
+- SWE-Bench Pro: 56.4%, Terminal-Bench 2.0: 64.0%
+- Reasoning effort: low, medium, high, xhigh (no `none` — always reasons for code)
+
+**Sources:**
+- GPT-5.2 Codex guide: https://www.digitalapplied.com/blog/gpt-5-2-codex-openai-model-guide-2026
+- https://serenitiesai.com/articles/gpt-52-codex-review-2026
+
+---
+
 ## GPT-5.1
 
 **Status:** Previous flagship (still useful; cheaper than 5.2 in many setups)
@@ -84,17 +147,17 @@ Never invent exact figures/links when uncertain; prefer "based on provided conte
 **Knowledge cutoff:** 2024-09-30
 **Context (API):** 400K tokens | **Max output:** 128K tokens
 
-### Key behaviors
+### Key Behaviors
 
 - Default reasoning effort is `none` (fast, "non-reasoning-like" behavior)
 - Supported `reasoning.effort` values include `none`, `low`, `medium`, and `high`
 - More steerable in **personality, tone, and formatting** than GPT-5
 - Better calibrated to prompt difficulty (fewer wasted tokens on easy prompts)
 
-### Prompting: what actually works best
+### Prompting: What Actually Works Best
 
-**1) "None" mode = GPT-4o-style prompting**
-When `reasoning.effort="none"`, many classic prompt techniques work well again:
+**1) "None" mode = classic-style prompting**
+When `reasoning.effort="none"`, many classic prompt techniques work well:
 - Few-shot examples (when you need strict style/format imitation)
 - High-quality tool descriptions
 - Concrete output length clamps
@@ -103,7 +166,7 @@ When `reasoning.effort="none"`, many classic prompt techniques work well again:
 On longer agentic tasks, add an explicit rule:
 "Keep going until the user's request is completely resolved; don't stop early."
 
-**3) Persona is helpful -- but don't confuse tone with capability**
+**3) Persona is helpful — but don't confuse tone with capability**
 GPT-5.1 responds well to a clear persona, but persona alone won't "add knowledge."
 Use persona for tone/communication style; use explicit constraints + evals for correctness.
 
@@ -113,7 +176,7 @@ GPT-5.1 is post-trained on:
 - `apply_patch` (structured diffs for file edits; reduces patch failure rates vs DIY JSON tools)
 - `shell` (plan-execute loop via controlled command execution)
 
-### When to prefer GPT-5.1 vs GPT-5.2
+### When to Prefer GPT-5.1 vs GPT-5.2
 
 - Choose **GPT-5.1** if you want lower cost and you're already getting high quality with your prompt suite.
 - Choose **GPT-5.2** if you need stronger instruction following, better tool reliability, improved vision, compaction, and the best all-around performance.
@@ -125,94 +188,110 @@ GPT-5.1 is post-trained on:
 
 ---
 
-## GPT-4o
+## GPT-5 (Base)
 
-**Context:** 128K tokens
-**Best for:** Execution tasks, speed-sensitive applications
-**Status:** Retired from ChatGPT as of February 13, 2026. Still available via API but superseded by GPT-5.x.
+**Released:** August 7, 2025
+**Model ID:** `gpt-5`
+**Context:** 400K tokens | **Max output:** 128K tokens
+**Pricing:** $1.25/M input ($0.125 cached), $10/M output
 
-### Key Behaviors
+First unified GPT-5 system with built-in thinking. Automatic routing between instant and thinking modes.
 
-- More literal instruction following than GPT-4
-- Requires explicit specification (implicit rules not inferred)
-- Highly steerable with single sentences
+### Prompting Patterns (Official GPT-5 Prompting Guide)
 
-### Prompting Patterns
-
-**Use delimiters:**
-```python
-prompt = """
-Summarize the text below as a bullet point list.
-
-Text: \"\"\"
-{text_input}
-\"\"\"
-"""
-```
-
-**Be specific about format:**
-```
-"Use a 3 to 5 sentence paragraph to describe this product."
-```
-
-**Say what TO do:**
-```
-# Don't
-"DO NOT ASK USERNAME OR PASSWORD"
-
-# Do
-"Refer the user to www.example.com/help instead of asking for PII"
-```
-
-### Agentic Prompting
-
-Include these reminders for agentic behavior:
-```
-# Persistence
-Keep going until the user's query is completely resolved.
-
-# Tool Usage
-If unsure about content, use tools to gather information. Do NOT guess.
-
-# Planning (optional)
-Plan extensively before each function call.
-```
+1. Show one gold example — few-shot is fastest path to consistent tone
+2. Right-size the "thinking" — light/medium/deep depending on stakes
+3. Prefer machine-readable outputs — JSON beats prose when automating
+4. Constrain the canvas — format, length, style, variables, acceptance checks
+5. State the goal first — one sentence that defines "done"
 
 ---
 
-## o1/o3 Reasoning Models
+## GPT-5 Mini & Nano (Cost-Optimized)
 
-**What they are:** OpenAI's "o-series" reasoning models are trained to think longer and harder about ambiguous, multi-step problems. They behave differently from GPT "workhorse" models.
+| Model | Input | Output | Best For |
+|-------|-------|--------|----------|
+| GPT-5 Mini (`gpt-5-mini`) | $0.25/M | $2/M | Cost-optimized reasoning, high-volume |
+| GPT-5 Nano (`gpt-5-nano`) | $0.05/M | $0.40/M | Classification, routing, edge/mobile |
 
-### Prompting rules of thumb (from OpenAI guidance)
+Both maintain 400K context. Nano is 25x cheaper than GPT-5 base. Use for preprocessing, triage, and latency-sensitive pipelines.
 
-- **Keep prompts simple and direct.** These models do best with high-level guidance and clear success criteria.
-- **Avoid chain-of-thought prompting** ("think step by step", "show your reasoning"). They already reason internally.
-- **Try zero-shot first.** Add a *small* number of examples only if you need strict formatting behavior, and ensure examples match instructions precisely.
+---
+
+## o3 / o4-mini Reasoning Models
+
+| Model | Context | Pricing (in/out) | Reasoning Effort | Released |
+|-------|---------|-------------------|-----------------|----------|
+| **o3** | 200K | $2/$8 per M | low/medium/high | Apr 2025 |
+| **o3-pro** | 200K | $20/$80 per M | Maximum | Jun 2025 |
+| **o4-mini** | 200K | $1.10/$4.40 per M | low/medium/high | Apr 2025 |
+
+**What they are:** Reasoning models that think longer about ambiguous, multi-step problems. Behave differently from GPT "workhorse" models.
+
+### Prompting Rules of Thumb
+
+- **Keep prompts simple and direct.** High-level guidance + clear success criteria.
+- **NEVER use chain-of-thought prompting** ("think step by step"). They reason internally.
+- **Try zero-shot first.** Few-shot only for strict formatting behavior.
 - **Use delimiters** (headings, XML tags, fenced blocks) to separate task, context, and constraints.
 - **Be explicit about constraints** (budget, time, scope, acceptance criteria).
 
-### Developer messages and formatting
+### Developer Messages and Formatting
 
-- In the API, reasoning models support **developer messages** (instead of "system" messages) to align with the model-spec chain of command.
-- Starting with `o1-2024-12-17`, reasoning models avoid Markdown by default. If you *want* Markdown, include **`Formatting re-enabled`** on the first line of your developer message.
+- Use **developer messages** (not "system" messages). System messages are converted internally.
+- **Markdown off by default.** Include **`Formatting re-enabled`** on the first line of developer message to enable.
 
-### Tool-heavy / agentic workflows
+### Function Calling Best Practices
 
-- Prefer the **Responses API** for reasoning models. For complex multi-tool workflows, use `store: true` and carry forward conversation state via `previous_response_id` or by replaying prior output items.
-- OpenAI recommends including reasoning items around function calls (at minimum, between the last function call and the previous user message) so the model doesn't "restart" its reasoning when you respond to tool outputs.
+1. **Role prompting:** Establish clear agent identity and scope
+2. **Function call ordering:** Explicitly outline task sequences for complex workflows
+3. **Boundary definition:** Clarify when to invoke vs avoid tools
+4. **Description quality:** Lead with usage rules ("Only call if directory exists")
+5. **Strict mode:** Always enable `strict: True` in function schemas
+6. **Persist reasoning:** Use `encrypted_content` to maintain CoT between function calls
 
-### When to use o-series vs GPT-5.x
+```python
+response = client.responses.create(
+    model="o3",
+    input=context,
+    tools=tools,
+    include=["reasoning.encrypted_content"]
+)
+context += response.output  # Preserves reasoning for next turn
+```
 
-- Use **o-series** when accuracy/reliability on ambiguous decisions matters more than latency (planning, policy/compliance judgments, dense document reasoning).
-- Use **GPT-5.2 / GPT-5.1** when you need fast execution, high-quality writing/coding, or you want to tune reasoning effort per call.
+### Anti-Patterns
 
-**Note:** GPT-4o, o4-mini, and other models were retired from ChatGPT on Feb 13, 2026. o3 and o4-mini remain available via API. Deep research variants (`o3-deep-research`, `o4-mini-deep-research`) are also available.
+- Do NOT use chain-of-thought prompting
+- Do NOT explicitly prompt for planning between tool calls
+- Do NOT promise to call functions later — emit now or respond normally
+- Do NOT carry irrelevant past tool calls in conversation history
+- Avoid deeply nested parameter hierarchies (keep tools flat, <100 tools, <20 args)
+
+### When to Use o-series vs GPT-5.x
+
+| Use o-series when... | Use GPT-5.x when... |
+|---------------------|---------------------|
+| Accuracy on ambiguous decisions > latency | Fast execution needed |
+| Planning, compliance, policy judgments | Writing/coding speed |
+| Dense document reasoning | Tunable reasoning per call |
+| Multi-step scientific/math problems | Cost sensitivity |
+
+**Note:** o3 and o4-mini remain available via API. o4-mini retired from ChatGPT Feb 13, 2026. Deep research variants (`o3-deep-research`, `o4-mini-deep-research`) also available.
 
 **Sources:**
 - Reasoning best practices: https://platform.openai.com/docs/guides/reasoning-best-practices
-- Reasoning models guide: https://platform.openai.com/docs/guides/reasoning
+- Function calling guide: https://developers.openai.com/cookbook/examples/o-series/o3o4-mini_prompting_guide
 - Model retirements: https://openai.com/index/introducing-o3-and-o4-mini/
+
+---
+
+## Model Retirements (February 13, 2026)
+
+The following models were retired from ChatGPT on February 13, 2026:
+- GPT-4o, GPT-4.1, GPT-4.1 mini, o4-mini, GPT-5 Instant, GPT-5 Thinking
+
+API access remains for now. Migrate to GPT-5.2 or GPT-5.1 for production workloads.
 
 ---
 
@@ -220,10 +299,11 @@ Plan extensively before each function call.
 
 | Model | CoT Prompting | Few-Shot | System Prompt |
 |-------|---------------|----------|---------------|
-| GPT-5.2 | Light (ask for brief plan) | Helpful in `none`/`low`; less needed at `medium+` | Yes (system/developer) |
-| GPT-5.1 | Light (ask for brief plan) | Helpful in `none`/`low`; less needed at `medium+` | Yes (system/developer) |
-| GPT-4o | Manual | Helpful | Yes |
-| o1/o3 | **NEVER** | **Hurts** | Developer role |
+| GPT-5.2 | Light (brief plan at `none`) | Helpful at `none`/`low`; less at `medium+` | Yes (system/developer) |
+| GPT-5.3 Codex | Always reasons | Helpful at lower effort | Yes (system/developer) |
+| GPT-5.1 | Light (brief plan at `none`) | Helpful at `none`/`low`; less at `medium+` | Yes (system/developer) |
+| GPT-5 / Mini / Nano | Light | Helpful | Yes |
+| o3 / o4-mini | **NEVER** | Only for strict formatting | Developer role |
 
 ---
 
