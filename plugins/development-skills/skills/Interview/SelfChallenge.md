@@ -41,6 +41,17 @@ What alternative interpretations exist? If multiple are valid, don't pick one si
 
 Surfacing the user's implicit beliefs is one of the highest-value things an interviewer can do.
 
+**Example** — User says: "We need a mobile app for our field technicians to log service reports."
+
+> **My assumptions:**
+> - The field technicians have reliable mobile connectivity (they may not — rural areas, basements)
+> - "Log service reports" means structured form entry, not free-text notes or voice memos
+> - This is a new capability, not replacing an existing paper or spreadsheet workflow
+>
+> **You appear to assume:**
+> - A native mobile app is the right form factor (a responsive web app might avoid app store friction)
+> - Field technicians will adopt this willingly (adoption resistance is common with field tools)
+
 ## Surfacing Ambiguity
 
 When a specific assumption is uncertain, escalate beyond just listing it:
