@@ -1,6 +1,6 @@
 ---
 name: prompt-craft
-description: Analyze, craft, and improve prompts using research-backed techniques. Use when users ask to improve prompts, write prompts for LLMs, or when Claude needs to write prompts for subagents. Modes include Analyze (critique existing), Craft (build from scratch), Teach (explain techniques), and Quick Fix (fast improvements).
+description: USE WHEN improve prompt, write prompt, craft prompt, analyze prompt, prompt engineering, subagent prompts. Analyze, craft, and improve prompts using 19 research-backed techniques. Modes - Analyze (critique existing), Craft (build from scratch), Teach (explain techniques), Quick Fix (fast improvements).
 ---
 
 # Prompt Craft

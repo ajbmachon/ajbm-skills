@@ -212,4 +212,4 @@ The Constraint Store feeds into the Verification Gate. Before any recommendation
 2. If yes: "Which constraints are relevant?"
 3. Display: "Given constraints [X, Y], I recommend [Z] because..."
 
-See `verification-gate.md` for the full gate protocol.
+See `VerificationGate.md` for the full gate protocol.

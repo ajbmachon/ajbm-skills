@@ -171,4 +171,4 @@ Together they cover:
 - Things the user said (Verification Gate)
 - Things Claude is assuming (Self-Challenge)
 
-See `self-challenge.md` for the complementary mechanism.
+See `SelfChallenge.md` for the complementary mechanism.
