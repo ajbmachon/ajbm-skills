@@ -211,9 +211,9 @@ Use challenge angles from the active workflow file. For Standard/Deep mode, appl
 <mandatory_read phase="interview">
 **STOP.** Read before asking questions:
 
-**Self-Challenge** catches UNSTATED assumptions — things Claude fills in that the user didn't say. Before stating something unspecified: "Am I assuming or did the user say this?" If ambiguous, surface it. If structural (files, schemas, architecture), use a Showpiece question with markdown previews.
+**Assumption Audit** catches UNSTATED assumptions — things Claude fills in that the user didn't say. Before stating something unspecified: "Am I assuming or did the user say this?" Write out both YOUR assumptions and what the USER appears to assume. If ambiguous, surface it. If structural, use a Showpiece question with markdown previews.
 
-- [SelfChallenge.md](SelfChallenge.md) — Full protocol, common traps, integration with Verification Gate
+- [AssumptionAudit.md](AssumptionAudit.md) — Full protocol, common traps, two-layer assumption writing
 
 **Verification Gate** catches CONSTRAINT violations — recommendations that contradict the user's stated constraints. Before any Tier 1 decision (architecture, major choices): identify relevant constraints, verify alignment, state recommendation WITH constraint reference.
 
@@ -234,7 +234,7 @@ Use `AskUserQuestion` tool. Up to 4 questions at a time. Use domain-specific que
 
 **Enforcement mechanisms on every recommendation:**
 1. **Verification Gate** — Does this honor all constraints?
-2. **Self-Challenge** — Am I assuming or did the user say this?
+2. **Assumption Audit** — Am I assuming or did the user say this? What is the user assuming?
 3. **Assumption Audit** — Is this Tested, Assumed, or Hoped?
 
 **📝 LOG AFTER EACH Q&A:** Append to Interview Q&A section. If constraint emerged → Constraint Registry. If decision → Decisions Log. If assumption corrected → Assumptions & Corrections.
@@ -316,7 +316,7 @@ Use TaskCreate throughout:
 - [ ] 📝 Log challenges and emerging constraints
 - [ ] Capture Constraint Registry in working log
 - [ ] Get user confirmation on constraints
-- [ ] Read SelfChallenge, VerificationGate, QuestionGuidelines
+- [ ] Read AssumptionAudit, VerificationGate, QuestionGuidelines
 - [ ] Deep interview (with BACKGROUND research + constraint enforcement)
 - [ ] 📝 Log each Q&A exchange immediately
 - [ ] Handle contradictions (if any)
@@ -339,7 +339,7 @@ Use TaskCreate throughout:
 
 4. **CAPTURE CONSTRAINTS AT TRANSITION** — Never proceed to Partner without explicit registry + user confirmation.
 
-5. **ENFORCE CONSTRAINTS IN PARTNER PHASE** — Verification Gate before structural decisions. Self-Challenge when assuming. Assumption Audit at checkpoints.
+5. **ENFORCE CONSTRAINTS IN PARTNER PHASE** — Verification Gate before structural decisions. Assumption Audit when assuming — write out both layers.
 
 6. **CHALLENGE, DON'T SYCOPHANT** — If you see a problem, say it. Useful disagreement > comfortable agreement.
 

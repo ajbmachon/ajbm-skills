@@ -1,6 +1,6 @@
-# Self-Challenge Trigger
+# Assumption Audit
 
-Catches assumptions about details the user didn't specify.
+Catches assumptions — both Claude's and the user's — before they compound into bad recommendations.
 
 ---
 
@@ -99,13 +99,13 @@ User asks a narrow question. Claude draws a complete picture, adding details the
 | Mechanism | What It Checks |
 |-----------|----------------|
 | **Verification Gate** | Does this violate STATED constraints? |
-| **Self-Challenge** | Am I ASSUMING things the user didn't state? |
+| **Assumption Audit** | Am I ASSUMING things? What is the USER assuming? |
 
 Together they prevent both assumption drift AND constraint drift.
 
 ---
 
-## Self-Challenge Checklist
+## Assumption Audit Checklist
 
 Before any recommendation involving unspecified details:
 

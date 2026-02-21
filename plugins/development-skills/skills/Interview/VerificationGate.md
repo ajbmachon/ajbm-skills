@@ -44,6 +44,14 @@ Before stating ANY Tier 1 recommendation:
 If conflict detected:
 > "Wait — I was about to recommend [X], but that conflicts with H1 ([constraint]). Let me reconsider..."
 
+**Example** — User wants to redesign their team's onboarding program. Constraints: H1 (must work for remote employees), H2 (team of 3 — no dedicated L&D staff), S1 (prefer async over synchronous).
+
+> **Step 1:** I'm about to recommend a cohort-based workshop series. Relevant constraints: H1 (remote), H2 (team of 3), S1 (async preference).
+>
+> **Step 2:** Cohort workshops require synchronous attendance — conflicts with S1. They also need someone to facilitate — strains H2. Remote compatibility (H1) is fine with video calls, but that doubles down on the synchronous problem.
+>
+> **Step 3:** "Wait — cohort workshops conflict with your async preference (S1) and would strain your team of 3 (H2) to facilitate. Given those constraints, a self-paced onboarding track with async check-ins fits better. It honors H1 (fully remote), H2 (no facilitator needed), and S1 (async-first)."
+
 ---
 
 ## The "Standard Pattern" Trap
@@ -90,13 +98,13 @@ Make the gate VISIBLE. This builds trust and catches errors.
 
 ---
 
-## Integration with Self-Challenge
+## Integration with Assumption Audit
 
 | Mechanism | What It Checks |
 |-----------|----------------|
 | **Verification Gate** | Does this violate STATED constraints? |
-| **Self-Challenge** | Am I ASSUMING things the user didn't state? |
+| **Assumption Audit** | Am I ASSUMING things? What is the USER assuming? |
 
-Together they cover both stated constraints and unstated assumptions.
+Together they cover stated constraints, Claude's assumptions, and user's implicit beliefs.
 
-See `SelfChallenge.md` for the complementary mechanism.
+See `AssumptionAudit.md` for the complementary mechanism.
