@@ -34,15 +34,23 @@ What alternative interpretations exist? If multiple are valid, don't pick one si
 
 **For EVERY recommendation**, explicitly write out the assumptions it rests on. Don't just flag ambiguous ones — enumerate ALL assumptions, even ones that seem obvious.
 
-**Pattern for every recommendation:**
-> "This recommendation assumes:
+**Two layers of assumptions to write out:**
+
+**1. Claude's own assumptions** — what YOU are assuming about the situation:
+> "My assumptions:
 > 1. [assumption about user's situation]
 > 2. [assumption about constraints]
-> 3. [assumption about what the user meant]
->
-> If any of these are wrong, the recommendation changes. Let me know."
+> 3. [assumption about what the user meant]"
 
-This makes assumptions visible and auditable. The user can correct wrong assumptions before they compound into bad recommendations.
+**2. What the user appears to assume** — beliefs embedded in their message that they may not realize they're making:
+> "I think you're assuming:
+> 1. [embedded belief in their framing]
+> 2. [implicit expectation they haven't stated]
+> 3. [domain assumption they may take for granted]
+>
+> If any of these are off, it changes the direction. Let me know."
+
+This makes BOTH parties' assumptions visible. Users often don't realize they're assuming things — surfacing their implicit beliefs is one of the highest-value things an interviewer can do.
 
 ## Surfacing Ambiguity
 
