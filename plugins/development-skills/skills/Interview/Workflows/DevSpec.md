@@ -56,6 +56,35 @@ Interview type for crystallizing software development ideas into implementation-
 
 ---
 
+## Dev-Specific Verification Gate Tiers
+
+The core VerificationGate.md defines the general protocol. These are the dev-specific decision tiers.
+
+### Dev Tier 1: Major Structural Decisions (FULL CHECK)
+
+Full constraint verification before:
+- **Architecture patterns**: Monorepo vs polyrepo, microservices vs monolith, serverless vs containers
+- **Database choices**: SQL vs NoSQL, managed vs self-hosted, single vs sharded
+- **Deployment strategy**: Single tenant vs multi-tenant, per-customer vs shared
+- **Framework selection**: React vs Vue, Express vs Fastify, any major tech choice
+- **Service architecture**: How components communicate, API design
+- **Data flow**: Where data lives, how it moves between systems
+
+### Dev Tier 2: Minor Refinements (LIGHTWEIGHT CHECK)
+
+Quick constraint scan before: file naming, code style, variable naming, comment style.
+
+### Dev "Standard Pattern" Trap Examples
+
+Claude knows standard dev patterns and applies them without checking fit:
+- "Turborepo monorepos have apps/ and packages/" — but user needs separate repos
+- "Microservices communicate via message queues" — but user has a team of 2
+- "React apps use Redux for state management" — but user's app is simple enough for context
+
+**Before applying any standard dev pattern**, run the Verification Gate's 4-question check against the Constraint Registry.
+
+---
+
 ## Domain-Specific Output Additions
 
 ### TDD Block (include when test-driven workflow requested)

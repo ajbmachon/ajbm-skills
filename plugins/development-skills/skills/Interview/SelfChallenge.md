@@ -1,6 +1,6 @@
 # Self-Challenge Trigger
 
-The Self-Challenge Trigger catches assumptions about details the user didn't specify.
+Catches assumptions about details the user didn't specify.
 
 ---
 
@@ -8,59 +8,25 @@ The Self-Challenge Trigger catches assumptions about details the user didn't spe
 
 Prevent Claude from filling in gaps with assumptions that may not match the user's intent, even when those assumptions don't violate stated constraints.
 
-**The problem it solves:** User asks about "package structure." Claude assumes they mean "packages within one repo" when user actually meant "packages distributed to separate repos." No stated constraint was violated, but the assumption was wrong.
+**The problem it solves:** User asks about "team structure." Claude assumes they mean a flat hierarchy when user actually meant a matrix organization. No stated constraint was violated, but the assumption was wrong.
 
 ---
 
-## When to Trigger
+## The Three Questions
 
-### Trigger: Filling in Unspecified Details
+Before stating anything the user didn't explicitly say, ask internally:
 
-When Claude is about to state something the user didn't explicitly say:
+### 1. "Am I assuming or did the user say this?"
 
-- Architectural details not discussed
-- Implementation approaches not specified
-- Patterns being applied without user request
-- Defaults being chosen without user input
+If the user didn't say it, this is an assumption. Challenge it.
 
-### Signs You're Assuming
+### 2. "Could a reasonable person interpret this differently?"
 
-- "Obviously, we'd use..."
-- "The standard approach is..."
-- "This would involve..."
-- "We'd need to..."
-- Drawing a diagram or structure the user didn't describe
-- Explaining how something "works" when user only asked if it's possible
+If yes, ambiguity exists. Surface it before proceeding.
 
----
+### 3. "What am I NOT considering?"
 
-## The Challenge Protocol
-
-Before stating an assumption, ask internally:
-
-### Question 1: "Am I assuming or did the user say this?"
-
-```
-Claude (internal): "I'm about to say the packages live in a shared monorepo."
-Check: Did the user say packages live in a shared repo? → NO
-Result: This is an assumption. Challenge it.
-```
-
-### Question 2: "Could a reasonable person interpret this differently?"
-
-```
-Claude (internal): "The user said 'packages' - could they mean something else?"
-Check: Could packages mean distributed packages, not monorepo packages? → YES
-Result: Ambiguity exists. Surface it.
-```
-
-### Question 3: "What am I NOT considering?"
-
-```
-Claude (internal): "I'm assuming standard Turborepo. What else could fit?"
-Check: Template repos, copy-on-generate, git submodules, npm publishing
-Result: Multiple valid interpretations. Don't assume one.
-```
+What alternative interpretations exist? If multiple are valid, don't pick one silently.
 
 ---
 
@@ -68,110 +34,41 @@ Result: Multiple valid interpretations. Don't assume one.
 
 When the trigger fires, surface the assumption explicitly:
 
-### Pattern: State the Assumption
+**State it:** "I'm assuming [X]. Is that correct, or did you have something different in mind?"
 
-> "I'm assuming [X]. Is that correct, or did you have something different in mind?"
+**Offer alternatives:** "There are a few ways to interpret this: A) [interpretation], B) [interpretation], C) [interpretation]. Which did you mean?"
 
-### Pattern: Offer Alternatives (Text)
+**Check before elaborating:** "Before I explain how this would work — are you thinking [X] or [Y]?"
 
-For **preference or approach** assumptions, text alternatives are sufficient:
-
-> "There are a few ways to interpret 'packages' here:
-> A) Packages within a shared monorepo
-> B) Packages published to npm for separate repos
-> C) Code copied into each customer's repo
-> Which did you mean?"
-
-### Pattern: Offer Alternatives (Showpiece)
-
-For **structural** assumptions — where the ambiguity is about the *shape* of files, schemas, or architecture — use a single Showpiece question with markdown previews to make each interpretation visually concrete:
-
-```json
-{
-  "questions": [{
-    "question": "When you say 'packages', which structure are you picturing?",
-    "header": "Structure",
-    "multiSelect": false,
-    "options": [
-      {
-        "label": "Monorepo internal",
-        "description": "Packages live inside one repo, imported by path. Shared tooling, single lockfile.",
-        "markdown": "repo/\n├── packages/\n│   ├── auth/       # @company/auth\n│   ├── ui/         # @company/ui\n│   └── utils/      # @company/utils\n├── apps/\n│   └── web/        # imports from packages/\n└── package.json    # single lockfile"
-      },
-      {
-        "label": "Published to npm",
-        "description": "Each package is its own repo, published to npm. Independent versioning and release cycles.",
-        "markdown": "auth-pkg/           # separate repo\n├── src/\n├── package.json    # published @company/auth\n└── CHANGELOG.md\n\nui-pkg/             # separate repo\n├── src/\n├── package.json    # published @company/ui\n└── CHANGELOG.md\n\nweb-app/            # consumer repo\n├── package.json    # depends on @company/*\n└── node_modules/\n    └── @company/auth  ← installed from npm"
-      },
-      {
-        "label": "Copied per project",
-        "description": "Shared code copied into each project. No package management, but drift risk over time.",
-        "markdown": "project-a/\n├── lib/\n│   ├── auth.ts     # copied from shared\n│   └── utils.ts    # copied from shared\n└── src/\n\nproject-b/\n├── lib/\n│   ├── auth.ts     # copied (may drift)\n│   └── utils.ts    # copied (may drift)\n└── src/"
-      }
-    ]
-  }]
-}
-```
-
-**Guideline:** If the assumption involves **structure** (files, schemas, architecture), use a Showpiece question with previews. If it's about **preference or approach**, text alternatives are fine.
-
-### Pattern: Check Before Elaborating
-
-> "Before I explain how this would work - are you thinking [X] or [Y]?"
+**For structural ambiguity** (where the shape of the solution matters — layouts, schemas, hierarchies), use a Showpiece question with markdown previews. See QuestionGuidelines.md for the technique.
 
 ---
 
 ## Common Assumption Traps
 
-### The "Standard Pattern" Trap
-Claude knows common patterns and assumes they apply.
+### The "Standard Approach" Trap
+Claude knows common patterns and assumes they apply. The standard approach for business strategy, document structure, technical architecture, or design may not fit THIS user's situation.
 
-**Trigger:** "We'd use a monorepo with apps/ and packages/"
-**Challenge:** Did the user say monorepo? Did they say this structure?
+**Challenge:** Did the user ask for the standard approach, or am I defaulting to it?
 
 ### The "Obvious Default" Trap
-Claude fills in "obvious" choices without checking.
+Claude fills in "obvious" choices without checking — the default tool, the default structure, the default format.
 
-**Trigger:** "We'd use PostgreSQL for the database"
-**Challenge:** Did the user mention PostgreSQL? Did they say SQL at all?
+**Challenge:** Did the user specify this, or am I choosing for them?
 
 ### The "Completing the Picture" Trap
-Claude draws a complete architecture when user asked a narrow question.
+User asks a narrow question. Claude draws a complete picture, adding details the user didn't request.
 
-**Trigger:** User asks "How would tools work?" Claude explains full system architecture.
-**Challenge:** Did user ask for full architecture or just tool system?
-
-### The "Technical Context" Trap
-Claude assumes technical sophistication or preferences.
-
-**Trigger:** "You'd obviously want TypeScript here"
-**Challenge:** Did user say TypeScript? Do they know TypeScript?
+**Challenge:** Did user ask for the full picture or just one part?
 
 ---
 
 ## When NOT to Trigger
 
-### Explicit User Statements
-If the user said it, don't challenge it.
-
-> User: "I want to use Turborepo"
-> Claude: "Okay, with Turborepo..." ← No challenge needed
-
-### Confirmed Earlier
-If you already checked and user confirmed.
-
-> Earlier: "You mentioned packages - did you mean X or Y?" User: "X"
-> Later: "For the X approach..." ← No challenge needed
-
-### True Technical Facts
-Don't challenge objective facts.
-
-> "TypeScript compiles to JavaScript" ← This is a fact, not an assumption
-
-### Minor Details
-Don't over-challenge trivial things.
-
-> "The config file would be named config.ts" ← Trivial, don't challenge
+- **User explicitly stated it** — don't challenge what was said directly
+- **Already confirmed earlier** — don't re-check what was settled
+- **Objective facts** — don't challenge things that are simply true
+- **Trivial details** — don't over-challenge minor choices
 
 ---
 
@@ -182,29 +79,7 @@ Don't over-challenge trivial things.
 | **Verification Gate** | Does this violate STATED constraints? |
 | **Self-Challenge** | Am I ASSUMING things the user didn't state? |
 
-They work together:
-1. **Self-Challenge** catches unstated assumptions
-2. **Verification Gate** catches constraint violations
-3. Together they prevent both assumption drift AND constraint drift
-
----
-
-## The "Explain Before You Build" Principle
-
-When you catch yourself assuming, explain what you're about to assume:
-
-### Before Drawing Architecture
-> "Let me describe what I'm picturing, then you can correct me:
-> I'm imagining [X structure] because [reason].
-> Does that match what you're thinking?"
-
-### Before Choosing Technology
-> "I'm leaning toward [tech] because [reason].
-> Is that aligned with your preferences, or did you have something else in mind?"
-
-### Before Defining Scope
-> "I'm interpreting this as [scope].
-> Is that right, or should we expand/narrow?"
+Together they prevent both assumption drift AND constraint drift.
 
 ---
 

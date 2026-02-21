@@ -1,44 +1,32 @@
-# Unified Verification Gate
+# Verification Gate
 
-The Verification Gate fires before recommendations to ensure they honor established constraints.
+Fires before recommendations to ensure they honor established constraints.
 
 ---
 
 ## Purpose
 
-Prevent Claude from recommending solutions that contradict user's stated constraints, especially when applying "standard patterns" that may not fit THIS user's situation.
+Prevent Claude from recommending solutions that contradict the user's stated constraints, especially when applying "standard patterns" that may not fit THIS user's situation.
 
-**The problem it solves:** Claude knew "standard Turborepo monorepo" pattern, applied it without checking if it fit the user's "separate customer repos" constraint.
+**The problem it solves:** Claude knows a common approach from training, applies it without checking if it fits the user's specific constraints. The recommendation sounds reasonable but violates something the user explicitly stated.
 
 ---
 
 ## When the Gate Fires
 
-### Tier 1: Major Structural Decisions (FULL CHECK)
+### Tier 1: Major Decisions (FULL CHECK)
 
-The gate fires with FULL constraint verification before:
+Decisions that would take more than a day to undo. The active workflow defines domain-specific Tier 1 examples (see DevSpec.md, BusinessIdea.md, etc.).
 
-- **Architecture patterns**: Monorepo vs polyrepo, microservices vs monolith, serverless vs containers
-- **Database choices**: SQL vs NoSQL, managed vs self-hosted, single vs sharded
-- **Deployment strategy**: Single tenant vs multi-tenant, per-customer vs shared
-- **Framework selection**: React vs Vue, Express vs Fastify, any major tech choice
-- **Team structure assumptions**: Who maintains what, ownership boundaries
-- **Service architecture**: How components communicate, API design
-- **Data flow**: Where data lives, how it moves between systems
-
-**Heuristic:** If it would take more than a day to undo, it's major.
+**General Tier 1 patterns across all domains:**
+- Major strategic direction or approach
+- Structural organization choices
+- Key methodology or approach selection
+- Foundational decisions that downstream work depends on
 
 ### Tier 2: Minor Refinements (LIGHTWEIGHT CHECK)
 
-The gate fires with lightweight verification before:
-
-- File naming conventions
-- Code style decisions
-- Small implementation details
-- Variable naming
-- Comment style
-
-**Lightweight check:** Quick mental scan - "Does this conflict with anything?" No formal constraint citation required.
+Easily reversible decisions. Quick mental scan: "Does this conflict with anything?" No formal constraint citation required.
 
 ---
 
@@ -46,79 +34,38 @@ The gate fires with lightweight verification before:
 
 Before stating ANY Tier 1 recommendation:
 
-### Step 1: Identify Relevant Constraints
+**Step 1 — Identify relevant constraints:** Which constraints from the registry apply to this recommendation?
 
-```
-Claude (internal): "I'm about to recommend [X]. Which constraints are relevant?"
-- H1: Separate customer repos → RELEVANT (affects repo structure)
-- H2: Team of 2 → RELEVANT (affects complexity)
-- S1: Prefer TypeScript → NOT RELEVANT (doesn't affect architecture)
-```
+**Step 2 — Verify alignment:** Does the recommendation honor each relevant constraint? If conflict detected, STOP.
 
-### Step 2: Verify Alignment
-
-```
-Claude (internal): "Does [X] honor these constraints?"
-- H1: Does monorepo allow separate customer repos? → NO, CONFLICT
-- H2: Is monorepo manageable for team of 2? → MAYBE, worth noting
-```
-
-### Step 3: State Recommendation WITH Constraint Reference
-
-If aligned:
-> "Given constraint H1 (separate customer repos) and H2 (team of 2), I recommend a template-based approach where each customer gets their own generated repository. This honors both constraints because..."
+**Step 3 — State recommendation WITH constraint reference:** Make verification visible.
+> "Given constraint H1 ([constraint]), I recommend [X] because it honors that constraint by..."
 
 If conflict detected:
-> "Wait - I was about to recommend a monorepo, but that conflicts with H1 (separate customer repos). Let me reconsider..."
+> "Wait — I was about to recommend [X], but that conflicts with H1 ([constraint]). Let me reconsider..."
 
 ---
 
 ## The "Standard Pattern" Trap
 
-**This is the most common failure mode.** Claude knows "standard" patterns from training:
+Claude knows common patterns from training and applies them without checking fit. This is the most common failure mode.
 
-- "Turborepo monorepos have apps/ and packages/"
-- "Microservices communicate via message queues"
-- "React apps use Redux for state management"
-
-These patterns are often good, but they're not always right for THIS user.
-
-### Before Applying Any Standard Pattern
-
-Ask internally:
+Before applying any pattern that feels "standard" or "obvious":
 1. "Is this a standard pattern I'm applying?"
 2. "Have I verified it fits THIS user's constraints?"
 3. "What assumptions does this pattern make?"
 4. "Do those assumptions match the user's situation?"
 
-**Example of the trap:**
-```
-Standard pattern: "Turborepo monorepos put all apps in one repo"
-User's constraint: "Each customer needs their own repo"
-Conflict: Standard pattern assumes shared ownership; user needs isolation
-```
-
-### Pattern Verification Checklist
-
-Before recommending a standard pattern:
-
-- [ ] Identified the pattern explicitly ("I'm applying the X pattern")
-- [ ] Listed the pattern's assumptions
-- [ ] Checked assumptions against user's constraints
-- [ ] Noted any conflicts or modifications needed
-- [ ] Stated the recommendation WITH the constraint verification visible
-
 ---
 
-## Gate Bypass (When to Skip)
+## Gate Bypass
 
 The gate can be bypassed when:
+1. **User explicitly requests** — "Just give me the standard approach"
+2. **Already verified** — Same recommendation, constraints unchanged
+3. **Trivial decisions** — Tier 2 refinements that can't violate constraints
 
-1. **User explicitly requests** - "Just give me the standard approach"
-2. **Already verified** - Same recommendation, constraints unchanged
-3. **Trivial decisions** - Tier 2 refinements that can't violate constraints
-
-**Even when bypassed, stay alert.** If something feels off, re-engage the gate.
+Even when bypassed, stay alert. If something feels off, re-engage the gate.
 
 ---
 
@@ -126,49 +73,30 @@ The gate can be bypassed when:
 
 When the gate detects a conflict:
 
-### Option 1: Adjust the Recommendation
-Find an alternative that honors the constraint.
+1. **Adjust the recommendation** — Find an alternative that honors the constraint
+2. **Surface the tradeoff** — If no good alternative, present options explicitly
+3. **Challenge the constraint** — If the constraint seems problematic, ask if the underlying concern could be addressed differently
 
-> "Standard monorepos won't work here. Instead, let's use a template repo that generates separate customer repos."
-
-### Option 2: Surface the Tradeoff
-If no good alternative exists, be explicit.
-
-> "The standard approach conflicts with H1. We could either:
-> A) Modify H1 to allow shared infrastructure
-> B) Accept more complexity with separate repos
-> Which direction should we go?"
-
-### Option 3: Challenge the Constraint
-If the constraint seems problematic, revisit it.
-
-> "I'm finding that H1 (separate repos) is making this much harder. Was there a specific reason for that constraint? Would [alternative] address the underlying concern?"
-
-**NEVER silently violate the constraint.** Always surface the conflict.
+**NEVER silently violate a constraint.** Always surface the conflict.
 
 ---
 
 ## Visible Verification
 
-Make the gate VISIBLE to the user. This builds trust and catches errors.
+Make the gate VISIBLE. This builds trust and catches errors.
 
-### Good (Visible)
-> "Given your constraint that each customer needs their own repo (H1), I recommend a template approach rather than a shared monorepo. Here's why this fits..."
-
-### Bad (Invisible)
-> "I recommend a template approach. Here's how it works..."
-
-The second version hides the reasoning. The user can't verify that Claude considered their constraints.
+**Good:** "Given your constraint [H1], I recommend [X] rather than [Y]. Here's why this fits..."
+**Bad:** "I recommend [X]. Here's how it works..." (hides the reasoning)
 
 ---
 
 ## Integration with Self-Challenge
 
-The Verification Gate checks STATED constraints.
-The Self-Challenge Trigger checks UNSTATED assumptions.
+| Mechanism | What It Checks |
+|-----------|----------------|
+| **Verification Gate** | Does this violate STATED constraints? |
+| **Self-Challenge** | Am I ASSUMING things the user didn't state? |
 
-Together they cover:
-- Things the user said (Verification Gate)
-- Things Claude is assuming (Self-Challenge)
+Together they cover both stated constraints and unstated assumptions.
 
 See `SelfChallenge.md` for the complementary mechanism.
