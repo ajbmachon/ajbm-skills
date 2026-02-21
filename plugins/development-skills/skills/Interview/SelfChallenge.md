@@ -30,9 +30,23 @@ What alternative interpretations exist? If multiple are valid, don't pick one si
 
 ---
 
-## Surfacing Assumptions
+## Writing Out Assumptions
 
-When the trigger fires, surface the assumption explicitly:
+**For EVERY recommendation**, explicitly write out the assumptions it rests on. Don't just flag ambiguous ones — enumerate ALL assumptions, even ones that seem obvious.
+
+**Pattern for every recommendation:**
+> "This recommendation assumes:
+> 1. [assumption about user's situation]
+> 2. [assumption about constraints]
+> 3. [assumption about what the user meant]
+>
+> If any of these are wrong, the recommendation changes. Let me know."
+
+This makes assumptions visible and auditable. The user can correct wrong assumptions before they compound into bad recommendations.
+
+## Surfacing Ambiguity
+
+When a specific assumption is uncertain, escalate beyond just listing it:
 
 **State it:** "I'm assuming [X]. Is that correct, or did you have something different in mind?"
 
