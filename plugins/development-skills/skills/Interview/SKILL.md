@@ -1,6 +1,6 @@
 ---
 name: Interview
-description: USE WHEN spec, requirements, interview, flesh out idea, plan feature, business idea, design review, ideation, document draft, devil's advocate, stress test, brainstorm. Crystallize ideas into actionable specs through rigorous challenge and constraint enforcement. Six workflow types (DevSpec, BusinessIdea, DocumentDraft, DesignReview, Ideation, DevilsAdvocate). EXAMPLES "Help me design a new auth system" → DevSpec. "Devil's advocate this strategy" → DevilsAdvocate. "I have a business idea" → BusinessIdea.
+description: USE WHEN spec, requirements, interview, flesh out idea, plan feature, business idea, design review, ideation, document draft, devil's advocate, stress test, brainstorm. Crystallize ideas into actionable specs via rigorous challenge and constraint enforcement. Workflows: DevSpec, BusinessIdea, DocumentDraft, DesignReview, Ideation, DevilsAdvocate.
 ---
 
 <mandatory_read phase="skill_loaded">
