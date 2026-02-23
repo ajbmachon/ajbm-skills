@@ -298,7 +298,7 @@ After reaching your initial conclusion:
 | Model | Reasoning-First Notes |
 |-------|----------------------|
 | **Claude** | Handles well; explicit structure helps |
-| **GPT-4o** | Responds well; may need explicit template |
+| **GPT-5.x** | Use `reasoning.effort` to control; explicit templates at `none` effort |
 | **o1/o3** | **Built-in**—model reasons internally before answering |
 | **DeepSeek R1** | **Built-in**—reasoning visible in `reasoning_content` |
 | **Gemini** | Works well; can use thinking mode |

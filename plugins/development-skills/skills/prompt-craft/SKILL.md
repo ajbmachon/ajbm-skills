@@ -1,6 +1,6 @@
 ---
 name: prompt-craft
-description: Analyze, craft, and improve prompts using research-backed techniques. Use when users ask to improve prompts, write prompts for LLMs, or when Claude needs to write prompts for subagents. Modes include Analyze (critique existing), Craft (build from scratch), Teach (explain techniques), and Quick Fix (fast improvements).
+description: USE WHEN improve prompt, write prompt, craft prompt, analyze prompt, prompt engineering, subagent prompts. Analyze, craft, and improve prompts using 19 research-backed techniques. Modes - Analyze (critique existing), Craft (build from scratch), Teach (explain techniques), Quick Fix (fast improvements).
 ---
 
 # Prompt Craft
@@ -23,15 +23,17 @@ CORE TECHNIQUES (1-10)
 10. Self-Reflection
 
 EXTENDED: decomposition, compression, sufficiency, scope,
-          format-spec, uncertainty, chaining, self-consistency, tree-of-thoughts
+          format-spec, uncertainty, chaining, self-consistency,
+          tree-of-thoughts, react-loop, tool-description-craft,
+          context-engineering, multi-session
 
 MODEL GUIDES: claude, openai, deepseek, gemini, kimi, qwen
-              → See reference/models.md for model-specific prompting
+              → See reference/models/{name}.md for model-specific prompting
 
 Commands:
 - A/B/C/D or mode name to begin
 - 1-10 or technique name for Teach mode
-- *model [name] - Load model-specific guidance
+- *model [name] - Load model-specific guidance (from reference/models/)
 - *extended - Show extended techniques
 - *help - Show this menu
 ```
@@ -40,15 +42,13 @@ Commands:
 
 ## Mode Router
 
-**When this skill activates, ALWAYS start by showing the menu** (unless the user's request clearly maps to a specific mode).
+Detect the user's intent from context and route to the appropriate mode:
+- Existing prompt provided → **Analyze mode (A)**
+- Requirements for new prompt → **Craft mode (B)**
+- Technique number/name → **Teach mode (C)**
+- Quick improvement request → **Quick Fix mode (D)**
 
-**Before executing any mode, check if the user specified:**
-1. A mode (A/B/C/D or name)
-2. A technique number (1-10) → implies Teach mode
-3. A prompt to analyze → implies Analyze mode
-4. Requirements for a new prompt → implies Craft mode
-
-**If unclear:** Show the menu and ask which mode they want.
+If unclear, ask which mode fits. Use `*help` to show the menu on demand.
 
 **Interactive principle:** Guide the user through each mode. Ask clarifying questions before producing output. Don't assume—ask.
 
@@ -138,8 +138,11 @@ Next steps:
    - "What model will run this? (Claude, GPT, DeepSeek, etc.)"
    - "What output format do you need?"
    - "Any specific constraints or requirements?"
+   - "Should the prompt default to implementing or recommending?" (Action Bias)
+   - "Is this a single-turn prompt or part of an agentic workflow?" (Context)
 
    **Wait for answers before proceeding.** Don't assume.
+   If the answer to #6 is "agentic workflow," apply the agentic template from the Agentic Prompting section.
 
 2. **Select applicable techniques** based on task type:
    - Reasoning tasks → Chain-of-Thought, Reasoning-First
@@ -262,46 +265,78 @@ Want deeper analysis? Try mode A.
 
 ---
 
-## Agentic Self-Use
+## Agentic Prompting
 
-**When Claude is writing prompts for subagents or external APIs:**
+When Claude or any agent is writing prompts for subagents, tool descriptions, or agentic loops.
 
-### Automatic Self-Check
+### Tool Description Optimization
 
-Before sending any prompt to a subagent or API, mentally verify:
+The highest-leverage prompt surface for agents. See `reference/extended/tool-description-craft.md`.
+Key principle: write descriptions as if explaining to a new team member.
+- Make implicit context explicit; define niche terminology
+- Use human-readable return values (name > UUID)
+- Consolidate tools (fewer > many granular); namespace consistently
+- Use Claude to optimize its own tool descriptions (meta-pattern)
 
-1. **Placement:** Is the critical instruction at the start or end (not buried)?
-2. **Salience:** Are important constraints marked with XML tags or caps?
-3. **Positive framing:** Am I saying what TO do (not just what to avoid)?
-4. **Sufficient context:** Does the recipient have what they need?
-5. **Output format:** Is the expected format clear?
+### Subagent Briefing Pattern
+
+Every subagent prompt must include:
+1. **Context** — What the task is and why it matters
+2. **Constraints** — Time budget, scope limits, effort level
+3. **Output format** — What you need back, exactly
+4. **Success criteria** — How to know when done
+
+### ReAct Loop Construction
+
+For agents that use tools: Reason → Act → Observe → Reason...
+See `reference/extended/react-loop.md` for templates and the Reason-Plan-ReAct variant.
+- Single-prompt ReAct for simple tool chains
+- Multi-turn ReAct for complex workflows
+- Model-specific: Claude auto-delegates; GPT needs explicit structure
+
+### Action Bias Selection
+
+Choose one per prompt — be explicit about what the agent should default to:
+- **Proactive:** "Implement changes rather than suggesting them"
+- **Conservative:** "Default to research and recommendations"
+- **Balanced:** "Implement straightforward changes; recommend for complex ones"
+
+### Context Window Management
+
+Agents accumulate context across turns. Apply:
+- Just-in-time loading (load via tools, don't pre-load everything)
+- Compaction strategies (summarize, clear tool results, full reset)
+- State persistence (JSON > markdown for structured state across sessions)
+- See `reference/extended/context-engineering.md` and `reference/extended/multi-session.md`
+
+### Anti-Overtriggering (Claude 4.6+)
+
+Modern models need FEWER instructions, not more:
+- Remove "CRITICAL: You MUST..." language — causes overtriggering
+- Remove anti-laziness prompts ("be thorough", "don't be lazy") — causes overthinking
+- Use effort parameter instead of prompt-level reasoning simulation
+- Remove explicit think tool instructions — Claude 4.6 thinks adaptively
+- Soften tool-use language: "use when helpful" not "MUST use when..."
 
 ### Model-Specific Adjustments
 
-When targeting a specific model, load `reference/models.md` and apply:
-
-| Target Model | Key Adjustments |
-|--------------|-----------------|
-| Claude 4.x | Directive language ("implement" not "suggest"); explicit detail requests |
-| GPT-4o | Literal interpretation; explicit constraints |
-| o1/o3 | NO chain-of-thought prompts; use `developer` role; skip few-shot |
-| DeepSeek R1 | NO system prompt; NO few-shot; all instructions in user message |
-| Gemini 2.0 | Query at END after context; enable grounding for facts |
-| Kimi K2 | Goal-oriented (not step-by-step); keep constraints early |
-| Qwen 2.5 | ChatML format; low temp for code |
+When targeting a specific model, load `reference/models/{model}.md` and apply adjustments.
+Key differences: Claude prefers directive language; GPT-5.x uses reasoning effort + verbosity controls;
+o1/o3 uses developer role (no CoT prompts); DeepSeek R1 uses user message only;
+Gemini places query at END; Kimi is goal-oriented; Qwen uses ChatML format.
 
 ### Prompt Quality Gate
 
 For high-stakes prompts (production, external APIs):
-
-```
-Before sending, verify:
-- [ ] Critical info at start or end
-- [ ] Constraints are explicit
+- [ ] Critical info at start or end (Placement)
+- [ ] Constraints explicit and positive-framed
 - [ ] Output format specified
-- [ ] Model-specific adjustments applied
-- [ ] No ambiguous instructions
-```
+- [ ] Model-specific adjustments applied (see `reference/models/`)
+- [ ] Action bias declared
+- [ ] Context budget considered
+
+For programmatic prompt generation and templates, see the **Prompting skill**.
+For reusable domain-specific prompt patterns, see the **Fabric skill**.
 
 ---
 
@@ -339,6 +374,10 @@ Available in `reference/extended/`:
 | Chaining | Multi-stage prompts where outputs feed next stage |
 | Self-Consistency | Multiple samples with majority voting |
 | Tree-of-Thoughts | Explore multiple reasoning branches |
+| ReAct Loop | Reason-Act-Observe cycles for tool-using agents |
+| Tool Description Craft | Optimize tool/function descriptions for agents |
+| Context Engineering | Curate optimal token set during inference |
+| Multi-Session | State persistence across context windows |
 
 ---
 
@@ -346,15 +385,15 @@ Available in `reference/extended/`:
 
 **Command:** `*model [name]` or ask about prompting for a specific model.
 
-**Available:** Claude, OpenAI (GPT-4o, o1/o3), DeepSeek, Gemini, Kimi, Qwen
+**Available:** Claude, OpenAI (GPT-5.x, o1/o3), DeepSeek, Gemini, Kimi, Qwen
 
-**Location:** `reference/models.md` (single file with TOC by model family)
+**Location:** `reference/models/{name}.md` (per-model files for JIT loading)
 
 **Critical differences by model type:**
 
 | Model Type | Chain-of-Thought | Few-Shot | System Prompt |
 |------------|------------------|----------|---------------|
-| Standard (Claude, GPT-4o) | Add manually | Helpful | Yes |
+| Standard (Claude, GPT-5.x) | Add manually / use `reasoning.effort` | Helpful | Yes |
 | Reasoning (o1/o3, R1) | **Built-in - don't add** | **Hurts performance** | Developer role |
 | Agentic (Kimi K2) | Automatic | Varies | Goal-oriented |
 

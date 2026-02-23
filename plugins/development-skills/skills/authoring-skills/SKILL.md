@@ -1,6 +1,6 @@
 ---
 name: authoring-skills
-description: Use when creating skills, plugins, or hooks for Claude Code - covers writing SKILL.md files, plugin structure, distribution via marketplaces, hook configuration, trigger patterns, and troubleshooting. Complete guide from authoring to distribution. Note - slash commands were removed from Claude Code, only skills remain.
+description: USE WHEN create skill, write SKILL.md, plugin structure, hook config, skill triggers, troubleshoot skill. Create and distribute skills, plugins, and hooks for Claude Code. Covers authoring, plugin development, marketplace distribution, trigger patterns. Note - slash commands removed, only skills remain.
 ---
 
 # Authoring Skills for Claude Code

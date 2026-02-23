@@ -282,12 +282,32 @@ Situation: [situation]
 
 ---
 
+## 2025-2026 Effectiveness Update
+
+Role prompting has **diminishing returns on modern models:**
+- Claude 4.6 is personality-aware by default — explicit role assignment adds less than it did in 2023
+- GPT-5.x: "Persona alone won't add knowledge" — personas shape tone, not capability
+- Most effective when: domain-specific terminology matters, output style needs to match a persona, the role constrains what IS and ISN'T relevant
+
+**When roles still matter:**
+- Specialized domains (legal, medical, security analysis)
+- Teaching scenarios where voice matters
+- Multi-agent systems where role differentiation drives different outputs
+- Non-English contexts where role framing improves quality
+
+**When to skip roles:**
+- Generic tasks where the model's default is fine
+- When you'd just say "You are a helpful assistant" (adds nothing)
+- When the role would be "You are an expert at X" for a task the model already handles well
+
+---
+
 ## Model-Specific Notes
 
 | Model | Role Assignment Notes |
 |-------|----------------------|
 | **Claude** | Responds well; use specific expertise and behavioral guidelines |
-| **GPT-4o** | Responds well; system message is ideal location for roles |
+| **GPT-5.x** | Responds well; system/developer message for roles |
 | **o1/o3** | Use `developer` message; keep role concise |
 | **DeepSeek R1** | Put role in user message (no system prompt) |
 | **Gemini** | Works well; system instruction slot available |

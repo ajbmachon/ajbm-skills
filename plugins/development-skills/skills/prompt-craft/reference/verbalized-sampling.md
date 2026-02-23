@@ -338,7 +338,7 @@ Now generate variants for:
 | Model | Verbalized Sampling Notes |
 |-------|--------------------------|
 | **Claude** | Handles well; good at probability estimation |
-| **GPT-4o** | Works well; may need explicit template |
+| **GPT-5.x** | Works well; explicit template helps at lower reasoning effort |
 | **o1/o3** | Can request; remember reasoning is internal |
 | **DeepSeek** | Works; probability estimates may be less calibrated |
 | **Gemini** | Works well; explicit format helps |

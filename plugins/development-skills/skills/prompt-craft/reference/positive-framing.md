@@ -267,7 +267,7 @@ The positive instruction leads; the prohibition clarifies boundaries.
 | Model | Positive Framing Notes |
 |-------|------------------------|
 | **Claude** | Anthropic explicitly recommends "say what to do" over "what not to do" |
-| **GPT-4o** | Responds well; literal instruction following benefits from positive framing |
+| **GPT-5.x** | Responds well; literal instruction following benefits from positive framing |
 | **Gemini** | Explicitly advised against negative examples (showing what NOT to do) |
 | **DeepSeek** | Standard recommendation |
 | **Kimi K2** | Goal-oriented design aligns well with positive framing |

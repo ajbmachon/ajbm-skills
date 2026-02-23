@@ -97,3 +97,26 @@ Use function calling to trigger stages, with outputs passed between calls.
 - Include context about what was done in previous stages
 - Design recovery points: What if Stage 2 fails?
 - Consider parallel chains for independent subtasks
+
+## Agentic Pipeline Patterns
+
+For agent-to-agent chaining (subagent orchestration):
+
+### Input/Output Contracts
+Each stage should define:
+- **Input schema:** What data format the stage expects
+- **Output schema:** What data format the stage produces
+- **Success signal:** How to know the stage completed correctly
+
+### Agent Handoff Template
+When passing context between agents:
+1. What was accomplished (not the full transcript)
+2. What state exists (file paths, data structures)
+3. What the next agent must NOT re-do
+4. What constitutes completion for the next stage
+
+### Multi-Context-Window Chaining
+When a chain spans context window boundaries:
+- Use structured state files (JSON > text) at each boundary
+- Each new context starts by reading state, not resuming conversation
+- Include a startup checklist: read state, verify environment, run baseline test

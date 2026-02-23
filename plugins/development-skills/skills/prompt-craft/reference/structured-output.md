@@ -174,7 +174,7 @@ schema = {
 
 # OpenAI
 response = client.chat.completions.create(
-    model="gpt-4o",
+    model="gpt-5.2-chat-latest",
     messages=[...],
     response_format={"type": "json_schema", "json_schema": {"schema": schema}}
 )
@@ -263,7 +263,7 @@ Summarize the comparison in this format:
 | Model | Best Approach |
 |-------|---------------|
 | **Claude** | XML tags work excellently; JSON also good |
-| **GPT-4o** | Native JSON mode available; use `strict: true` for functions |
+| **GPT-5.x** | Native JSON mode; use `strict: true` for functions; Responses API preferred |
 | **o1/o3** | Add "Formatting re-enabled" for markdown; JSON works |
 | **DeepSeek** | Standard JSON; no special modes |
 | **Gemini** | Native JSON mode available |
