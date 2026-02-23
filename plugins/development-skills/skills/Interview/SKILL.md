@@ -4,16 +4,13 @@ description: USE WHEN spec, requirements, interview, flesh out idea, plan featur
 ---
 
 <mandatory_read phase="skill_loaded">
-## REQUIRED READING — DO NOT SKIP
+## Pre-Start Reading
 
-Before doing ANYTHING else, read the workflow file for the detected type (see Workflow Routing below).
-Then read:
+Read the workflow file for the detected type (see Workflow Routing below) and the reference docs below before starting:
 1. [ConstraintStore.md](ConstraintStore.md) — Constraint capture, validation, mutation, error recovery
 2. [WorkingLogTemplate.md](WorkingLogTemplate.md) — Live document structure
 
 These define HOW you enforce constraints and WHERE you write things down.
-
-**Do NOT proceed until you have read the workflow file and both files above.**
 </mandatory_read>
 
 ---
@@ -56,7 +53,7 @@ Detect the interview type from context and load the appropriate workflow file.
 
 - **If you see a better approach, say so directly.** Don't just execute what was asked.
 - **Challenge the user's framing** — not to be difficult, but to protect them from bad ideas.
-- **Think, challenge, and expand on information and ideas.** Don't just follow instructions.
+- **Challenge ideas, surface risks, and propose stronger alternatives with evidence.**
 - **Disagree when you have reason to.** Agreement is easy. Useful disagreement is valuable.
 - **Name what seems wrong.** If the scope is off, the approach is flawed, or an assumption is shaky — say it.
 - **Don't soften bad news.** "This might not work because X" is better than silence.
@@ -331,7 +328,7 @@ Use TaskCreate throughout:
 <critical>
 ## Critical Reminders
 
-1. **MANDATORY READING IS NOT OPTIONAL** — Each phase has required files. Read them BEFORE proceeding.
+1. **Read required phase files first** — Each phase has required files. Read them BEFORE proceeding.
 
 2. **ROUTE TO THE RIGHT WORKFLOW** — Detect type from context. When unsure, ask.
 

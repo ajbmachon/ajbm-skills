@@ -81,7 +81,7 @@ Use when user asks to set up automatic linting, add a linter hook, or configure 
 
 Use when encountering any bug, test failure, or unexpected behavior—BEFORE proposing fixes.
 
-**Iron Law:** NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
+**Iron Law:** Investigate root cause before proposing fixes
 
 **Four Phases:**
 1. Root cause investigation
@@ -96,7 +96,7 @@ Use when encountering any bug, test failure, or unexpected behavior—BEFORE pro
 Use when writing, reviewing, or reporting tests. Comprehensive testing quality skill.
 
 **Five Iron Laws:**
-1. ALWAYS investigate when a test passes on first run
+1. Investigate when a test passes on first run
 2. ALWAYS assert on real system behavior, not mock wiring
 3. ALWAYS keep tests as straight-line code
 4. ALWAYS execute tests and report concrete evidence
@@ -108,7 +108,7 @@ Use when writing, reviewing, or reporting tests. Comprehensive testing quality s
 
 Use when implementing any feature or bugfix—write the test first, watch it fail, write minimal code to pass.
 
-**The Iron Law:** NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST
+**The Iron Law:** Write production code only after a failing test exists
 
 **Red-Green-Refactor cycle:**
 1. **RED**: Write one minimal failing test
@@ -217,11 +217,11 @@ These skills activate automatically based on context. You don't need to call the
 
 ## Background Agent Output Management
 
-**CRITICAL: Background agents can flood your context if you read their output incorrectly.**
+**Background agent output management:**
 
 When checking on background agents (Task tool with `run_in_background: true`):
 
-1. **NEVER** read the full `.output` file directly - it contains the entire conversation transcript
+1. **Avoid** reading the full `.output` file directly - it contains the entire conversation transcript
 2. **NEVER** use `sleep` commands to poll - you receive automatic notifications when agents complete
 3. **DO** use `tail -20` to see just the final messages if needed
 4. **DO** use `grep` to find specific patterns in output
