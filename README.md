@@ -190,9 +190,9 @@ I've tried 3 fixes and nothing is working
 - After 3+ failed fixes, questions architecture instead of attempting more fixes
 - Integrates with test-driven-development and root-cause-tracing skills
 
-### Testing Anti-Patterns Skill
+### Testing Best Practices Skill
 
-**Best for:** Writing tests, adding mocks, or when tempted to add test-only methods
+**Best for:** Writing, reviewing, or reporting tests, including anti-pattern detection
 
 ```
 I need to write tests for this component
@@ -203,7 +203,12 @@ Or when tests are getting complex:
 My test mocks are getting really complicated
 ```
 
-**The Iron Laws:**
+Or invoke directly:
+```
+/testing-best-practices
+```
+
+**Anti-pattern Iron Laws (excerpt):**
 1. NEVER test mock behavior
 2. NEVER add test-only methods to production classes
 3. NEVER mock without understanding dependencies
