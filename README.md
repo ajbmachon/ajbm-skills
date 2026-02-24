@@ -208,7 +208,7 @@ Or invoke directly:
 /testing-best-practices
 ```
 
-**Anti-pattern Iron Laws (excerpt):**
+**Key Anti-patterns (excerpt):**
 1. NEVER test mock behavior
 2. NEVER add test-only methods to production classes
 3. NEVER mock without understanding dependencies
