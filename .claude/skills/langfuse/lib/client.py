@@ -54,7 +54,12 @@ def get_langfuse() -> Langfuse:
     """
     global _langfuse_instance
     if _langfuse_instance is None:
-        timeout = int(os.getenv("LANGFUSE_TIMEOUT", str(DEFAULT_TIMEOUT)))
+        raw_timeout = os.getenv("LANGFUSE_TIMEOUT", str(DEFAULT_TIMEOUT))
+        try:
+            timeout = int(raw_timeout)
+        except ValueError:
+            timeout = DEFAULT_TIMEOUT
+        timeout = max(1, timeout)
         _langfuse_instance = Langfuse(timeout=timeout)
     return _langfuse_instance
 
