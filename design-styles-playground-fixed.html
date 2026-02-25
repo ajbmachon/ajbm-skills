@@ -1462,7 +1462,7 @@
     function copyPrompt() {
       const text = document.getElementById('prompt-output').textContent;
       navigator.clipboard.writeText(text);
-      const btn = event.target.closest('.copy-btn');
+    function copyPrompt(event) {
       btn.textContent = 'Copied!';
       setTimeout(() => btn.textContent = 'Copy Prompt', 2000);
     }
