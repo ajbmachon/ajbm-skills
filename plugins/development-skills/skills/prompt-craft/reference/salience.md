@@ -79,7 +79,7 @@ Provide your summary:"
 |---|---|---|
 | Claude 4.x | **Markdown headers** | Prefers markdown over XML. Use ## headers, **bold**, CAPS for critical terms. |
 | GPT-5.x | **XML tags or delimiters** | Responds well to `<context>`, `<instructions>` tags. |
-| Gemini 3.x | **Markdown or XML** | Both work. Place query at END for long contexts. |
+| Gemini 3.x | **Markdown or XML** | Both work. Place query at END for long contexts. Temperature must stay at 1.0. |
 | o1/o3 | **Delimiters and headings** | Use structure to separate task, context, constraints. |
 | DeepSeek R1 | **Markdown headers** | All instructions in user message. Use ## headers. |
 
