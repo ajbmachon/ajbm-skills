@@ -1497,7 +1497,9 @@
         if (d.status === 'processing') btn.textContent = 'Claude working...';
         if (d.status === 'done') { btn.textContent = 'Done \u2713'; setTimeout(() => btn.textContent = 'Send to Claude', 2000); }
       });
-    } catch {}
+    } catch (error) {
+      console.error("EventSource connection failed:", error);
+    }
 
     // ── Initialize ───────────────────────────────────────
 
