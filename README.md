@@ -190,9 +190,9 @@ I've tried 3 fixes and nothing is working
 - After 3+ failed fixes, questions architecture instead of attempting more fixes
 - Integrates with test-driven-development and root-cause-tracing skills
 
-### Testing Anti-Patterns Skill
+### Testing Best Practices Skill
 
-**Best for:** Writing tests, adding mocks, or when tempted to add test-only methods
+**Best for:** Writing, reviewing, or reporting tests; choosing test levels; avoiding anti-patterns
 
 ```
 I need to write tests for this component
@@ -203,16 +203,19 @@ Or when tests are getting complex:
 My test mocks are getting really complicated
 ```
 
-**The Iron Laws:**
-1. NEVER test mock behavior
-2. NEVER add test-only methods to production classes
-3. NEVER mock without understanding dependencies
+**The Five Iron Laws:**
+1. ALWAYS investigate when a test passes on first run — verify it tests the right thing.
+2. ALWAYS assert on real system behavior, not mock wiring.
+3. ALWAYS keep tests as straight-line code — no conditionals, loops, or try/catch.
+4. ALWAYS execute tests and report concrete evidence before claiming they pass.
+5. ALWAYS keep production APIs clean — move test lifecycle helpers to test harnesses.
 
 **Catches common mistakes:**
-- Asserting on mock elements instead of real behavior
-- Adding `destroy()` methods only used in tests
-- Over-mocking that breaks test logic
-- Incomplete mocks that hide bugs
+- Asserting on mock artifacts instead of real behavior
+- Adding test-only lifecycle methods to production classes
+- Over-mocking that hides real system behavior
+- Conditional logic inside test bodies
+- Tests that validate current behavior instead of intended behavior
 
 ### Test-Driven Development Skill
 
