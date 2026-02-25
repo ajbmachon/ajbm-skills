@@ -125,6 +125,23 @@ Use when implementing any feature or bugfix—write the test first, watch it fai
 
 **Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
 
+### skill-distiller
+
+Use when user wants to distill, extract skill, capture patterns, teach from conversation, or learn from session.
+
+**Core concept:** Extracts expert guidance patterns from conversations and distills them into permanent, replayable skills that teach Claude behavioral dispositions (not rigid rules).
+
+**Five-step guided flow:**
+1. **Source** — Current session (in-memory) or stored transcript (session ID/file path)
+2. **Analyze** — Extract patterns across four categories (Corrections, Questions & Probes, Quality Gates, Analysis Modes)
+3. **Review & Co-Edit** — Collaborative pattern review with user (Claude proposes, user decides)
+4. **Generate** — Write SKILL.md using behavioral dispositions format
+5. **Verify** — On-demand behavioral checks via `/distill verify <path>`
+
+**Toolbox:** transcript-filter, turn-extractor (on-demand, not a pipeline)
+
+**Dependency:** qmd for cross-conversation semantic search
+
 ### docs-research-specialist (agent)
 
 Use when looking up current documentation, API syntax, library patterns, or best practices. Invoked proactively during interview research phases and general dev work.

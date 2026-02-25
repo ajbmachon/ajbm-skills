@@ -4,6 +4,7 @@ description: "Use this agent when you need to look up current software documenta
 tools: Glob, Grep, Read, WebFetch, TodoWrite, Bash, Edit, Write, WebSearch, Skill, ReadMcpResourceTool, ListMcpResourcesTool
 model: opus
 color: green
+memory: project
 ---
 
 <critical>
