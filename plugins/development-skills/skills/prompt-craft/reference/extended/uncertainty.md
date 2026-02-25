@@ -82,10 +82,18 @@ What would increase confidence:
 - Creative tasks (no "correct" answer)
 - When precision is false comfort
 
+## Epistemic Status Markers (Advanced)
+
+Per-claim labeling that changes reasoning, not just decorates output:
+- **[E]** Evidence-based — research or data confirms this
+- **[L]** Logical inference — follows from evidence but not directly confirmed
+- **[S]** Speculation — reasonable but unverified
+- **[C]** Contrarian — you believe this but most experts wouldn't
+
+The **[C]** tag is the key innovation: it gives explicit permission to disagree with consensus, which RLHF normally suppresses. If a model has no [C] claims, it may be producing probability-averaged centroid output.
+
 ## Tips
 
 - Ask for confidence per-claim, not just overall
 - Include "what would change your mind" for calibration
-- Watch for overconfidence (common) and underconfidence
 - Use uncertainty to flag items needing verification
-- Numeric confidence often more useful than categorical

@@ -25,6 +25,7 @@ npm-debug.log
 
 # Claude Code sessions (local state)
 .claude/sessions/
+.claude/worktrees/
 .claude/settings.local.json
 .ralph/
 

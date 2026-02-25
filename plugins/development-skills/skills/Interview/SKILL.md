@@ -58,6 +58,10 @@ Detect the interview type from context and load the appropriate workflow file.
 - **Name what seems wrong.** If the scope is off, the approach is flawed, or an assumption is shaky — say it.
 - **Don't soften bad news.** "This might not work because X" is better than silence.
 
+### What This Skill is NOT
+
+This is not a requirements-gathering checklist. Not a brainstorming session. Not a friendly conversation that happens to produce a spec. Not balanced advice. This is structured adversarial collaboration: Phase 2 tries to KILL the idea, Phase 3 builds what survived. If your Devil's Advocate phase feels comfortable, you've failed. If your Partner phase ignores constraints, you've failed worse.
+
 ### Structured Assumption Audit
 
 Surface hidden assumptions at three checkpoints during the interview:
@@ -120,6 +124,7 @@ After completing the interview, verify the skill worked well:
 - [ ] **Constraint coverage:** Every Hard Constraint referenced in at least one recommendation
 - [ ] **Q&A record complete:** Every question asked and answer received is logged
 - [ ] **Assumptions surfaced:** At least one assumption was caught and corrected (if none — research wasn't thorough enough)
+- [ ] **Epistemic honesty:** Every major recommendation labeled [E], [L], [S], or [C]. At least one [C] recommendation exists.
 - [ ] **Working log matches spec:** No information in spec that isn't traceable to working log
 - [ ] **No silent contradictions:** Every research finding that contradicted a claim was surfaced
 
@@ -164,7 +169,11 @@ Read the active workflow's challenge angles AND:
 - [Workflows/DevilsAdvocate.md](Workflows/DevilsAdvocate.md) — for Standard or Deep mode
 </mandatory_read>
 
+**Difficulty:** Genuine challenge -- not performed challenge -- is the hardest cognitive task in this skill. The common error is producing challenges that SOUND tough but are actually generic enough to apply to any idea. If you can swap out the user's idea for any other idea and your challenges still work, you're in the generic basin.
+
 You are a **CRITICAL CHALLENGER.** Challenge the idea's right to exist.
+
+**Failure mode -- "Challenge Theater":** Producing challenges so generic they could apply to any idea ("Have you considered the competition?", "What about scalability?"). This is not challenging -- it is performing the appearance of challenge. Real challenge quotes back the user's specific claims and attacks the specific mechanism that makes them fragile.
 
 Use challenge angles from the active workflow file. For Standard/Deep mode, apply the cognitive critique modes from DevilsAdvocate.md (Red Team, Assumptions, Pre-Mortem, Biases, Steelman).
 
@@ -187,6 +196,9 @@ Use challenge angles from the active workflow file. For Standard/Deep mode, appl
 </mandatory_read>
 
 1. Extract all constraints that emerged from Devil's Advocate
+
+**Difficulty:** Constraint capture is where most AI systems silently fail. The common error is extracting only the constraints the user stated explicitly, missing the implicit constraints revealed by HOW they defended their idea.
+
 2. Classify as Hard (immutable), Soft (negotiable), or Boundary (out of scope)
 3. Check for internal contradictions
 4. Display Constraint Registry to user (use Showpiece question for 5+ constraints)
@@ -221,7 +233,13 @@ Use challenge angles from the active workflow file. For Standard/Deep mode, appl
 - [QuestionGuidelines.md](QuestionGuidelines.md) — Techniques, field usage, phase-level cadence, visual decisions
 </mandatory_read>
 
+**Difficulty:** Being genuinely helpful while honoring constraints is harder than it sounds. The common error is defaulting to "industry best practices" that happen to violate the user's specific constraints because you stopped checking the registry.
+
 **You are now an invested partner.** The idea passed your challenge.
+
+**Failure mode -- "Constraint Amnesia":** Understanding constraints perfectly during Devil's Advocate, then silently violating them during Partner phase by applying "standard patterns" from training data. This is the single most dangerous failure -- the constraint registry exists because memory is unreliable across 30+ Q&A turns.
+
+**Your audience:** The user is not a casual explorer -- they are someone who has already defended their idea against your skepticism. They earned this phase. They expect domain-specific expertise, not generic guidance. Treat them as a peer collaborator who will notice if you've defaulted to textbook recommendations.
 
 Your job shifts: ~~"Should this exist?"~~ → **"How should this work?"**
 
@@ -233,6 +251,13 @@ Use `AskUserQuestion` tool. Up to 4 questions at a time. Use domain-specific que
 1. **Verification Gate** — Does this honor all constraints?
 2. **Assumption Audit** — Am I assuming or did the user say this? What is the user assuming?
 3. **Assumption Audit** — Is this Tested, Assumed, or Hoped?
+4. **Epistemic Label** — Tag your recommendation:
+   - **[E]** Evidence-based -- research confirms this
+   - **[L]** Logical inference -- follows from constraints and evidence
+   - **[S]** Speculation -- reasonable but unverified
+   - **[C]** Contrarian -- you believe this but it contradicts common practice
+
+The [C] label is the most valuable. If you have no contrarian recommendations, you may be defaulting to conventional wisdom. Surface at least one [C] recommendation per major section.
 
 **📝 LOG AFTER EACH Q&A:** Append to Interview Q&A section. If constraint emerged → Constraint Registry. If decision → Decisions Log. If assumption corrected → Assumptions & Corrections.
 
