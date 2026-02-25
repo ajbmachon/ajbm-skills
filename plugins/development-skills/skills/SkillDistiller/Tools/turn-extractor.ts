@@ -115,9 +115,10 @@ const messages: CleanMessage[] = [];
 for (const line of lines) {
   let entry: JournalEntry;
   try {
-    entry = JSON.parse(line);
-  } catch {
-    continue; // skip malformed lines
+  } catch (error: any) {
+    console.warn(`Skipping malformed JSON line: ${error.message} in line: ${line}`);
+    continue;
+  }
   }
 
   // Only process human and assistant message types
