@@ -43,10 +43,10 @@ def factorial(n):
     return n * factorial(n-1)
 
 CRITIQUE:
-1. Base case: MISSING - No base case, will recurse infinitely
-2. Edge cases: MISSING - No handling for n=0 or n<0
-3. Stack overflow: RISK - Deep recursion for large n
-4. Efficiency: OK for small n, but recursive overhead
+1. Base case: x MISSING - No base case, will recurse infinitely
+2. Edge cases: x MISSING - No handling for n=0 or n<0
+3. Stack overflow: ! RISK - Deep recursion for large n
+4. Efficiency: ! OK for small n, but recursive overhead
 
 REVISED CODE:
 def factorial(n):
