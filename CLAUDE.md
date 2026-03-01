@@ -7,6 +7,23 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 
 ---
 
+## Specs Archive
+
+Specs and interview logs live in `specs/{skill-name}/` — they are versioned alongside the code and are considered **more important than the implementation**. They capture the reasoning, constraints, decisions, and research that produced the code.
+
+**Convention:**
+- `specs/{skill-name}/interview-log.md` — Interview/ideation working log (constraints, decisions, research findings)
+- `specs/{skill-name}/spec.md` — Implementation spec produced by the interview
+- `specs/{skill-name}/build-log.md` — Build session log (Algorithm PRD, testing results, refinements applied)
+
+**When to create:** Every new skill or significant feature change MUST have at minimum an interview-log and spec in `specs/` before or alongside the implementation commit. The spec is the source of truth for why the code exists.
+
+**Naming:** Directory name matches the skill name (e.g., `tactical-empathy`, `skill-distiller`). Files use the standard names above — no variations.
+
+**Lifecycle:** Build logs may start in `.ai/` during active work, then graduate to `specs/` when the build is complete and committed.
+
+---
+
 ## Development Skills (ajbm-dev)
 
 ### authoring-skills
