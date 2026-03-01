@@ -17,6 +17,8 @@ Use this template when producing the Analyze workflow output. Write the dossier 
 **Power dynamics:** {who has leverage, why, and how it might shift}
 **Relationship context:** {ongoing vs one-time, relationship stakes, history}
 **Emotional landscape:** {what emotions are likely in play on both sides}
+**Stakeholder map:** {who else influences the decision — boss's boss, HR, finance, spouse, board}
+**Communication channel:** {in-person / phone / email / video — and how this affects technique selection}
 
 ## BATNA Analysis
 
@@ -88,6 +90,7 @@ like {specific fear 2}. And you might be worried that {specific fear 3}."
 | {emotional escalation} | {label + safety restoration} |
 | {shut down / go silent} | {safety monitoring — mutual purpose statement} |
 | {threaten to walk away} | {BATNA assessment + calibrated question} |
+| {agree immediately / too fast} | {Rule of Three — verify with summary + "how" question. Fast "yes" is often counterfeit} |
 
 ## Exact Phrases (Pre-Written)
 
@@ -100,6 +103,18 @@ Customize these for the actual conversation:
 - **No-Oriented:** "Would it be ridiculous to {your ask framed for "no"}?"
 - **Loss Frame:** "If we don't {action}, {specific loss they'd face}..."
 - **"That's Right" Trigger:** Summary + label that demonstrates full understanding
+
+## Quick Reference Card
+
+Take this into the conversation:
+
+- **Open:** Accusation Audit → "[specific phrasing from above]"
+- **Listen:** Mirror key words + Label emotions → wait for "that's right"
+- **Stuck:** "How am I supposed to [constraint]?"
+- **Move:** Loss frame → "[specific loss phrasing]"
+- **Close:** Rule of Three → get 3 confirmations
+- **If they shut down:** Restore safety → "I don't want [fear]. I do want [purpose]."
+- **Remember:** Never split the difference. Silence is your friend.
 
 ---
 

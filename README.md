@@ -17,6 +17,8 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 | **clean-code-reviewer** | Agent that analyzes code against Robert C. Martin's Clean Code principles. Produces tiered remediation reports (🟢/🟡/🔴). Activated via setup-linter. |
 | **hormozi-pitch** | Alex Hormozi's $100M Offers methodology for creating irresistible offers, pricing, guarantees, and value propositions |
 | **x-post-writer** | Twitter/X copywriting system for high-engagement social media content with viral frameworks and examples |
+| **tactical-empathy** | Chris Voss negotiation methodology — situation analysis (produces dossier files) and sparring (roleplay with inline coaching). Covers salary, deals, difficult conversations, persuasion. |
+| **agent-align** | AI-to-AI delegation alignment — verifies that context, constraints, and intent survive handoffs in multi-agent systems |
 
 ---
 
@@ -42,6 +44,15 @@ claude
 # Install business skills (offers, copywriting) - optional
 /plugin install ajbm-business@ajbm
 
+# Install interview & spec skills - optional
+/plugin install ajbm-interview@ajbm
+
+# Install communication skills (negotiation, persuasion) - optional
+/plugin install ajbm-communication@ajbm
+
+# Install agent alignment skills (multi-agent delegation) - optional
+/plugin install ajbm-agent-align@ajbm
+
 # Install security guardrails (blocks dangerous commands/file access) - optional
 /plugin install ajbm-security@ajbm
 
@@ -65,6 +76,9 @@ claude
 
 # Install the plugins
 /plugin install ajbm-dev@ajbm
+/plugin install ajbm-interview@ajbm
+/plugin install ajbm-communication@ajbm
+/plugin install ajbm-agent-align@ajbm
 /plugin install ajbm-business@ajbm
 /plugin install ajbm-security@ajbm
 /plugin install ajbm-skill-reminders@ajbm
@@ -110,6 +124,7 @@ ACTION: Use Skill tool BEFORE responding
 | "skill", "hook", "plugin", "SKILL.md" | authoring-skills |
 | "docs", "documentation", "API", "reference" | docs-research-specialist |
 | "refactor", "clean code", "SOLID", "code smell" | clean-code-reviewer |
+| "negotiate", "salary", "difficult conversation", "persuade" | tactical-empathy |
 
 ### Error Detection (PostToolUse)
 
@@ -344,6 +359,46 @@ Or auto-invoked by Claude when the CLAUDE.md instruction is present (added by se
 I want to create a new Claude Code skill for database migrations
 ```
 
+### Tactical Empathy Skill
+
+**Best for:** Negotiation prep, salary discussions, difficult conversations, persuasion, conflict resolution, practicing before high-stakes conversations
+
+```
+I need to negotiate a raise from $145K to $175K with my VP of Engineering
+```
+
+Or to practice:
+```
+Let's spar — roleplay as my boss while I practice asking for a raise
+```
+
+**Two workflows:**
+
+| Workflow | Trigger | Output |
+|----------|---------|--------|
+| **Analyze** | Describe a situation | Written dossier file with strategy, exact phrases, danger zones |
+| **Spar** | "Practice", "roleplay", "spar" | Roleplay as counterpart with inline `[COACH:]` coaching annotations |
+
+**What Analyze produces** (`negotiation-dossier-{topic}.md`):
+- Situation map with power dynamics and stakeholder mapping
+- BATNA analysis (your walkaway vs theirs)
+- Negotiator type assessment (Analyst/Accommodator/Assertive)
+- Black Swan candidates (hidden info that could change everything)
+- Move-by-move technique playbook with exact pre-written phrases
+- Danger zones (if they do X, respond with Y)
+- Quick reference card to take into the conversation
+
+**What Spar does:**
+- Claude plays the counterpart fully in character
+- After each line, adds `[COACH:]` annotations naming the technique to try next with exact phrasing
+- Auto-calibrates difficulty based on your skill level
+- Ends with a debrief: what you did well, missed opportunities, what to practice next, and option to replay key moments
+
+**Core techniques (Chris Voss "Never Split the Difference"):**
+- **Mirroring** — repeat last 1-3 words + silence
+- **Labeling** — "It seems like..." names the emotion underneath
+- **Calibrated Questions** — "How am I supposed to do that?" says no without saying no
+
 ### Hormozi Pitch Skill
 
 **Best for:** Creating offers, pricing strategies, marketing copy, value propositions
@@ -486,6 +541,28 @@ Decomposition, Compression, Sufficiency, Scope, Format-Spec, Uncertainty, Chaini
 **Model-specific guidance:**
 Includes tailored prompting strategies for Claude, OpenAI (GPT-4o, o1/o3), DeepSeek R1, Gemini 3, Kimi K2, Qwen 2.5, and Grok.
 
+### tactical-empathy
+
+Chris Voss negotiation methodology with vector activation architecture:
+
+**Two workflows:**
+| Workflow | When | What It Does |
+|----------|------|--------------|
+| **Analyze** | Situation described, "prepare for", "strategy for" | Produces `negotiation-dossier-{topic}.md` with full strategy |
+| **Spar** | "Practice", "roleplay", "rehearse", "spar" | Roleplay counterpart with `[COACH:]` annotations |
+
+**Technique coverage:**
+- **Big Three (primary):** Mirroring, Labeling, Calibrated Questions
+- **Full arsenal:** Accusation Audit, No-Oriented Questions, "That's Right", Late-Night FM DJ Voice, Tactical Silence, Black Swan Discovery, Ackerman Bargaining, Bend Reality, Rule of Three
+- **Complements (loaded on demand):** BATNA Analysis, OFNR (NVC), Safety Monitoring, Three Conversations Model
+
+**Key features:**
+- Permission escalation prevents Claude from defaulting to compromise/softening
+- Quality gate: "Am I suggesting compromise for their interests or my comfort?"
+- Spar auto-calibrates difficulty and offers replay of key moments
+- Cultural adaptation notes for non-Western contexts
+- Phase coverage map: Prepare → Open → Listen → Speak → Move → Commit → Repair
+
 ### hormozi-pitch
 
 Alex Hormozi's $100M Offers methodology:
@@ -509,18 +586,27 @@ Twitter/X copywriting expertise:
 ```bash
 # Disable without uninstalling
 /plugin disable ajbm-dev@ajbm
+/plugin disable ajbm-interview@ajbm
+/plugin disable ajbm-communication@ajbm
+/plugin disable ajbm-agent-align@ajbm
 /plugin disable ajbm-business@ajbm
 /plugin disable ajbm-security@ajbm  # Turn off security guardrails
 /plugin disable ajbm-skill-reminders@ajbm  # Turn off skill suggestions
 
 # Re-enable
 /plugin enable ajbm-dev@ajbm
+/plugin enable ajbm-interview@ajbm
+/plugin enable ajbm-communication@ajbm
+/plugin enable ajbm-agent-align@ajbm
 /plugin enable ajbm-business@ajbm
 /plugin enable ajbm-security@ajbm
 /plugin enable ajbm-skill-reminders@ajbm
 
 # Completely remove
 /plugin uninstall ajbm-dev@ajbm
+/plugin uninstall ajbm-interview@ajbm
+/plugin uninstall ajbm-communication@ajbm
+/plugin uninstall ajbm-agent-align@ajbm
 /plugin uninstall ajbm-business@ajbm
 /plugin uninstall ajbm-security@ajbm
 /plugin uninstall ajbm-skill-reminders@ajbm
@@ -547,9 +633,14 @@ Twitter/X copywriting expertise:
 - **Run tests with real implementations first** — Before mocking, see what actually needs to happen
 - **Gate functions prevent mistakes** — Ask the questions before adding mocks or test methods
 
+### Tactical Empathy Skill
+- **Analyze first, then Spar** — Run Analyze to get a dossier, then say "let's spar" to practice. The Spar loads the dossier for realistic counterpart behavior.
+- **Be specific about the counterpart** — The more you tell Claude about who you're negotiating with, the more realistic the sparring and the sharper the dossier.
+- **Don't settle** — The skill is designed to push back when you consider a bad compromise. Trust it.
+
 ### General
 - **Let skills activate naturally** — You don't need to explicitly invoke skills; Claude uses them based on context
-- **Combine skills** — You can use interview to spec a feature, then prompt-craft to write prompts for that feature
+- **Combine skills** — You can use interview to spec a feature, then prompt-craft to write prompts for that feature, or use tactical-empathy to prepare for a negotiation and then spar to practice
 - **Check for updates** — Skills improve over time. Run `/plugin marketplace update` periodically
 
 ---

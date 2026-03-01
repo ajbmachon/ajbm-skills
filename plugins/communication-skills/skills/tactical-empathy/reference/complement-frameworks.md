@@ -184,3 +184,12 @@ Every difficult conversation is actually three conversations happening simultane
 ### Integration with Voss
 
 Use Voss's labels and calibrated questions to surface the identity layer. When you detect disproportionate reactions, shift from the "What Happened" conversation to the Feelings or Identity conversation. Label the deeper emotion. Then return to the surface issue with the emotional charge reduced.
+
+---
+
+## Cultural Adaptation Note
+
+These frameworks assume a broadly Western communication context. Adjust for cultural norms:
+- **High-context cultures** (Japan, Korea, Arab world): Silence means more, direct labels may feel confrontational. Use softer labeling ("I wonder if...") and allow more processing time.
+- **Hierarchical cultures**: Calibrated questions directed at someone senior may feel disrespectful. Frame as seeking guidance: "How would you like me to approach this?"
+- **Relationship-first cultures** (Latin America, Middle East): Extended rapport-building is not wasted time — it IS the negotiation. Skip it and you lose before you start.

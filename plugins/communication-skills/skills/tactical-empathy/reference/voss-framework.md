@@ -148,9 +148,11 @@ Hidden information that, if discovered, completely changes the negotiation dynam
 **Extreme anchoring:** Set a high/low anchor early so your real ask feels reasonable by comparison. Anchor with confidence, combine with empathy or it reads as a threat. Remember: anchoring works on you too — recognize when they anchor you.
 
 ### Ackerman Bargaining Model
-Systematic: 65% → 85% → 95% → 100% of your target. Each increment decreases, signaling you're approaching your limit. Use empathy and calibrated questions between each raise — not mechanical jumping.
+Systematic: 65% → 85% → 95% → 100% of your target price. The decreasing increments are the strategy — each smaller jump signals you're approaching your limit and makes the final number feel inevitable, not arbitrary.
 
-**Final offer specifics:** Non-round number ($37,893 not $38,000) — precision signals thorough calculation. Include a non-monetary sweetener (something they probably don't even want) — signals you're at your absolute limit.
+**The rhythm matters more than the numbers:** Between each move, deploy empathy tools. Label their reaction to your last number. Ask a calibrated question about their constraints. The Ackerman isn't a mechanical counter-offer sequence — it's a framework for pacing concessions while gathering information. Each pause between numbers is an opportunity to discover a Black Swan.
+
+**Final offer specifics:** Non-round number ($37,893 not $38,000) — precision signals thorough calculation, not a round guess. Include a non-monetary sweetener at the end (something they probably don't even want) — it signals you've scraped the bottom of your barrel and have nothing left to give.
 
 ### Rule of Three
 Three agreements to the same thing, different approaches each time:
