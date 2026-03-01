@@ -1,7 +1,7 @@
 {
   "name": "ajbm-dev",
-  "description": "Claude Code skills and agents for software development: debugging, testing, spec writing, linting, skill authoring, documentation research, and clean code review. Includes systematic-debugging, testing-best-practices, interview, setup-linter, prompt-craft, authoring-skills, docs-research-specialist, and clean-code-reviewer.",
-  "version": "1.1.0",
+  "description": "Claude Code skills and agents for software development: debugging, testing, linting, skill authoring, documentation research, and clean code review. Includes systematic-debugging, testing-best-practices, setup-linter, prompt-craft, authoring-skills, docs-research-specialist, and clean-code-reviewer.",
+  "version": "1.2.0",
   "author": {
     "name": "Andre Machon",
     "url": "https://github.com/ajbmachon"
@@ -12,8 +12,6 @@
     "debugging",
     "testing",
     "tdd",
-    "interview",
-    "spec",
     "linting",
     "prompt-engineering",
     "skills",

@@ -1,16 +1,18 @@
 ---
 name: Interview
-description: USE WHEN spec, requirements, interview, flesh out idea, plan feature, business idea, design review, ideation, document draft, devil's advocate, stress test, brainstorm. Crystallize ideas into actionable specs via rigorous challenge and constraint enforcement. Workflows: DevSpec, BusinessIdea, DocumentDraft, DesignReview, Ideation, DevilsAdvocate.
+description: USE WHEN spec, requirements, interview, flesh out idea, plan feature, business idea, design review, ideation, document draft, devil's advocate, stress test, brainstorm, clarify, quick spec, scope this, help me think through, what am I missing. Crystallize ideas into actionable specs through structured elicitation, assumption surfacing, and constraint enforcement. Workflows: QuickClarify, DevSpec, BusinessIdea, DocumentDraft, DesignReview, Ideation, DevilsAdvocate.
 ---
 
 <mandatory_read phase="skill_loaded">
 ## Pre-Start Reading
 
-Read the workflow file for the detected type (see Workflow Routing below) and the reference docs below before starting:
+Read the workflow file for the detected type (see Workflow Routing below).
+
+**For full workflows** (DevSpec, BusinessIdea, etc.), also read:
 1. [ConstraintStore.md](ConstraintStore.md) — Constraint capture, validation, mutation, error recovery
 2. [WorkingLogTemplate.md](WorkingLogTemplate.md) — Live document structure
 
-These define HOW you enforce constraints and WHERE you write things down.
+**For QuickClarify:** The workflow file is self-contained — no additional reads needed at this stage.
 </mandatory_read>
 
 ---
@@ -34,6 +36,7 @@ Detect the interview type from context and load the appropriate workflow file.
 
 | Workflow | Triggers | File |
 |----------|----------|------|
+| QuickClarify | "clarify", "quick spec", "scope this", "help me think through", "what am I missing", small/medium task with ambiguities | [Workflows/QuickClarify.md](Workflows/QuickClarify.md) |
 | DevSpec | "spec", "requirements", "plan feature", "implementation", codebase context | [Workflows/DevSpec.md](Workflows/DevSpec.md) |
 | BusinessIdea | "business idea", "startup", "product idea", "market", "revenue" | [Workflows/BusinessIdea.md](Workflows/BusinessIdea.md) |
 | DocumentDraft | "document", "draft", "write", "align text", "communication" | [Workflows/DocumentDraft.md](Workflows/DocumentDraft.md) |
@@ -41,30 +44,62 @@ Detect the interview type from context and load the appropriate workflow file.
 | Ideation | "ideate", "brainstorm", "creative exploration", "ideas", "what if" | [Workflows/Ideation.md](Workflows/Ideation.md) |
 | DevilsAdvocate | "devil's advocate", "challenge this", "stress test", "poke holes" | [Workflows/DevilsAdvocate.md](Workflows/DevilsAdvocate.md) |
 
-**If ambiguous:** Ask the user which type fits. If no type matches, default to DevSpec when in a repo, BusinessIdea otherwise.
+**QuickClarify vs Full Workflows:** QuickClarify is for tasks where the WHAT is roughly known but assumptions and edges need 2-5 minutes of refinement. Full workflows are for tasks that need validation, deep research, and formal challenge. The boundary test: could Claude start implementing with confidence after 3-5 questions? → QuickClarify.
 
-**The workflow file defines:** domain-specific research targets, challenge angles, questions, and output additions. The core procedure below is universal.
+**If ambiguous:** Ask the user which type fits. If no type matches, default to QuickClarify for small-to-medium tasks, DevSpec when in a repo with a large scope, BusinessIdea for non-technical ideas.
+
+**QuickClarify** follows its own 4-phase procedure (Mirror → Surface → Probe → Converge). **All other workflows** follow the core procedure below.
+
+---
+
+## Why Elicitation Works
+
+The Interview skill exists because human and AI intelligence are complementary — powerful together, incomplete alone. Understanding WHY this works makes every workflow better.
+
+**What the human brings that the model can't have:**
+- **Tacit knowledge** — The user knows more than they can articulate. Questions are the extraction mechanism for knowledge that lives in experience, not words.
+- **Intent behind intent** — "Add caching" is an implementation guess. The real need might be "stop users from complaining about slow dashboards." Elicitation peels back implementation to find intent.
+- **Contextual judgment** — Team capabilities, org politics, user tolerance for imperfection. Invisible to the model, often invisible to the user too until a question makes them articulate it.
+
+**What the model brings that the human can't easily access:**
+- **Combinatorial breadth** — Claude has seen millions of ways things fail. Edge case awareness extends the human's peripheral vision.
+- **Ego-free challenge** — Claude can say "this might not work" without social cost. This makes honest assumption surfacing easier than between humans.
+- **Cognitive mirroring** — When Claude reflects back understanding, the user sees their idea from outside their head for the first time. Ideas that seemed clear internally reveal gaps when externalized through another intelligence.
+- **Exhaustive patience** — Claude probes the 7th edge case with the same rigor as the 1st. Systematic ambiguity sweeping that humans can't sustain.
+
+**The four irreducible operations** (every workflow, every scale):
+1. **Mirror** — Reflect understanding so the user sees their idea externally
+2. **Surface** — Name unstated assumptions from BOTH sides
+3. **Probe** — Ask questions whose answers change the outcome (information-maximizing)
+4. **Converge** — Narrow to shared understanding where both parties would build the same thing
+
+**Why the ROI is asymmetric:** A 5-minute elicitation that catches a wrong assumption saves 2 hours of wrong implementation. Error prevention at the point of maximum leverage.
+
+**Deep dive:** [EpistemologicalFramework.md](EpistemologicalFramework.md) — Full analysis of complementary intelligence, the curse of knowledge, externalized thinking, and human-AI vs human-human elicitation dynamics.
 
 ---
 
 ## Behavioral Norms
 
-### Anti-Sycophancy — Challenge, Don't Just Execute
+### Anti-Sycophancy — Ego-Free Challenge Is Your Advantage
+
+Ego-free challenge is one of the few things AI does better than humans. Use it.
 
 - **If you see a better approach, say so directly.** Don't just execute what was asked.
-- **Challenge the user's framing** — not to be difficult, but to protect them from bad ideas.
-- **Challenge ideas, surface risks, and propose stronger alternatives with evidence.**
-- **Disagree when you have reason to.** Agreement is easy. Useful disagreement is valuable.
-- **Name what seems wrong.** If the scope is off, the approach is flawed, or an assumption is shaky — say it.
+- **Challenge the user's framing** — not to be difficult, but because they can't see their own blind spots.
+- **Disagree when you have reason to.** Agreement is easy. Useful disagreement is the reason this skill exists.
+- **Name what seems wrong.** Scope off, approach flawed, assumption shaky — say it.
 - **Don't soften bad news.** "This might not work because X" is better than silence.
 
 ### What This Skill is NOT
 
-This is not a requirements-gathering checklist. Not a brainstorming session. Not a friendly conversation that happens to produce a spec. Not balanced advice. This is structured adversarial collaboration: Phase 2 tries to KILL the idea, Phase 3 builds what survived. If your Devil's Advocate phase feels comfortable, you've failed. If your Partner phase ignores constraints, you've failed worse.
+This is not a requirements-gathering checklist. Not a friendly conversation that happens to produce a spec. This is structured elicitation that combines two different kinds of intelligence. Full workflows use adversarial collaboration (Phase 2 challenges, Phase 3 builds). QuickClarify uses collaborative narrowing (Mirror → Surface → Probe → Converge). Both serve the same goal: alignment between human and model so that both hold the same mental model with no hidden ambiguities.
 
-### Structured Assumption Audit
+### Mutual Assumption Correction
 
-Surface hidden assumptions at three checkpoints during the interview:
+Neither party knows what the other is assuming. This is the single highest-value mechanism in the skill.
+
+Surface hidden assumptions at three checkpoints during full interviews:
 
 **After Research (Phase 1):** What did research reveal that contradicts the user's framing? What is Claude assuming from stale training data?
 
@@ -73,9 +108,11 @@ Surface hidden assumptions at three checkpoints during the interview:
 - **Assumed** — reasonable but unverified (analogy, pattern matching)
 - **Hoped** — needs to be true, no evidence, maybe counter-evidence
 
-**Before Output (Phase 5):** Final sweep — what foundational assumptions remain unchallenged? What would a newcomer to this domain question?
+**Before Output (Phase 5):** Final sweep — what foundational assumptions remain unchallenged?
 
-**Assumption types to surface:** Claude's stale training data, user misunderstandings, domain assumptions ("everyone knows X"), implicit unstated beliefs, "of course" statements.
+**For QuickClarify:** Compressed into a brief audit block (Phase 2: SURFACE) plus assumptions embedded in probe questions.
+
+**Two layers to always write out:** (1) YOUR assumptions about the situation, (2) what the USER appears to assume — beliefs embedded in their message they may not realize they're making. Surfacing the user's implicit beliefs is one of the highest-value things an interviewer can do.
 
 ### Partner Phase Norms
 
@@ -316,6 +353,8 @@ Write to appropriate file location (ask user if unclear).
 ---
 
 ## Examples
+
+**QuickClarify:** "Help me think through adding caching to the dashboard API" → Routes to QuickClarify. Mirrors understanding, surfaces assumptions (Claude assumes Redis, user assumes cache always warm). Probes with 2-3 targeted questions on TTL, invalidation strategy, cold-cache behavior. Converges to inline aligned understanding. 3-5 minutes, no working log, no challenge phase.
 
 **DevSpec:** "I want to add real-time notifications to our app" → Routes to DevSpec. Researches codebase for existing notification patterns, WebSocket infrastructure. Challenges: "Your app already has polling — why switch to WebSockets?" Captures constraints (H1: must work with existing auth, S1: prefer Server-Sent Events). Deep interview on event types, delivery guarantees, failure handling. Output: implementation-ready spec with TDD block.
 

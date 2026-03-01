@@ -1,0 +1,25 @@
+{
+  "name": "ajbm-interview",
+  "description": "Structured elicitation and spec crystallization through rigorous challenge, assumption surfacing, and constraint enforcement. Workflows: DevSpec, BusinessIdea, DocumentDraft, DesignReview, Ideation, DevilsAdvocate, QuickClarify.",
+  "version": "2.0.0",
+  "author": {
+    "name": "Andre Machon",
+    "url": "https://github.com/ajbmachon"
+  },
+  "repository": "https://github.com/ajbmachon/ajbm-skills",
+  "license": "MIT",
+  "keywords": [
+    "interview",
+    "spec",
+    "requirements",
+    "elicitation",
+    "clarify",
+    "quick-spec",
+    "business-idea",
+    "design-review",
+    "ideation",
+    "devil's-advocate",
+    "brainstorm",
+    "alignment"
+  ]
+}
