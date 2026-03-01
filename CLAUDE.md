@@ -2,7 +2,7 @@
 
 A collection of generally useful Claude Code skills that work across all Anthropic surfaces.
 
-**Plugins:** `ajbm-dev`, `ajbm-business`, `ajbm-security`
+**Plugins:** `ajbm-dev`, `ajbm-interview`, `ajbm-business`, `ajbm-security`
 **Install:** `/plugin install ajbm-dev@ajbm`
 
 ---
@@ -25,22 +25,6 @@ Use when writing or reviewing SKILL.md files.
 - [ ] No time-sensitive information
 - [ ] Consistent terminology
 - [ ] Concrete examples
-
-### interview
-
-Use when user mentions spec, requirements, interview, wants to flesh out an idea, or needs help planning a feature.
-
-**Two-Phase Identity:**
-- **Phases 1-2:** Critical Challenger (skeptical, probing, BLOCKING research)
-- **Phase 3+:** Expert Partner (collaborative, thorough, CONSTRAINT-ENFORCED)
-
-**Key mechanisms:**
-- Constraint Registry captures hard/soft constraints at transition
-- Verification Gate checks recommendations against constraints
-- Self-Challenge Trigger catches assumptions during Partner phase
-- Working log for progressive documentation
-
-**Transition rule:** Never proceed to Partner without explicit constraint confirmation.
 
 ### prompt-craft
 
@@ -169,6 +153,35 @@ Use after implementing a working feature to analyze for Clean Code compliance. A
 - 🔴 ARCHITECTURAL: Cross-file design (SRP, coupling, blast radius shown)
 
 **Includes:** TDD-Readiness score, refactoring priority matrix, educational "Why This Matters" per violation.
+
+---
+
+## Interview Plugin (ajbm-interview)
+
+### interview
+
+Use when user mentions spec, requirements, interview, flesh out idea, plan feature, business idea, design review, ideation, document draft, devil's advocate, stress test, brainstorm, clarify, quick spec, scope this, help me think through.
+
+**Core principle:** Structured elicitation that combines human tacit knowledge with AI's combinatorial breadth. The goal is alignment — both parties holding the same mental model with no hidden ambiguities.
+
+**Seven workflows:**
+
+| Workflow | When | Flow |
+|----------|------|------|
+| **QuickClarify** | Small/medium tasks with ambiguities | Mirror → Surface → Probe → Converge (2-5 min, inline output) |
+| **DevSpec** | Software features, implementations | Full 7-phase with codebase research and TDD output |
+| **BusinessIdea** | Startups, products, revenue models | Full 7-phase with market research and business case |
+| **DocumentDraft** | Written content, proposals, docs | Full 7-phase with audience analysis and style alignment |
+| **DesignReview** | UI/UX, system design, architecture | Full 7-phase with visual Showpiece questions |
+| **Ideation** | Brainstorming, creative exploration | Diverge-Constrain-Refine-Verify with BeCreative integration |
+| **DevilsAdvocate** | Stress-testing, challenging ideas | Standalone challenge with cognitive critique modes |
+
+**Full workflow identity:**
+- **Phases 1-2:** Critical Challenger (skeptical, probing, BLOCKING research)
+- **Transition:** Capture Constraint Registry, get user confirmation
+- **Phase 3+:** Expert Partner (collaborative, CONSTRAINT-ENFORCED)
+
+**QuickClarify** skips challenge and constraints — purely collaborative, 1-3 rounds of questions, inline output. For when the idea doesn't need to defend its right to exist, just needs refinement.
 
 ---
 
