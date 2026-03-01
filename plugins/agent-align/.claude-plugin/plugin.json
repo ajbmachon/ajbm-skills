@@ -1,0 +1,21 @@
+{
+  "name": "ajbm-agent-align",
+  "description": "Structured AI-to-AI alignment protocol for multi-agent delegation. Three graduated levels (Inline, Quick, Full) with constraint inheritance chains. Prevents context compression loss, assumption stacking, and principal intent drift.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andre Machon",
+    "url": "https://github.com/ajbmachon"
+  },
+  "repository": "https://github.com/ajbmachon/ajbm-skills",
+  "license": "MIT",
+  "keywords": [
+    "agent-align",
+    "delegation",
+    "multi-agent",
+    "alignment",
+    "handoff",
+    "constraint-inheritance",
+    "elicitation",
+    "ai-to-ai"
+  ]
+}

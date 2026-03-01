@@ -1,306 +1,325 @@
-# Plan: Interview Skill Evolution — Quick Interview + Plugin Extraction
+# Plan: AgentAlign — AI-to-AI Elicitation Workflow for Multi-Agent Systems
 
 ## Context
 
-The Interview skill has outgrown the `development-skills` plugin — it's used for business ideas, design reviews, document drafts, ideation, and devil's advocate. It needs its own plugin. Additionally, the full 7-phase Interview is too heavy for smaller tasks where users still benefit from structured elicitation. A new lightweight "QuickClarify" workflow is needed.
+The Interview skill's EpistemologicalFramework.md identifies **complementary intelligence** — bridging human depth with AI breadth — as the foundation of human-AI elicitation. But in fully autonomous multi-agent systems, agents delegate to other agents. Both parties are the same KIND of intelligence, yet they hold DIFFERENT context. The problem shifts from "how do we combine two different intelligences?" to **"how do we verify that information survives the compression of delegation?"**
 
-A First Principles decomposition revealed that the full Interview's overhead exists to prevent memory drift across 30+ Q&A turns — irrelevant for 3-8 turn tasks. The irreducible value of human-AI elicitation comes from four operations:
+Without structured alignment at delegation junctions, multi-agent systems suffer from: context compression loss (rich conversation compressed to a prompt), assumption stacking (each layer adds unchecked assumptions), constraint evaporation (human principal's constraints lost through the chain), and parallel divergence (workers building incompatible things from the same brief).
 
-1. **Mirror** — Reflect back understanding so the user sees their idea externally
-2. **Surface** — Name unstated assumptions (both sides)
-3. **Probe** — Ask questions whose answers change the outcome
-4. **Converge** — Narrow to shared understanding
-
-Quick Interview preserves these four and strips everything else.
+The Interview skill's four irreducible operations (Mirror → Surface → Probe → Converge) still apply, but the WHY behind each changes. This plan designs a new graduated workflow: **AgentAlign**.
 
 ---
 
-## Part 1: QuickClarify Workflow Design
+## Part 1: Epistemological Foundation — Context Asymmetry
 
-### File: `Workflows/QuickClarify.md`
+### The Core Shift
 
-**Routing table entry:**
+| Human-AI Elicitation | AI-to-AI Elicitation |
+|---|---|
+| Complementary intelligence (depth + breadth) | Context asymmetry (same intelligence, different information) |
+| Tacit knowledge extraction | Context recovery from delegation compression |
+| Intent behind intent | Principal intent preservation through chains |
+| Ego-free challenge as advantage | Cross-context verification (both ego-free) |
+| Externalized thinking catalyzes new insight | Information transfer, not insight generation |
 
-| Workflow | Triggers | File |
-|----------|----------|------|
-| QuickClarify | "clarify", "quick spec", "scope this", "help me think through", "what am I missing", small/medium task with ambiguities | Workflows/QuickClarify.md |
+### The Three Asymmetries
 
-**Boundary with full workflows:** QuickClarify is for tasks where the WHAT is roughly known but the HOW/edges/assumptions need 2-5 minutes of refinement. Full workflows (DevSpec, BusinessIdea, etc.) are for tasks where the idea itself needs validation, research, and challenge.
+1. **Context asymmetry** — Agent A talked to the user for 30 min; Agent B starts fresh. Delegation compresses rich context into a prompt. Information is inevitably lost. This is analogous to tacit knowledge — the delegator "knows" things it can't fully articulate in the handoff.
 
-### Phase Structure (4 phases, no challenge)
+2. **Role asymmetry** — Architect reasons about tradeoffs; Engineer reasons about implementation. Same information, different conclusions because they weight factors differently.
 
-```
-Phase 1: MIRROR     — Reflect back understanding
-Phase 2: SURFACE    — Brief assumption audit + assumptions in questions
-Phase 3: PROBE      — 1-3 rounds of AskUserQuestion (2-4 Qs each)
-Phase 4: CONVERGE   — Inline summary of aligned understanding
-```
+3. **Capability asymmetry** — Different tools, permissions, models, isolation modes. Delegating a task requiring capabilities the worker lacks is a silent failure mode.
 
-**Time budget:** 2-5 minutes total
-**Max rounds:** 3 rounds of AskUserQuestion (hard cap)
-**No working log:** Context window sufficient for 3-8 turns
-**No blocking research:** Optional background research only
-**No devil's advocate:** Purely collaborative — full Interview handles challenge for big decisions
+### The Four Operations Adapted
 
-### Phase 1: MIRROR
+| Human-AI | AI-to-AI | Purpose Shift |
+|---|---|---|
+| **Mirror** | **ECHO** | From "see your idea externally" → verify compression didn't lose information |
+| **Surface** | **AUDIT** | From bilateral assumptions → cascade prevention + constraint inheritance |
+| **Probe** | **RECOVER** | From extracting tacit knowledge → filling delegation compression gaps |
+| **Converge** | **CONTRACT** | From shared understanding → binding execution agreement with testable criteria |
 
-Claude paraphrases what it understood from the user's request. This is NOT a summary — it's a **cognitive mirror** that lets the user see their idea from outside their head.
+### What Gets Stripped (Human-Specific)
 
-Format:
-```
-Here's what I understand you want:
-  [2-4 bullet paraphrase of the task, intent, and desired outcome]
-```
+- Devil's Advocate / Challenge — task validity settled by human
+- Epistemological labels ([E], [L], [S], [C]) — both reason the same way
+- Working log — handoff spec replaces it for Full level
+- Showpiece questions — no visual UI between agents
+- Research phases — worker reads files directly
+- Progressive logging — no memory drift within short exchanges
 
-Purpose: Catches gross misalignment immediately. If Claude's mirror is wrong, the user corrects before any work begins.
+### What's New (AI-to-AI Specific)
 
-### Phase 2: SURFACE (Hybrid Assumption Audit)
-
-**Step A — Brief audit block:** State Claude's assumptions AND surface what the user appears to assume.
-
-Format:
-```
-I'm assuming:
-  • [assumption 1]
-  • [assumption 2]
-
-You appear to assume:
-  • [implicit belief 1]
-  • [implicit belief 2]
-```
-
-**Step B — Embedded in questions:** Remaining assumptions woven into probe questions naturally: "I'm assuming X — is that right? Also..."
-
-This hybrid ensures assumptions are VISIBLE (audit block) and ACTIONABLE (embedded in questions that resolve them).
-
-### Phase 3: PROBE
-
-Use `AskUserQuestion` with 2-4 questions per round. Claude must read QuestionGuidelines.md before asking.
-
-**Question quality rules (from full Interview, still apply):**
-- Every question must earn its place — could I answer this myself? Does the answer change the outcome?
-- No canned/generic questions — specific to THIS situation
-- Include at least one question the user wouldn't think to ask themselves
-- Reference codebase findings, research, or domain knowledge in questions
-
-**Convergence signals (when to stop):**
-- No new ambiguities emerged in last round
-- Claude could proceed without guessing on any aspect
-- User's answers are getting shorter/confirmatory
-
-**Hard cap:** 3 rounds maximum. If still unclear after 3 rounds, this should have been a full Interview.
-
-**Background research:** Claude MAY launch background research agents during probing (not blocking). Surface findings as they arrive: "While you answered, I found..."
-
-### Phase 4: CONVERGE
-
-Inline summary of the aligned understanding. NOT a spec file — delivered directly in conversation.
-
-Format:
-```
-## Aligned Understanding
-
-**Task:** [one-sentence description]
-**Key decisions:**
-  • [decision 1 from Q&A]
-  • [decision 2 from Q&A]
-
-**Assumptions confirmed:**
-  • [confirmed assumption]
-
-**Assumptions corrected:**
-  • [what changed and why]
-
-**Scope boundaries:**
-  • In: [what's included]
-  • Out: [what's excluded]
-
-**Ready to proceed.**
-```
-
-This becomes Claude's reference for implementation. No separate file — the conversation IS the artifact.
-
-### Behavioral Norms (inherited from full Interview, compressed)
-
-- **Anti-sycophancy:** If you see a problem with the approach, say so in the probe questions — don't save it for later
-- **Question Guidelines apply:** Read them. No obvious questions, no generic questions, no agreement-seeking
-- **Assumption Audit lite:** Hybrid (audit block + embedded). Surface BOTH Claude's and user's assumptions
-- **Showpiece questions:** May use markdown previews for structural forks (max 1 per QuickClarify session)
-
-### Degrees of Freedom
-
-| Component | Freedom | Notes |
-|-----------|---------|-------|
-| Phase ordering | **None** | Mirror → Surface → Probe → Converge is fixed |
-| Number of Q&A rounds | **High** | 1-3, convergence-signal driven |
-| Question content | **High** | Specific to THIS situation |
-| Background research | **Medium** | Optional, non-blocking only |
-| Output format | **Low** | Must follow Converge template |
-| Showpiece questions | **Low** | Max 1 per session |
-
-### Example: Quick Interview in Action
-
-User: "I want to add a webhook system to our API so clients can get notified of events"
-
-**MIRROR:**
-> Here's what I understand: you want to add outbound webhooks to your existing API. Clients register a URL, and when events occur in your system, you POST a payload to their URL. This is for external consumers of your API, not internal services.
-
-**SURFACE:**
-> I'm assuming:
-> - HTTP POST with JSON payload (standard webhook pattern)
-> - Retry on failure with exponential backoff
-> - Events are things like `order.created`, `user.updated`
->
-> You appear to assume:
-> - Clients will handle idempotency on their side
-> - Webhook delivery doesn't need to be exactly-once (at-least-once is fine)
-
-**PROBE (Round 1):**
-> Q1: "What events should be supported initially? I noticed your API has 12 resource types — are all of them webhook-eligible or just a subset?"
-> Q2: "How should authentication work for webhook delivery? I'm assuming HMAC signature verification — but your API uses API keys elsewhere. Should webhooks follow the same pattern?"
-> Q3: "What's your failure budget? If a client's endpoint is down for 2 hours, should webhooks queue indefinitely or is there a TTL?"
-
-[User answers...]
-
-**CONVERGE:**
-> ## Aligned Understanding
->
-> **Task:** Add webhook system for order and payment events only (phase 1)
-> **Key decisions:**
-> - HMAC-SHA256 signature verification (consistent with API key model)
-> - At-least-once delivery with 24-hour retry window
-> - 5 event types initially: order.created, order.updated, order.cancelled, payment.succeeded, payment.failed
->
-> **Assumptions confirmed:**
-> - JSON POST payloads
-> - Exponential backoff (30s, 2m, 15m, 1h, 6h)
->
-> **Assumptions corrected:**
-> - NOT all resource types — only orders and payments for phase 1
->
-> **Scope boundaries:**
-> - In: Registration API, delivery engine, retry logic, signature verification
-> - Out: Webhook management UI (phase 2), event filtering/subscriptions, batch delivery
->
-> **Ready to proceed.**
+- **Constraint inheritance verification** — explicit chain-of-custody for principal's constraints
+- **Capability audit** — worker declares tools/permissions; delegator confirms sufficiency
+- **Compression loss detection** — systematic check for information lost in handoff
+- **Token budget awareness** — convergence pressure higher than human-AI
 
 ---
 
-## Part 2: Plugin Extraction Plan
+## Part 2: AgentAlign Workflow Design — Three Graduated Levels
 
-### New plugin: `ajbm-interview`
+### Level Selection (Boundary Tests)
 
-Move Interview from `plugins/development-skills/skills/Interview/` to `plugins/interview/skills/Interview/`.
+| Level | When | Boundary Test | Max Rounds | Token Cost |
+|---|---|---|---|---|
+| **Inline** | Simple, well-specified tasks | Could worker proceed after just reading the delegation prompt? | 0 (echo only) | ~50-80 tokens |
+| **Quick** | Moderate tasks with a few ambiguities | Can alignment be achieved in one back-and-forth? | 2 | ~200-400 tokens |
+| **Full** | Complex tasks, multi-layer chains, architecture decisions | Does this need iterative refinement of scope, approach, or constraints? | 4 | ~500-1000 tokens |
 
-**Files to move (all from `plugins/development-skills/skills/Interview/`):**
-
-```
-Interview/
-├── SKILL.md                    (update routing table to add QuickClarify)
-├── AssumptionAudit.md
-├── ConstraintStore.md
-├── QuestionGuidelines.md
-├── VerificationGate.md
-├── OutputTemplatesCore.md
-├── WorkingLogTemplate.md
-└── Workflows/
-    ├── DevSpec.md
-    ├── BusinessIdea.md
-    ├── DocumentDraft.md
-    ├── DesignReview.md
-    ├── Ideation.md
-    ├── DevilsAdvocate.md
-    └── QuickClarify.md          (NEW — created from this plan)
-```
-
-**New plugin structure:**
-
-```
-plugins/interview/
-├── .claude-plugin/
-│   └── plugin.json
-└── skills/
-    └── Interview/
-        ├── [all files above]
-```
-
-**New `plugin.json`:**
-```json
-{
-  "name": "ajbm-interview",
-  "description": "Structured elicitation and spec crystallization through rigorous challenge, assumption surfacing, and constraint enforcement. Workflows: DevSpec, BusinessIdea, DocumentDraft, DesignReview, Ideation, DevilsAdvocate, QuickClarify.",
-  "version": "2.0.0",
-  "author": {
-    "name": "Andre Machon",
-    "url": "https://github.com/ajbmachon"
-  },
-  "repository": "https://github.com/ajbmachon/ajbm-skills",
-  "license": "MIT",
-  "keywords": [
-    "interview",
-    "spec",
-    "requirements",
-    "elicitation",
-    "clarify",
-    "quick-spec",
-    "business-idea",
-    "design-review",
-    "ideation",
-    "devil's-advocate",
-    "brainstorm",
-    "alignment"
-  ]
-}
-```
-
-### Updates needed:
-
-1. **Remove Interview from `development-skills` plugin.json** — update description and keywords to remove interview references
-2. **Update root CLAUDE.md** — move Interview listing from "Development Skills" section to its own "Interview Plugin" section; add QuickClarify description
-3. **SKILL.md routing table** — add QuickClarify entry
+**Mapping to delegation TIMING SCOPE:**
+- `fast` → Inline (default)
+- `standard` → Quick (default), Full if ambiguous
+- `deep` → Full (default), Quick if clear
+- Leader can override explicitly
 
 ---
 
-## Part 3: Enrich Full Interview with Epistemological Framework
+### Level 1: INLINE (Behavioral Norm)
 
-The deep thinking analysis revealed the fundamental WHY of elicitation. This should be embedded in the Interview SKILL.md to give Claude the right mental model when running ANY workflow.
+Not a workflow invocation — a behavioral disposition for every worker agent.
 
-### Add to SKILL.md — New section: "Why Elicitation Works"
+**Format (embedded in worker's first output):**
+```
+## Understanding
+Task: [one-sentence restatement]
+Success: [restatement of success criteria]
+Constraints inherited: [H1, S1, etc. or "none specified"]
+Approach: [brief statement of how worker will proceed]
+```
 
-Add after "Behavioral Norms" and before "Procedure." This section explains the complementary intelligence dynamic:
-
-- **What the human brings:** Tacit knowledge, intent behind intent, contextual judgment, the right to decide
-- **What the model brings:** Combinatorial breadth, ego-free challenge, cognitive mirroring, exhaustive patience
-- **The four irreducible operations:** Mirror → Surface → Probe → Converge
-- **Why this matters:** Error prevention at point of maximum leverage; mutual assumption correction; externalized thinking
-
-This gives Claude the deeper WHY that improves question quality across all workflows — not just QuickClarify.
-
-### Update Behavioral Norms
-
-Reframe the existing norms through the epistemological lens:
-- "Anti-Sycophancy" becomes grounded in "ego-free challenge is your unique advantage"
-- "Structured Assumption Audit" becomes grounded in "mutual assumption correction — neither party knows what the other assumes"
-- Question quality becomes grounded in "convergent narrowing — each question must maximize information gain"
+**Convergence:** Implicit. Delegator reads echo; if correct, no response needed. If wrong, one correction message.
 
 ---
 
-## Part 4: Verification
+### Level 2: QUICK (1 Round of SendMessage)
 
-1. **QuickClarify workflow:** Run a test scenario — give Claude a medium-complexity task and verify it follows Mirror → Surface → Probe → Converge
-2. **Plugin extraction:** After moving files, verify `ajbm-interview` plugin loads correctly and Interview skill triggers on expected keywords
-3. **SKILL.md updates:** Verify routing table includes QuickClarify with correct triggers
-4. **CLAUDE.md:** Verify Interview appears in its own section with QuickClarify documented
-5. **Full Interview enrichment:** Verify the epistemological framework section appears in SKILL.md and doesn't exceed 500-line limit
+**Phase structure (two messages total):**
+
+**Message 1 — Worker to Leader:**
+```
+## ECHO
+Task: [restatement in worker's own words]
+Intent: [why this matters]
+Success: [what "done" looks like]
+
+## AUDIT
+Constraints inherited: [list with IDs]
+My assumptions: [things not specified, worker filling in]
+Capability check: [tools available / gaps identified]
+
+## RECOVER
+Questions (answer changes my approach):
+1. [specific question about gap]
+2. [specific question about ambiguity]
+```
+
+**Message 2 — Leader to Worker:**
+```
+## Corrections
+[corrections to ECHO, or "none"]
+
+## Answers
+1. [answer]
+2. [answer]
+
+## Additional constraints
+[any forgotten constraints, or "none"]
+
+## CONTRACT: Confirmed
+```
+
+Worker proceeds after receiving Message 2. If leader's response reveals NEW ambiguity, one follow-up round allowed (Quick-Extended), then proceed regardless.
+
+**Question rules (from QuestionGuidelines.md, adapted):**
+- Max 5 questions (hard cap)
+- Each must earn its place — would a different answer change the implementation?
+- No questions answerable by re-reading the delegation prompt
 
 ---
 
-## Implementation Order
+### Level 3: FULL (Multi-Round with Handoff Spec)
 
-1. Create `plugins/interview/` plugin structure with plugin.json
-2. Move all Interview files from development-skills to interview plugin
-3. Create `Workflows/QuickClarify.md` from the design above
-4. Update SKILL.md: add routing table entry, add epistemological framework section, update behavioral norms
-5. Update development-skills plugin.json (remove interview references)
-6. Update root CLAUDE.md (new Interview plugin section with QuickClarify)
-7. Verify everything loads and triggers correctly
+**Phase 1: ECHO + AUDIT (Worker → Leader)**
+
+Comprehensive understanding + constraint inheritance + capability check.
+
+```
+## ECHO
+Task: [detailed restatement]
+Intent: [business context]
+Success criteria: [enumerated, testable]
+Scope: In: [list] | Out: [list]
+
+## AUDIT
+### Constraints inherited
+| ID | Constraint | Source | My interpretation |
+|----|-----------|--------|-------------------|
+| H1 | [text] | [human principal / leader] | [how I'll honor this] |
+
+### My assumptions (not specified)
+- [assumption 1] — proceeding with this unless corrected
+- [assumption 2] — proceeding with this unless corrected
+
+### Capability check
+- Tools: [available / missing]
+- Model: [what I'm running on]
+- Permissions: [file write, bash, etc.]
+
+### Potential conflicts
+- [constraint X might conflict with approach Y]
+```
+
+**Phase 2: RECOVER (Max 2 rounds)**
+
+Questions organized by what they unlock:
+```
+## RECOVER — Round 1
+
+### [Architecture decision name]
+1. [question] — determines approach A or B
+2. [question] — clarifies scope
+
+### [Implementation detail name]
+3. [question] — affects file structure
+```
+
+Leader answers + corrections. Hard cap: 2 RECOVER rounds. If not aligned after 2, task needs human-AI interview first — too ambiguous for agent delegation.
+
+**Phase 3: CONTRACT (Handoff Spec Document)**
+
+Worker produces shared document at `.claude/handoffs/{task-name}.md`:
+
+```markdown
+# Handoff Spec: [Task Name]
+
+**Leader:** [agent name] | **Worker:** [agent name]
+**Status:** CONFIRMED | IN PROGRESS | COMPLETE
+
+## Task
+[what will be done]
+
+## Intent
+[business context from human principal]
+
+## Success Criteria
+- [ ] [testable criterion 1]
+- [ ] [testable criterion 2]
+
+## Constraint Registry (Inherited Chain)
+
+### From Human Principal
+| ID | Constraint | Type | How Honored |
+|----|-----------|------|-------------|
+| H1 | [text] | Hard | [approach] |
+
+### From Leader
+| ID | Constraint | Type | How Honored |
+|----|-----------|------|-------------|
+| L1 | [text] | Soft | [approach] |
+
+## Scope
+In: [enumerated] | Out: [enumerated]
+
+## Approach
+[architecture, file changes, testing strategy]
+
+## Assumptions Confirmed
+- [confirmed in Round N]
+
+## Decisions Made
+| Decision | Alternatives | Chosen | Rationale |
+|----------|-------------|--------|-----------|
+```
+
+Leader confirms: `CONTRACT: CONFIRMED` or `CONTRACT: REVISED — [changes]` (one revision round max).
+
+---
+
+## Part 3: Constraint Inheritance Protocol (Multi-Layer Chains)
+
+**Rule:** Constraints are PASSED DOWN, never invented. Workers cannot create Hard Constraints the human didn't establish. Workers can add Soft Constraints consistent with inherited Hard Constraints.
+
+**Chain format:**
+```
+### Layer 0: Human Principal
+| ID | Constraint | Type |
+| H1 | Must work offline | Hard |
+
+### Layer 1: Leader → Architect
+| H1 | Must work offline | Hard | Inherited from Human (H1) |
+| L1 | Event-driven architecture | Soft | Leader decision (consistent with H1) |
+
+### Layer 2: Architect → Engineer
+| H1 | Must work offline | Hard | Inherited from Human (H1) |
+| L1 | Event-driven architecture | Soft | Inherited from Leader (L1) |
+| A1 | Service worker for offline sync | Soft | Architect decision (implements H1) |
+```
+
+**Verification at each layer:**
+1. Worker lists ALL inherited constraints (no evaporation)
+2. Worker states how each is honored (no drift)
+3. If approach would violate a constraint, STOP and surface
+
+---
+
+## Part 4: Anti-Patterns
+
+| Anti-Pattern | What It Looks Like | Fix |
+|---|---|---|
+| **Bureaucracy Trap** | 10 questions for a 3-file change | Questions proportional to blast radius |
+| **Echo Theater** | Verbatim copy of delegation prompt | Echo must restate in worker's own words |
+| **Constraint Inflation** | Worker invents Hard Constraints | Only human principal establishes Hard Constraints |
+| **Assumption Hiding** | Worker proceeds without listing assumptions | AUDIT requires explicit enumeration |
+| **Round Padding** | Questions answerable from delegation prompt | Same "earn its place" rule as QuestionGuidelines |
+| **Chain Amnesia** | Middle agent drops principal's constraints | Constraint Chain Protocol at every layer |
+
+---
+
+## Part 5: Implementation Plan
+
+### Files to Create
+
+1. **`plugins/interview/skills/Interview/Workflows/AgentAlign.md`** (~250-300 lines)
+   - Self-contained workflow with all three levels
+   - Includes format templates, constraint inheritance protocol, convergence signals, anti-patterns
+   - No additional reference files needed — simpler than human-AI workflows
+
+### Files to Modify
+
+2. **`plugins/interview/skills/Interview/SKILL.md`**
+   - Add routing table entry: `AgentAlign | "agent alignment", "delegation alignment", multi-agent delegation | Workflows/AgentAlign.md`
+   - Add note in Workflow Routing explaining AgentAlign is the only AI-to-AI workflow
+   - Verify line count stays under 500
+
+3. **`plugins/interview/skills/Interview/EpistemologicalFramework.md`**
+   - Add new section: "AI-to-AI Elicitation: Context Asymmetry"
+   - Contrast with human-AI complementary intelligence model
+   - Document the three asymmetries and four adapted operations
+
+4. **`plugins/interview/.claude-plugin/plugin.json`**
+   - Add "agent-align" to keywords
+   - Update description to mention 8 workflows
+
+5. **`CLAUDE.md` (root)**
+   - Add AgentAlign to Interview Plugin section
+   - Brief description of when it triggers and what it does
+
+### Implementation Order
+
+1. Update `EpistemologicalFramework.md` — foundation first
+2. Create `Workflows/AgentAlign.md` — the core deliverable
+3. Update `SKILL.md` — routing + AI-to-AI note
+4. Update `plugin.json` — metadata
+5. Update root `CLAUDE.md` — documentation
+
+---
+
+## Part 6: Verification
+
+1. **Self-containment test:** Can a Leader agent read this workflow and know exactly how to delegate at each level?
+2. **Worker test:** Can a Worker agent read this and know exactly how to respond at each level?
+3. **Constraint chain test:** In a 3-layer chain (Leader → Architect → Engineer), do constraints propagate correctly?
+4. **Line count:** SKILL.md stays under 500 lines
+5. **Routing:** AgentAlign triggers on correct keywords
+6. **Token efficiency:** Quick level stays under 400 tokens total; Full under 1000

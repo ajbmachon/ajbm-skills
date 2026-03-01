@@ -2,7 +2,7 @@
 
 A collection of generally useful Claude Code skills that work across all Anthropic surfaces.
 
-**Plugins:** `ajbm-dev`, `ajbm-interview`, `ajbm-business`, `ajbm-security`
+**Plugins:** `ajbm-dev`, `ajbm-interview`, `ajbm-agent-align`, `ajbm-business`, `ajbm-security`
 **Install:** `/plugin install ajbm-dev@ajbm`
 
 ---
@@ -182,6 +182,28 @@ Use when user mentions spec, requirements, interview, flesh out idea, plan featu
 - **Phase 3+:** Expert Partner (collaborative, CONSTRAINT-ENFORCED)
 
 **QuickClarify** skips challenge and constraints — purely collaborative, 1-3 rounds of questions, inline output. For when the idea doesn't need to defend its right to exist, just needs refinement.
+
+---
+
+## AgentAlign Plugin (ajbm-agent-align)
+
+### agent-align
+
+Use when agents delegate tasks to other agents in multi-agent systems. Triggers: agent alignment, delegation alignment, agent handoff, multi-agent delegation.
+
+**Core principle:** AI-to-AI alignment bridges **context asymmetry** — same intelligence, different information. When a delegator compresses a rich conversation into a prompt, information is lost. AgentAlign verifies that critical context, constraints, and intent survive the handoff.
+
+**Three graduated levels:**
+
+| Level | When | Protocol |
+|-------|------|----------|
+| **Inline** | Simple, well-specified tasks | Worker echoes understanding in first output (~50 tokens) |
+| **Quick** | Moderate tasks with ambiguities | 1 round of SendMessage: ECHO + AUDIT + RECOVER → CONTRACT (~300 tokens) |
+| **Full** | Complex tasks, multi-layer chains | Multi-round with shared handoff spec document (~800 tokens) |
+
+**Four operations:** ECHO (verify compression), AUDIT (surface assumptions + constraint inheritance), RECOVER (fill delegation gaps), CONTRACT (confirm execution agreement).
+
+**Constraint inheritance chains:** Explicit chain-of-custody so human principal's constraints survive multi-layer delegation (Leader → Architect → Engineer) without evaporation or drift.
 
 ---
 
