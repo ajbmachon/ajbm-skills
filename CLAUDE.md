@@ -2,7 +2,7 @@
 
 A collection of generally useful Claude Code skills that work across all Anthropic surfaces.
 
-**Plugins:** `ajbm-dev`, `ajbm-interview`, `ajbm-agent-align`, `ajbm-business`, `ajbm-security`
+**Plugins:** `ajbm-dev`, `ajbm-interview`, `ajbm-agent-align`, `ajbm-business`, `ajbm-communication`, `ajbm-security`
 **Install:** `/plugin install ajbm-dev@ajbm`
 
 ---
@@ -245,6 +245,32 @@ Use when writing tweets, Twitter threads, or social media copy.
 - Short paragraphs (1-2 sentences)
 - Bullet points for readability
 - Clear CTA at end
+
+---
+
+## Communication Skills (ajbm-communication)
+
+### tactical-empathy
+
+Use when negotiating, preparing for difficult conversations, persuading, giving feedback, salary discussions, deal-making, conflict resolution, or practicing negotiation through roleplay.
+
+**Core philosophy:** Chris Voss's "Never Split the Difference" — negotiation as tactical empathy, not argument. Vector activation approach: terminology clusters activate expert behavior rather than dumping knowledge.
+
+**The Big Three techniques:**
+- **Mirroring:** Repeat last 1-3 words + silence. Forces elaboration, gathers information, builds connection.
+- **Labeling:** "It seems like..." names the emotion underneath. Precision matters — surgical labels get "that's right."
+- **Calibrated Questions:** "How am I supposed to do that?" says no without saying no. Makes your problem their problem.
+
+**Two workflows:**
+
+| Workflow | When | Output |
+|----------|------|--------|
+| **Analyze** | Situation described, preparing for a conversation | Written dossier file with strategy, exact phrases, danger zones |
+| **Spar** | "Practice", "roleplay", "rehearse" | Roleplay as counterpart with inline `[COACH:]` annotations |
+
+**Complementary frameworks** (loaded on demand): BATNA Analysis, OFNR (NVC), Safety Monitoring (Crucial Conversations), Three Conversations (Difficult Conversations).
+
+**Quality gate:** Before any recommendation — "Am I suggesting compromise because it serves their interests, or because it avoids discomfort?" Never split the difference.
 
 ---
 

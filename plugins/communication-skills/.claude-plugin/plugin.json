@@ -1,0 +1,22 @@
+{
+  "name": "ajbm-communication",
+  "description": "Claude Code skills for negotiation, persuasion, and human communication. Includes tactical-empathy (Chris Voss methodology with situation analysis and roleplay sparring).",
+  "version": "1.0.0",
+  "author": {
+    "name": "Andre Machon",
+    "url": "https://github.com/ajbmachon"
+  },
+  "repository": "https://github.com/ajbmachon/ajbm-skills",
+  "license": "MIT",
+  "keywords": [
+    "negotiation",
+    "communication",
+    "persuasion",
+    "voss",
+    "tactical-empathy",
+    "difficult-conversations",
+    "influence",
+    "roleplay",
+    "coaching"
+  ]
+}
