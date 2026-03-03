@@ -1,6 +1,6 @@
 {
   "name": "ajbm",
-  "description": "Claude Code skills by Andre Machon - development, business, and security",
+  "description": "Claude Code skills by Andre Machon - development, business, security, interview, communication, and agent alignment",
   "owner": {
     "name": "Andre Machon"
   },
@@ -37,6 +37,33 @@
       "description": "Hooks to remind for skill user on UserPromptSubmit",
       "version": "1.0.0",
       "source": "./plugins/skill-reminders",
+      "author": {
+        "name": "Andre Machon"
+      }
+    },
+    {
+      "name": "ajbm-interview",
+      "description": "Structured elicitation and spec crystallization through rigorous challenge, assumption surfacing, and constraint enforcement. Workflows: DevSpec, BusinessIdea, DocumentDraft, DesignReview, Ideation, DevilsAdvocate, QuickClarify.",
+      "version": "2.0.0",
+      "source": "./plugins/interview",
+      "author": {
+        "name": "Andre Machon"
+      }
+    },
+    {
+      "name": "ajbm-communication",
+      "description": "Skills for negotiation, persuasion, and human communication. Includes tactical-empathy (Chris Voss methodology with situation analysis and roleplay sparring).",
+      "version": "1.0.0",
+      "source": "./plugins/communication-skills",
+      "author": {
+        "name": "Andre Machon"
+      }
+    },
+    {
+      "name": "ajbm-agent-align",
+      "description": "Structured AI-to-AI alignment protocol for multi-agent delegation. Three graduated levels (Inline, Quick, Full) with constraint inheritance chains.",
+      "version": "1.0.0",
+      "source": "./plugins/agent-align",
       "author": {
         "name": "Andre Machon"
       }
