@@ -60,6 +60,24 @@
 
 ---
 
+## AI-Decided Items
+
+> Topics the user chose to defer via Menu mode. Claude decided using best judgment.
+> Each entry is logged IMMEDIATELY at deferral time, not retroactively.
+> These items are surfaced again in Phase 5 for individual review.
+
+### AD1: [Topic name]
+- **Decision:** [What Claude decided]
+- **Confidence:** [🟢 High / 🟡 Medium]
+- **Reasoning:** [Why — cite research findings (R#), codebase evidence, or logical inference]
+- **Assumptions:**
+  - [A] [First assumption underpinning this decision]
+  - [A] [Second assumption, if any]
+- **Deferred at:** [Round N, Menu mode]
+- **Constraint check:** [Which constraints verified — e.g., "Honors H1, S2"]
+
+---
+
 ## Interview Q&A
 
 > Append each exchange as it happens.

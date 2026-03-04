@@ -184,8 +184,11 @@ Use `AskUserQuestion` tool. Up to 4 questions at a time.
 |------|-----------|------|--------|
 | **Standard** | 2-4 | Normal probing, exploring options | Multiple questions, text descriptions |
 | **Showpiece** | 1 | Critical structural fork where text is ambiguous | Single question with `markdown` previews showing each option visually |
+| **Menu** | 1 | Round 2+ with 3+ pending topics, some high-confidence | Pre-table overview + `multiSelect: true`, defaults shown in descriptions |
 
 **Showpiece questions** are rare (max 3-4 per interview) and powerful. Use them when two reasonable developers could imagine different shapes from the same text description. See **Visual Decision Questions** below.
+
+**Menu questions** appear at most once per interview to let users choose which remaining topics they want to engage with. See **Question Menu Mode** below.
 
 ### Field Usage
 
@@ -313,6 +316,137 @@ Use markdown previews when the interview hits a **structural fork** — a decisi
 3. **Add constraint annotations** when relevant — `<- H1 ✓` to show which option honors which constraint
 4. **Match the user's tech stack** — TypeScript examples for TS users, Python for Python users
 5. **Keep scannable** — the user should grasp the difference between options in 3 seconds
+
+---
+
+## Question Menu Mode
+
+Use Menu mode to let users choose which remaining topics to engage with. Claude handles deferred topics using transparent best-judgment defaults with full audit trails.
+
+**Purpose:** Reduce question fatigue on low-stakes topics while preserving thoroughness on everything that matters.
+
+### When to Offer a Menu
+
+ALL conditions must be true:
+- Phase 3 (Partner phase), **Round 2 or later** — Round 1 is always Standard (sacred baseline capture)
+- **3+ remaining question topics** — a menu of 2 is pointless, just ask both
+- **At least some topics at 🟢 High or 🟡 Medium confidence** — if everything is 🔴 Low, use Standard
+- **No more than once per interview** — a punctual offer, not a recurring escape hatch
+
+### When NOT to Offer a Menu
+
+- QuickClarify workflow — too short, already capped at 3 rounds
+- When all remaining topics are structural forks (Showpiece territory) — never deferrable
+- When Claude can't articulate a specific assumption for a topic — insufficient understanding to defer
+
+### Confidence Levels
+
+Assess each remaining topic before building the menu:
+
+| Level | Meaning | Deferrable? | Criteria |
+|-------|---------|:-----------:|----------|
+| 🟢 High | Backed by research findings or codebase evidence | Yes | Found concrete evidence in codebase or research |
+| 🟡 Medium | Reasonable inference with stated assumptions | Yes (with warning) | Logical but assumption-dependent |
+| 🔴 Low | Genuinely uncertain, multiple valid approaches | **No** | No evidence, no clear default, structural implications |
+
+**Rule: If you can't articulate what you're assuming, you don't understand the topic well enough to defer it.**
+
+### Pre-Menu Overview Table
+
+Before the Menu question, output a markdown table showing ALL remaining topics — including non-deferrable ones — so the user can see the full picture:
+
+```markdown
+### Remaining Topics
+
+| # | Topic | Confidence | Default If Deferred | Key Assumption |
+|---|-------|:----------:|---------------------|----------------|
+| 1 | Auth approach | 🟢 High | JWT with refresh tokens | Existing auth-middleware.ts pattern applies |
+| 2 | Error handling | 🟢 High | Global middleware + per-route overrides | Express error patterns in codebase are intentional |
+| 3 | Caching strategy | 🟡 Medium | Redis, 5-min TTL | Current Redis instance has capacity |
+| 4 | Rate limiting | 🔴 Low | — must ask | No existing pattern found, multiple valid approaches |
+
+🟢 High = backed by research or codebase evidence
+🟡 Medium = reasonable inference, some assumptions
+🔴 Low = genuinely uncertain, will be asked directly
+```
+
+### Menu Question Format
+
+Only 🟢 and 🟡 topics appear as options. 🔴 topics are excluded and asked as Standard questions in the next round.
+
+```json
+{
+  "questions": [{
+    "question": "Select the topics you want to weigh in on — I'll use my best judgment for the rest (see table above for my defaults and assumptions).",
+    "header": "Topics",
+    "multiSelect": true,
+    "options": [
+      {
+        "label": "Auth approach",
+        "description": "I'd default to JWT with refresh tokens — matches your existing auth-middleware.ts patterns"
+      },
+      {
+        "label": "Error handling",
+        "description": "I'd default to global error middleware with per-route overrides — consistent with your Express setup"
+      },
+      {
+        "label": "Caching strategy",
+        "description": "I'd default to Redis with 5-min TTL — assuming current Redis instance has capacity"
+      }
+    ]
+  }]
+}
+```
+
+**Note:** `multiSelect: true` disables `markdown` previews — this is correct. Menu mode is for topic selection, not structural visualization. If a topic needs visual comparison, it's a Showpiece candidate and shouldn't be in the Menu.
+
+### Thoroughness Guardrails
+
+These rules are NON-NEGOTIABLE — they prevent the Menu from degrading interview quality:
+
+1. **Confidence threshold** — Only 🟢 and 🟡 topics can be deferred. 🔴 MUST be asked as Standard. No exceptions.
+2. **Hard cap** — Max **3 topics** deferrable per interview. If more qualify, ask the excess as Standard.
+3. **Structural fork exclusion** — Any topic that passes the "Two Reasonable Developers" test NEVER appears in the Menu. Use Showpiece instead.
+4. **Once per interview** — Menu mode fires at most once. Not every round.
+5. **Zero-selection pushback** — If user defers ALL topics, push back: "These topics affect spec quality — are you sure? I'd recommend weighing in on at least [topic] where my assumption about [X] could be wrong."
+6. **Round 1 is sacred** — First round of Phase 3 always Standard. No deferral before baseline capture.
+7. **Assumption exposure** — Every deferrable topic MUST show its key assumption in the pre-table. Can't articulate the assumption? Can't defer the topic.
+
+### After the Menu
+
+- **Selected topics** → ask in subsequent Standard or Showpiece rounds as appropriate
+- **Unselected 🟢/🟡 topics** → Claude uses stated default, logs IMMEDIATELY as AI-decided (see below)
+- **🔴 topics** → asked in the next Standard round regardless of menu selections
+
+### AI-Decided Logging Requirements
+
+When a topic is deferred, log it IMMEDIATELY (not retroactively) in the working log with this structure:
+
+```markdown
+### AD[N]: [Topic name]
+- **Decision:** [What Claude decided]
+- **Confidence:** [🟢/🟡]
+- **Reasoning:** [Why this default — cite research findings, codebase evidence, or logical inference]
+- **Assumptions:**
+  - [A] [First assumption]
+  - [A] [Second assumption]
+- **Deferred at:** [Round N, Menu mode]
+- **Constraint check:** [Which constraints were verified — e.g., "Honors H1, S2"]
+```
+
+Also log the Menu round in the Q&A section:
+
+```markdown
+### Q[N]: [Menu Round] Topic Selection
+**Asked:** [timestamp]
+**Mode:** Menu (multiSelect)
+**Topics presented:** [list with confidence levels]
+**User selected:** [which topics]
+**Deferred:** [topic] → AD[N], [topic] → AD[N]
+**Note:** [any 🔴 topics excluded and their disposition]
+```
+
+AI-decided items are surfaced again in **Phase 5** for individual review and in the **final spec** as a permanent record. See OutputTemplatesCore.md section 8.
 
 ---
 

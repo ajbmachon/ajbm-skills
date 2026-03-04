@@ -282,6 +282,8 @@ Your job shifts: ~~"Should this exist?"~~ → **"How should this work?"**
 
 Use `AskUserQuestion` tool. Up to 4 questions at a time. Use domain-specific questions from the active workflow.
 
+**Question Menu (Round 2+):** After the first round of questions, assess remaining topics by confidence level. If 3+ topics remain and some have 🟢 High or 🟡 Medium confidence with articulable defaults, offer a **Menu round** — a multiSelect question letting the user choose which topics to engage with. Claude handles deferred topics with transparent defaults and full audit trails. See [QuestionGuidelines.md](QuestionGuidelines.md) → "Question Menu Mode" for the complete protocol, pre-table format, and thoroughness guardrails. Menu mode fires **at most once per interview**.
+
 **Research is now BACKGROUND (async):** Launch agents while user answers. Surface findings as they arrive.
 
 **Enforcement mechanisms on every recommendation:**
@@ -321,8 +323,9 @@ Before output:
 3. **Final Assumption Audit** — what foundational assumptions remain unchallenged?
 4. Flag contradictions between spec and research findings
 5. Confirm alignment with user's intent
-6. Check for gaps the interview didn't cover
-7. Run final verification research if needed
+6. **Review AI-Decided Items** — if any topics were deferred via Menu mode, surface each item INDIVIDUALLY with its assumptions. Do not bulk-list them. For each: state the decision, the key assumption, and ask "Keep this, or discuss?" Require explicit confirmation or override before proceeding to output.
+7. Check for gaps the interview didn't cover
+8. Run final verification research if needed
 
 ---
 

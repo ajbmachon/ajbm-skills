@@ -367,3 +367,50 @@ Impact: [What depends on this answer]
 **Keep It Short** - Ideal: 0-3 open questions. 5+ means the interview wasn't thorough enough.
 
 **Mark Resolution Path** - Who/what can resolve this?
+
+---
+
+## 8. AI-Decided Items (Conditional)
+
+Include when any topics were deferred via Menu mode during the interview. Omit if no topics were deferred.
+
+### Purpose
+
+Provides a permanent, auditable record of decisions Claude made autonomously when the user chose to defer. Each item includes the decision, reasoning, assumptions, and constraint alignment — giving future readers (and implementation Claude) full context on WHY these decisions were made and WHAT could be wrong about them.
+
+### Template
+
+```markdown
+## AI-Decided Items
+
+> These items were decided by Claude's best judgment during the interview.
+> The user chose to defer on these topics. Each was reviewed in Phase 5.
+> Override any decision by updating this section before implementation.
+
+### AD1: [Topic name]
+
+| Field | Value |
+|-------|-------|
+| **Decision** | [What Claude decided] |
+| **Confidence** | [🟢 High / 🟡 Medium] |
+| **Reasoning** | [Why — cite codebase evidence, research findings, or logical inference] |
+| **Assumptions** | (1) [First assumption]. (2) [Second assumption]. |
+| **Constraint alignment** | [Which constraints checked — e.g., H1 ✓, S2 ✓] |
+| **Reviewed in Phase 5** | [✓ User confirmed / ✗ User overrode → new decision] |
+```
+
+### Guidance
+
+**Every assumption must be explicit.** The assumptions field is the most important — it tells the implementer what could invalidate this decision. If an assumption turns out wrong, the decision should be revisited.
+
+**Include the reasoning chain, not just the conclusion:**
+- Bad: "Chose Redis"
+- Good: "Redis already in stack (R1 finding), 5-min TTL standard for session-adjacent data, no invalidation triggers needed beyond expiry"
+
+**Mark Phase 5 review outcome:**
+- `✓ User confirmed` — user saw the assumption and agreed
+- `✗ User overrode → [new decision]` — user changed the decision (update the item)
+
+**Keep items distinct.** Each deferred topic gets its own AD entry. Don't combine multiple topics into one.
+
+**Typical count:** 0-3 items. If more than 3, the interview may have been too permissive with deferrals — the Menu mode guardrails cap at 3 deferrable topics per interview.
