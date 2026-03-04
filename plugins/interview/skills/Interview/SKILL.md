@@ -352,6 +352,38 @@ Write to appropriate file location (ask user if unclear).
 
 ---
 
+### Phase 7: Implementation Handoff (Plan Mode)
+
+**Applies to:** Full workflows that produce a spec and interview log (DevSpec, BusinessIdea, DocumentDraft, DesignReview). Skip for QuickClarify, Ideation, and DevilsAdvocate.
+
+After Phase 6 output is written, transition the user into implementation:
+
+1. **Enter plan mode** using `EnterPlanMode`
+2. **Write a plan** that:
+   - References the spec file and interview log by path — these are the source of truth
+   - States as the **first implementation step**: "Read the spec and interview log, then create detailed granular tasks with dependencies using TaskCreate"
+   - Outlines the remaining implementation steps at a high level (derived from the spec)
+3. **Exit plan mode** with `ExitPlanMode` for user approval
+
+**Why this matters:** The interview may have consumed significant context. Plan mode approval gives the user a fresh context window for implementation. The plan ensures the new context starts by ingesting the spec (which captured everything) rather than relying on conversation memory. Granular task tracking with dependencies ensures nothing from the spec is lost in translation.
+
+**Plan structure:**
+```
+## Implementation Plan
+
+**Source of truth:**
+- Spec: `{spec_file_path}`
+- Interview log: `{interview_log_path}`
+
+### Steps
+1. Read spec and interview log, then create detailed granular tasks
+   with dependencies using TaskCreate
+2. [High-level implementation steps derived from spec...]
+3. ...
+```
+
+---
+
 ## Examples
 
 **QuickClarify:** "Help me think through adding caching to the dashboard API" → Routes to QuickClarify. Mirrors understanding, surfaces assumptions (Claude assumes Redis, user assumes cache always warm). Probes with 2-3 targeted questions on TTL, invalidation strategy, cold-cache behavior. Converges to inline aligned understanding. 3-5 minutes, no working log, no challenge phase.
@@ -385,6 +417,9 @@ Use TaskCreate throughout:
 - [ ] Read output templates + workflow-specific additions
 - [ ] Compile spec from working log
 - [ ] Mark working log status COMPLETE
+- [ ] Enter plan mode for implementation handoff (DevSpec/BusinessIdea/DocumentDraft/DesignReview only)
+- [ ] Write plan referencing spec + interview log, with task creation as step 1
+- [ ] Exit plan mode for user approval
 ```
 
 ---
@@ -411,6 +446,8 @@ Use TaskCreate throughout:
 9. **PROGRESSIVE LOGGING IS NOT OPTIONAL** — Write to working log AS things happen. The log prevents memory drift.
 
 10. **USE MARKDOWN PREVIEWS FOR STRUCTURAL FORKS** — When two people could imagine different shapes from the same description, show both visually. Max 3-4 per interview. Phase 3 only.
+
+11. **HANDOFF TO PLAN MODE AFTER SPEC** — For full workflows that produce specs, enter plan mode so implementation starts in a fresh context with the spec as source of truth. Never skip this — the spec captured everything, but conversation memory didn't.
 
 **Most dangerous failure mode:** Understanding constraints perfectly during Devil's Advocate, then contradicting them during Partner phase by applying "standard patterns" without verification.
 
