@@ -189,7 +189,7 @@ After completing the interview, verify the skill worked well:
 **FIRST ACTION.** Read: [WorkingLogTemplate.md](WorkingLogTemplate.md)
 </mandatory_read>
 
-1. Ask user for file location OR use `./interview-log-{topic}.md`
+1. Resolve output location (see **Output Location Resolution** above). Record chosen path in working log header.
 2. Initialize with template structure
 3. Fill in topic and start time
 4. Mark Phase Transitions table with "Research Foundation" entry
@@ -365,7 +365,7 @@ Then read domain-specific output additions from the active workflow file.
 
 **Include when relevant:** Edge Cases, Tradeoffs, Open Questions, plus domain-specific additions from the active workflow.
 
-Write to appropriate file location (ask user if unclear).
+Write to resolved output location (determined in Phase 0).
 
 ---
 
@@ -473,3 +473,22 @@ Use TaskCreate throughout:
 Skipping reads = poor spec quality = failed implementations.
 Skipping logs = memory drift = constraint violations.
 </critical>
+
+---
+
+## Output Location Resolution
+
+Determines where to write the working log (Phase 0) and final spec (Phase 6). Resolved once at Phase 0; both files use the same directory.
+
+**Resolution order:**
+
+1. **Explicit path** — If invoked via slash command with `$ARGUMENTS`, use as output directory
+2. **Project convention** — If project CLAUDE.md defines where specs/docs live, follow it
+3. **Codebase discovery** — If Phase 1 Explore agents find an existing specs/, docs/, or similar directory, propose it to the user for confirmation before using
+4. **Fallback** — `./specs/{topic}/` if a `specs/` directory exists; otherwise `.ai/{topic}/` (hidden working directory, suitable for unversioned artifacts)
+
+**Rules:**
+- Resolve ONCE at Phase 0 start, record the chosen path in the working log header
+- Steps 1-2 are silent (no user prompt needed). Step 3 requires user confirmation.
+- Step 4 is a last resort — create the directory if needed
+- Both working log and final spec land in the same resolved directory

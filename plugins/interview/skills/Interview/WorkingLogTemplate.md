@@ -2,7 +2,7 @@
 
 **Purpose:** Progressive capture during interview. Claude writes to this file AS things happen, not at the end.
 
-**Location:** Create at interview start. Ask user for location or use `./interview-log-{topic}.md`
+**Location:** Resolved via Output Location Resolution (SKILL.md). Path recorded in working log header at creation.
 
 ---
 
