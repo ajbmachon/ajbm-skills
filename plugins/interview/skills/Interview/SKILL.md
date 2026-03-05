@@ -46,7 +46,21 @@ Detect the interview type from context and load the appropriate workflow file.
 
 **QuickClarify vs Full Workflows:** QuickClarify is for tasks where the WHAT is roughly known but assumptions and edges need 2-5 minutes of refinement. Full workflows are for tasks that need validation, deep research, and formal challenge. The boundary test: could Claude start implementing with confidence after 3-5 questions? → QuickClarify.
 
-**If ambiguous:** Ask the user which type fits. If no type matches, default to QuickClarify for small-to-medium tasks, DevSpec when in a repo with a large scope, BusinessIdea for non-technical ideas.
+**If ambiguous:** Present a workflow menu so the user can choose. Use `AskUserQuestion` with a `singleSelect` showing all workflows, a one-liner for each, and your recommendation based on context:
+
+| Workflow | One-liner |
+|----------|-----------|
+| **QuickClarify** | Fast 2-5 min refinement — the WHAT is known, edges need sharpening |
+| **DevSpec** | Software feature spec with codebase research and TDD output |
+| **BusinessIdea** | Business case with market research, revenue model, and competitive landscape |
+| **DocumentDraft** | Written content — proposals, docs, communications with audience alignment |
+| **DesignReview** | UI/UX or system design review with visual Showpiece questions |
+| **Ideation** | Creative brainstorming — diverge, constrain, refine, verify |
+| **DevilsAdvocate** | Pure challenge — stress-test an idea without building a spec |
+
+Include a line like: *"Based on [context reason], I'd recommend **WorkflowName** — but pick what fits."* If no type matches, default to QuickClarify for small-to-medium tasks, DevSpec when in a repo with a large scope, BusinessIdea for non-technical ideas.
+
+**When the trigger is unambiguous** (e.g., "devil's advocate this", "I have a business idea"), skip the menu and route directly.
 
 **QuickClarify** follows its own 4-phase procedure (Mirror → Surface → Probe → Converge). **All other workflows** follow the core procedure below.
 
