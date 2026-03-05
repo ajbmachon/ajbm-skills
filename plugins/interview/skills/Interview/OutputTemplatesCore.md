@@ -306,26 +306,58 @@ Include when decisions were made between alternatives during the interview.
 ```markdown
 ## Tradeoffs & Decisions
 
-| Decision | Alternatives Considered | Why This Choice? |
-|----------|------------------------|------------------|
-| [Choice made] | [Other options considered] | [Reasoning for selection] |
-| Use Redis for caching | Memcached, in-memory Map | Team familiarity, persistence support, existing infrastructure |
-| REST over GraphQL | GraphQL, gRPC | Simpler for this use case, matches existing API patterns |
+### TD1: [Decision name]
+
+**Chosen:** [Selected approach]
+**Over:** [Rejected alternatives]
+**Tradeoff axis:** [What dimension separates the options — e.g., complexity vs. flexibility]
+
+| Option | Pros | Cons | Who Pays |
+|--------|------|------|----------|
+| [Chosen] | [concrete benefits] | [concrete costs] | [who bears the cost] |
+| [Rejected A] | [what this offered] | [why it lost] | [who would have paid] |
+
+**Reasoning:** [Why this choice won given constraints and context]
+**What we gave up:** [Explicit statement of the cost accepted]
+```
+
+### Example
+
+```markdown
+### TD1: Caching layer
+
+**Chosen:** Redis
+**Over:** Memcached, in-memory Map
+**Tradeoff axis:** Operational familiarity vs. simplicity
+
+| Option | Pros | Cons | Who Pays |
+|--------|------|------|----------|
+| Redis | Team already operates it, persistence, pub/sub | ~500MB baseline, monitoring overhead | Ops (already absorbed) |
+| Memcached | Simpler, lower memory | New dependency, no persistence | Ops (new runbook) |
+| In-memory Map | Zero infra, fastest | Lost on restart, no sharing across instances | Users (stale data) |
+
+**Reasoning:** Team of 2 (H2) can't afford a new operational dependency. Redis is already in the stack.
+**What we gave up:** Memcached's lower memory footprint. Acceptable — current Redis instance has headroom.
 ```
 
 ### Guidance
 
 **Include When:** Multiple valid approaches were discussed, a conscious choice was made, reasoning should be preserved.
 
-**Document the "Why":**
-- Bad: "Chose React" (no reasoning)
-- Good: "Chose React - existing codebase uses it, team expertise, component library available"
+**Every tradeoff entry must answer:**
+1. What did we choose and what did we reject?
+2. What axis separates the options?
+3. What are the concrete pros and cons of each?
+4. Who bears the cost of each option?
+5. What did we explicitly give up by choosing this?
 
-**Include Rejected Alternatives** - Knowing what was NOT chosen prevents relitigating the decision.
-
-**Quantify When Possible:**
+**Quantify costs concretely:**
 - Bad: "Better performance"
-- Good: "2x faster for 95th percentile queries (measured: 400ms to 200ms)"
+- Good: "2x faster for 95th percentile queries (400ms → 200ms)"
+- Bad: "More complex"
+- Good: "Adds ~200 lines of config and a migration step"
+
+**Include rejected alternatives with their strengths** — Knowing what was NOT chosen AND what it offered prevents relitigating the decision. If someone revisits this, they can see exactly what the rejected option would have bought them.
 
 ---
 

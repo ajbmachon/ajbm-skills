@@ -147,10 +147,49 @@ Don't pad the interview with low-value questions.
 
 Cover these areas, but craft SPECIFIC questions for THIS project:
 
-### Alternatives
-- What else could solve this?
-- Why this approach over others?
-- What did you consider and reject?
+### Alternatives & Tradeoff Analysis
+
+When multiple valid approaches exist, don't just ask "which do you prefer?" — lay out the tradeoffs BEFORE asking. The user can't choose well without seeing what they're trading.
+
+**Tradeoff presentation protocol:**
+
+1. **Name the options** — Give each approach a short, descriptive label
+2. **State the tradeoff axis** — What dimension separates the options? (complexity vs. flexibility, speed vs. correctness, upfront cost vs. maintenance cost, etc.)
+3. **Be concrete about costs** — "More complex" is useless. "Adds ~200 lines of config and a migration step" is useful. Quantify when possible.
+4. **Show who pays** — Every tradeoff has a payer. "Simpler now but ops team maintains the workaround" is different from "simpler now, no downstream cost."
+5. **State your lean** — After presenting options fairly, say which you'd pick and why. Don't hide behind false neutrality.
+
+```
+BAD (lazy):
+"Would you prefer Redis or Memcached for caching?"
+
+GOOD (tradeoff-first):
+"Two caching approaches fit here:
+
+**Redis** — Richer data structures, persistence, pub/sub. But heavier operationally
+(~500MB baseline memory, needs monitoring). Your team already runs it for sessions.
+
+**Memcached** — Simpler, faster for pure key-value, lower memory footprint. But no
+persistence, no pub/sub, and it's a NEW dependency your team doesn't operate today.
+
+The axis is: operational familiarity (Redis wins) vs. simplicity (Memcached wins).
+Given H2 (team of 2), I'd lean Redis — one less thing to learn to operate.
+
+Which fits better?"
+```
+
+**Text before question:** When tradeoff analysis needs more space than fits in `AskUserQuestion` option descriptions, output the full analysis as text FIRST, then follow with a concise question referencing it. The question's option descriptions can be brief ("see analysis above") — the user already read the context. This is one of the few cases where outputting text before `AskUserQuestion` is the right call.
+
+**When to surface tradeoffs:**
+- Any Tier 1 decision (architecture, framework, major design choice)
+- When the user's stated preference has a non-obvious cost
+- When two options both honor constraints but differ meaningfully
+- When rejecting an alternative — explain what's being given up
+
+**Key questions:**
+- What are you trading away with this approach?
+- Why this approach over [specific alternative given your constraints]?
+- What did you consider and reject? (surfaces hidden tradeoff analysis the user already did)
 
 ### Failure Modes
 - How could this break?

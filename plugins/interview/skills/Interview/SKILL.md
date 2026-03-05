@@ -304,7 +304,8 @@ Use `AskUserQuestion` tool. Up to 4 questions at a time. Use domain-specific que
 1. **Verification Gate** — Does this honor all constraints?
 2. **Assumption Audit** — Am I assuming or did the user say this? What is the user assuming?
 3. **Assumption Audit** — Is this Tested, Assumed, or Hoped?
-4. **Epistemic Label** — Tag your recommendation:
+4. **Tradeoff Analysis** — For any decision with multiple valid approaches: name the options, state the tradeoff axis, quantify costs concretely, show who pays, and state your lean with reasoning. Don't ask "which do you prefer?" without first showing what each option costs. When tradeoffs need more space than fits in an `AskUserQuestion` description, output the analysis as text BEFORE the question — the question then references the analysis. See [QuestionGuidelines.md](QuestionGuidelines.md) → "Alternatives & Tradeoff Analysis" for the full protocol.
+5. **Epistemic Label** — Tag your recommendation:
    - **[E]** Evidence-based -- research confirms this
    - **[L]** Logical inference -- follows from constraints and evidence
    - **[S]** Speculation -- reasonable but unverified
