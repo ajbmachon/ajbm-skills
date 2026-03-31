@@ -1,0 +1,64 @@
+{
+  "skill_name": "twitter-cli",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "pull my last 20 bookmarks and tell me what themes I've been saving",
+      "expected_output": "Should use `twitter bookmarks -c -n 20` or `--json`, then categorize the results by theme and present a summary",
+      "files": [],
+      "assertions": [
+        {"text": "Uses the twitter bookmarks command with -c or --json flag", "type": "cli_correctness"},
+        {"text": "Includes -n flag to limit results", "type": "cli_correctness"},
+        {"text": "Analyzes and categorizes the bookmark content after retrieval", "type": "workflow"}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "what are people saying about $TSLA options right now on twitter?",
+      "expected_output": "Should search Twitter for TSLA options discussion using the search command with latest filter and engagement minimums, then summarize sentiment",
+      "files": [],
+      "assertions": [
+        {"text": "Uses twitter search command with $TSLA or TSLA options as query", "type": "cli_correctness"},
+        {"text": "Uses -t latest flag for recency", "type": "cli_correctness"},
+        {"text": "Uses -c flag for compact output", "type": "cli_correctness"},
+        {"text": "Excludes retweets or filters for quality (--min-likes or --exclude retweets)", "type": "cli_correctness"},
+        {"text": "Provides sentiment analysis or summary of the results", "type": "workflow"}
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "save this tweet thread for me: https://x.com/someuser/status/1234567890",
+      "expected_output": "Should fetch the full thread with replies, then save as a structured markdown file",
+      "files": [],
+      "assertions": [
+        {"text": "Uses twitter tweet command with the URL", "type": "cli_correctness"},
+        {"text": "Includes -n flag to get replies/thread continuation", "type": "cli_correctness"},
+        {"text": "Saves output to a file (either --json -o or writes a markdown summary)", "type": "workflow"},
+        {"text": "Does NOT just print the raw CLI output and call it done — reconstructs or summarizes the thread", "type": "workflow"}
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I want to see what @chaikitrader has been posting about momentum strategies lately",
+      "expected_output": "Should search that user's posts for momentum content or pull their recent posts and filter",
+      "files": [],
+      "assertions": [
+        {"text": "Uses twitter search with --from flag OR twitter user-posts command", "type": "cli_correctness"},
+        {"text": "Uses -c flag for compact output", "type": "cli_correctness"},
+        {"text": "Focuses on momentum-related content in query or analysis", "type": "workflow"}
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "check twitter for any breaking news about fed rate decision",
+      "expected_output": "Should do a latest search for fed rate decision content, prioritizing recency and engagement",
+      "files": [],
+      "assertions": [
+        {"text": "Uses twitter search with appropriate query terms", "type": "cli_correctness"},
+        {"text": "Uses -t latest for recency (breaking news = latest)", "type": "cli_correctness"},
+        {"text": "Uses -c flag", "type": "cli_correctness"},
+        {"text": "Summarizes findings with urgency appropriate to breaking news context", "type": "workflow"}
+      ]
+    }
+  ]
+}
