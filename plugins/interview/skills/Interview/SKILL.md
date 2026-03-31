@@ -1,6 +1,6 @@
 ---
-name: Interview
-description: USE WHEN spec, requirements, interview, flesh out idea, plan feature, business idea, design review, ideation, document draft, devil's advocate, stress test, brainstorm, clarify, quick spec, scope this, help me think through, what am I missing. Crystallize ideas into actionable specs through structured elicitation, assumption surfacing, and constraint enforcement. Workflows: QuickClarify, DevSpec, BusinessIdea, DocumentDraft, DesignReview, Ideation, DevilsAdvocate.
+name: interview
+description: "USE WHEN spec, requirements, interview, flesh out idea, plan feature, business idea, design review, ideation, document draft, devil's advocate, stress test, brainstorm, clarify, quick spec, scope this, help me think through, what am I missing. Crystallize ideas into actionable specs through structured elicitation, assumption surfacing, and constraint enforcement. Workflows: QuickClarify, DevSpec, BusinessIdea, DocumentDraft, DesignReview, Ideation, DevilsAdvocate."
 ---
 
 <mandatory_read phase="skill_loaded">
