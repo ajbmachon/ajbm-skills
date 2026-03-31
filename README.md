@@ -16,6 +16,7 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 | **docs-research-specialist** | Agent that looks up current software documentation, API syntax, and library best practices. Prevents hallucinated or outdated implementations. |
 | **clean-code-reviewer** | Agent that analyzes code against Robert C. Martin's Clean Code principles. Produces tiered remediation reports (🟢/🟡/🔴). Activated via setup-linter. |
 | **hormozi-pitch** | Alex Hormozi's $100M Offers methodology for creating irresistible offers, pricing, guarantees, and value propositions |
+| **twitter-cli** | Read from and write to Twitter/X — fetch bookmarks, search tweets, read timelines, view profiles, post tweets. Cookie-based auth, no API key needed. |
 | **x-post-writer** | Twitter/X copywriting system for high-engagement social media content with viral frameworks and examples |
 | **tactical-empathy** | Chris Voss negotiation methodology — situation analysis (produces dossier files) and sparring (roleplay with inline coaching). Covers salary, deals, difficult conversations, persuasion. |
 | **agent-align** | AI-to-AI delegation alignment — verifies that context, constraints, and intent survive handoffs in multi-agent systems |
@@ -53,11 +54,11 @@ claude
 # Install agent alignment skills (multi-agent delegation) - optional
 /plugin install ajbm-agent-align@ajbm
 
+# Install social skills (Twitter/X tools) - optional
+/plugin install ajbm-social@ajbm
+
 # Install security guardrails (blocks dangerous commands/file access) - optional
 /plugin install ajbm-security@ajbm
-
-# Install skill reminder hooks (suggests relevant skills based on prompts) - optional
-/plugin install ajbm-skill-reminders@ajbm
 ```
 
 After installation, restart Claude Code to activate the skills.
@@ -80,8 +81,8 @@ claude
 /plugin install ajbm-communication@ajbm
 /plugin install ajbm-agent-align@ajbm
 /plugin install ajbm-business@ajbm
+/plugin install ajbm-social@ajbm
 /plugin install ajbm-security@ajbm
-/plugin install ajbm-skill-reminders@ajbm
 ```
 
 ### Verify Installation
@@ -92,62 +93,6 @@ After restarting Claude Code:
 # Ask Claude about available skills
 What skills are available?
 ```
-
----
-
-## Automatic Skill Suggestions
-
-The ajbm-dev plugin includes **smart hooks** that automatically suggest relevant skills based on context:
-
-### Prompt-Based Suggestions (UserPromptSubmit)
-
-When you type a prompt, the hook analyzes it and suggests skills:
-
-```
-You: "help me plan this authentication feature"
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 SKILL ACTIVATION CHECK
-📚 RECOMMENDED SKILLS:
-  ⚡ interview (score: 41)
-ACTION: Use Skill tool BEFORE responding
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-| Trigger Keywords | Suggested Skill |
-|------------------|-----------------|
-| "plan", "idea", "spec", "design", "scope" | interview |
-| "test", "mock", "coverage" | testing-best-practices |
-| "TDD", "test first", "red green refactor" | test-driven-development |
-| "debug", "bug", "fix", "error", "broken" | systematic-debugging |
-| "prompt", "llm", "system prompt" | prompt-craft |
-| "skill", "hook", "plugin", "SKILL.md" | authoring-skills |
-| "docs", "documentation", "API", "reference" | docs-research-specialist |
-| "refactor", "clean code", "SOLID", "code smell" | clean-code-reviewer |
-| "negotiate", "salary", "difficult conversation", "persuade" | tactical-empathy |
-
-### Error Detection (PostToolUse)
-
-When a command fails (tests, builds, servers), the hook detects it and warns Claude:
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚠️  ERROR DETECTED IN OUTPUT
-Detected: Test failure
-
-📚 RECOMMENDED SKILLS:
-  ⚡ systematic-debugging (investigate root cause FIRST)
-  ⚡ testing-best-practices (apply testing best practices)
-
-⛔ DO NOT attempt quick fixes without investigation!
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-This prevents Claude from jumping straight to fixes without understanding the root cause.
-
-### Clean Code Review (via setup-linter)
-
-When you run setup-linter, it also adds a clean-code-reviewer instruction to your project's `CLAUDE.md`. This tells Claude to invoke the `clean-code-reviewer` agent after meaningful code changes (20+ lines), enabling the two-commit workflow: first commit working code, then commit clean code improvements.
 
 ---
 
@@ -590,8 +535,8 @@ Twitter/X copywriting expertise:
 /plugin disable ajbm-communication@ajbm
 /plugin disable ajbm-agent-align@ajbm
 /plugin disable ajbm-business@ajbm
+/plugin disable ajbm-social@ajbm
 /plugin disable ajbm-security@ajbm  # Turn off security guardrails
-/plugin disable ajbm-skill-reminders@ajbm  # Turn off skill suggestions
 
 # Re-enable
 /plugin enable ajbm-dev@ajbm
@@ -599,8 +544,8 @@ Twitter/X copywriting expertise:
 /plugin enable ajbm-communication@ajbm
 /plugin enable ajbm-agent-align@ajbm
 /plugin enable ajbm-business@ajbm
+/plugin enable ajbm-social@ajbm
 /plugin enable ajbm-security@ajbm
-/plugin enable ajbm-skill-reminders@ajbm
 
 # Completely remove
 /plugin uninstall ajbm-dev@ajbm
@@ -608,8 +553,8 @@ Twitter/X copywriting expertise:
 /plugin uninstall ajbm-communication@ajbm
 /plugin uninstall ajbm-agent-align@ajbm
 /plugin uninstall ajbm-business@ajbm
+/plugin uninstall ajbm-social@ajbm
 /plugin uninstall ajbm-security@ajbm
-/plugin uninstall ajbm-skill-reminders@ajbm
 
 # Update to latest version
 /plugin marketplace update ajbmachon

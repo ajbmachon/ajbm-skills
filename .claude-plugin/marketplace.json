@@ -33,10 +33,10 @@
       }
     },
     {
-      "name": "ajbm-skill-reminders",
-      "description": "Hooks to remind for skill user on UserPromptSubmit",
+      "name": "ajbm-social",
+      "description": "Skills for social media: Twitter/X bookmark management, search, timeline reading, posting, and content workflows.",
       "version": "1.0.0",
-      "source": "./plugins/skill-reminders",
+      "source": "./plugins/social-skills",
       "author": {
         "name": "Andre Machon"
       }
