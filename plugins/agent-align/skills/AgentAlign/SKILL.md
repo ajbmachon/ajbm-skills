@@ -54,7 +54,7 @@ Adapted from the four irreducible operations of elicitation (Mirror, Surface, Pr
 
 ---
 
-## Three Graduated Levels
+## Four Graduated Levels
 
 ### Level Selection
 
@@ -63,13 +63,17 @@ Adapted from the four irreducible operations of elicitation (Mirror, Surface, Pr
 | **Inline** | Simple, well-specified tasks | Could worker proceed after reading the delegation prompt? | 0 |
 | **Quick** | Moderate tasks with a few ambiguities | Can alignment be achieved in one back-and-forth? | 2 |
 | **Full** | Complex tasks, architecture decisions, multi-layer chains | Does this need iterative refinement? | 4 |
+| **Deep** | Spec refinement, decision surface coverage, exhaustive elicitation | Does this need multi-round interview to surface non-obvious decisions? | 12 (configurable) |
 
 **Mapping to delegation TIMING SCOPE:**
 - `fast` → Inline (default)
 - `standard` → Quick (default), Full if ambiguous
 - `deep` → Full (default), Quick if clear
+- `interview` / `spec-refine` / `elicit` → Deep
 
 Leader can override by specifying the level explicitly.
+
+**Deep level triggers:** "interview this spec", "refine this spec", "surface decisions", "spec refinement", "decision coverage", "elicit requirements", or explicit `level: deep` in delegation.
 
 ---
 
@@ -267,6 +271,27 @@ Worker writes a shared handoff spec to `.claude/handoffs/{task-name}.md`:
 ```
 
 Leader confirms: `CONTRACT: CONFIRMED` or `CONTRACT: REVISED — [changes]` (one revision round max).
+
+---
+
+## Level 4: DEEP
+
+Extended AI-to-AI interview for spec refinement. Two agents — Interviewer and Stakeholder — conduct a structured multi-round interview to surface non-obvious decisions and produce comprehensive specs.
+
+<mandatory_read phase="deep_level">
+**Read before executing Deep level:**
+- [Level4-Deep/Overview.md](Level4-Deep/Overview.md) — Phase structure, shared file references, behavioral norms
+- [Level4-Deep/Roles/Interviewer.md](Level4-Deep/Roles/Interviewer.md) — Interviewer agent brief
+- [Level4-Deep/Roles/Stakeholder.md](Level4-Deep/Roles/Stakeholder.md) — Stakeholder agent brief
+- [Level4-Deep/DecisionPolicy.md](Level4-Deep/DecisionPolicy.md) — How the Stakeholder decides and defers
+- [Level4-Deep/ConvergenceProtocol.md](Level4-Deep/ConvergenceProtocol.md) — When to stop
+</mandatory_read>
+
+**Goal:** Decision surface area coverage — not correct decisions, but a comprehensive list of decisions with choices made. The interview log is the primary artifact.
+
+**Key difference from Levels 1-3:** Levels 1-3 align BEFORE work begins (prevent misunderstanding). Level 4 DISCOVERS what needs deciding through extended elicitation (prevent incomplete specs).
+
+**Orchestrator role:** The invoking agent creates a team, spawns Interviewer + Stakeholder, initializes the Working Log, monitors convergence, and compiles the final output. See Overview.md for full procedure.
 
 ---
 
