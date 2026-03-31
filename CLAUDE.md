@@ -2,7 +2,7 @@
 
 A collection of generally useful Claude Code skills that work across all Anthropic surfaces.
 
-**Plugins:** `ajbm-dev`, `ajbm-interview`, `ajbm-agent-align`, `ajbm-business`, `ajbm-communication`, `ajbm-security`
+**Plugins:** `ajbm-dev`, `ajbm-interview`, `ajbm-agent-align`, `ajbm-business`, `ajbm-communication`, `ajbm-social`, `ajbm-security`
 **Install:** `/plugin install ajbm-dev@ajbm`
 
 ---
@@ -241,6 +241,33 @@ Value = (Dream Outcome × Perceived Likelihood) / (Time Delay × Effort & Sacrif
 - **Value Stack**: Justify any price point by stacking bonuses
 
 **"Stupid Not To" Test:** Prospect should feel irrational saying no.
+
+---
+
+## Social Skills (ajbm-social)
+
+### twitter-cli
+
+Use when the user wants to read from or write to Twitter/X — fetch bookmarks, search tweets, read timelines, view profiles, post tweets, and more.
+
+**Prerequisite:** `uv tool install twitter-cli` (cookie-based auth, no API key needed)
+
+**Key commands:**
+- `twitter -c bookmarks` — fetch bookmarks (compact output)
+- `twitter -c search "query"` — search tweets
+- `twitter -c feed` — home timeline
+- `twitter -c post "text"` — post a tweet
+
+**Important:** `-c` is a global flag — always place it BEFORE the subcommand.
+
+**Four workflow files** (in `references/`):
+
+| Workflow | When |
+|----------|------|
+| `search-workflow.md` | Find bookmarks about a topic, semantic filtering, Obsidian export |
+| `classify-workflow.md` | Tag all bookmarks, discover clusters, build Obsidian vault |
+| `trading-research.md` | Market sentiment, trader tracking, signal discovery |
+| `save-and-organize.md` | Save tweets/threads as structured markdown |
 
 ### x-post-writer
 
