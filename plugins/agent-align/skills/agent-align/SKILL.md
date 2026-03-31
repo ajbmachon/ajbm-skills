@@ -280,11 +280,11 @@ Extended AI-to-AI interview for spec refinement. Two agents — Interviewer and 
 
 <mandatory_read phase="deep_level">
 **Read before executing Deep level:**
-- [Level4-Deep/Overview.md](Level4-Deep/Overview.md) — Phase structure, shared file references, behavioral norms
-- [Level4-Deep/Roles/Interviewer.md](Level4-Deep/Roles/Interviewer.md) — Interviewer agent brief
-- [Level4-Deep/Roles/Stakeholder.md](Level4-Deep/Roles/Stakeholder.md) — Stakeholder agent brief
-- [Level4-Deep/DecisionPolicy.md](Level4-Deep/DecisionPolicy.md) — How the Stakeholder decides and defers
-- [Level4-Deep/ConvergenceProtocol.md](Level4-Deep/ConvergenceProtocol.md) — When to stop
+- [level4-deep/overview.md](level4-deep/overview.md) — Phase structure, shared file references, behavioral norms
+- [level4-deep/roles/interviewer.md](level4-deep/roles/interviewer.md) — Interviewer agent brief
+- [level4-deep/roles/stakeholder.md](level4-deep/roles/stakeholder.md) — Stakeholder agent brief
+- [level4-deep/decision-policy.md](level4-deep/decision-policy.md) — How the Stakeholder decides and defers
+- [level4-deep/convergence-protocol.md](level4-deep/convergence-protocol.md) — When to stop
 </mandatory_read>
 
 **Goal:** Decision surface area coverage — not correct decisions, but a comprehensive list of decisions with choices made. The interview log is the primary artifact.
