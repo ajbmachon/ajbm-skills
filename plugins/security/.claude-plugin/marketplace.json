@@ -1,8 +1,10 @@
 {
   "name": "ajbm-security-dev",
-  "description": "Development marketplace for ajbm-security plugin",
   "owner": {
     "name": "Andre Machon"
+  },
+  "metadata": {
+    "description": "Development marketplace for ajbm-security plugin"
   },
   "plugins": [
     {

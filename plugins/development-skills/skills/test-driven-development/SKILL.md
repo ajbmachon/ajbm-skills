@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: Use when implementing any feature or bugfix before implementation changes. Enforces test-first behavior: write a failing test, verify failure, implement minimal code, and prove green.
+description: "Use when implementing any feature or bugfix before implementation changes. Enforces test-first behavior: write a failing test, verify failure, implement minimal code, and prove green."
 ---
 
 # Test-Driven Development (TDD)
