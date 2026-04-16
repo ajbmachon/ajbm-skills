@@ -15,14 +15,9 @@ Core principle:
 If you did not observe a meaningful failing test first, you do not yet have proof the test validates the change.
 ```
 
-## Claude 4.x Execution Rules
+## Execution Posture
 
-Claude 4.x tends to be concise and suggestion-oriented. This skill requires execution-first behavior.
-
-- Perform the TDD cycle, do not stop at advice.
-- Run tests and report evidence.
-- Avoid speculative language.
-- Follow the output contract exactly.
+**Execute the TDD cycle. Run tests. Report evidence. Don't stop at advice.**
 
 ## When To Use
 
