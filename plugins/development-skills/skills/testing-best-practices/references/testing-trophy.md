@@ -32,6 +32,8 @@ The testing trophy inverts the emphasis: **integration tests give the highest co
 
 ## Level Selection Decision Tree
 
+**Apply in order. The tree wins unless an override below explicitly fires.**
+
 ```
 Is it pure logic (math, parsing, sorting)?
   → YES: Unit test
@@ -46,19 +48,20 @@ Is it a critical multi-step user journey?
   → NO: Integration test (default)
 ```
 
-**When to override the default:**
+**Overrides (each takes precedence over the tree when its condition is fully met):**
 
-| Override To | When |
-|-------------|------|
-| Unit | Complex algorithm with many edge cases (combinatorial testing) |
-| Unit | Pure utility function used everywhere (high leverage) |
-| Integration | Uncertain about test level (always the safe default) |
-| E2E | User-facing workflow that crosses multiple services |
-| Contract | Service-to-service boundaries with independent deployment |
+| Override To | When (explicit condition) |
+|-------------|---------------------------|
+| Unit | Pure algorithm with combinatorial edge cases — the tree's "pure logic" branch would fire anyway, but state it for clarity |
+| Unit | High-leverage pure utility called from 10+ places (the ROI on unit coverage beats an integration test elsewhere) |
+| E2E | Tree routed to Integration, but this specific flow crosses 3+ services AND is user-facing AND has business-critical failure modes |
+| Contract | Tree routed to Integration, but the boundary is a service you don't control and deploys independently |
+
+**Tiebreaker when tree and override both apply:** the override wins only if its condition statement is true in its entirety. Partial matches lose to the tree. When in doubt, pick Integration (the tree's default) — it's almost never the wrong answer.
 
 ## Property-Based Testing
 
-**The research:** Each property-based test finds approximately 50x as many mutations as the average unit test (OOPSLA 2025).
+**The research:** Each property-based test finds approximately 50x as many mutations as the average unit test ([Goldstein et al. — "An Empirical Evaluation of Property-Based Testing in Python", OOPSLA 2025](https://dl.acm.org/doi/10.1145/3764068)).
 
 Property-based testing generates random inputs and checks that properties (invariants) hold across all of them. It finds edge cases humans would never write manually.
 
@@ -92,12 +95,13 @@ test("sort is idempotent", () => {
 });
 ```
 
-**Most effective property patterns (from research):**
-1. Exception checks (function doesn't crash on any input) — 19x more effective
-2. Collection inclusion (output contains expected elements)
-3. Type checks (output has correct shape/type)
-4. Roundtrip (encode/decode, serialize/deserialize)
-5. Idempotency (applying operation twice = applying once)
+**Most effective property patterns** (from the same OOPSLA 2025 study — exception/inclusion/type checks were ~19x more effective at finding mutations than other property kinds):
+
+1. **Exception checks** — function doesn't crash on any input (highest effectiveness)
+2. **Collection inclusion** — output contains expected elements
+3. **Type checks** — output has correct shape/type
+4. **Roundtrip** — encode/decode, serialize/deserialize
+5. **Idempotency** — applying operation twice = applying once
 
 ## Contract Testing
 

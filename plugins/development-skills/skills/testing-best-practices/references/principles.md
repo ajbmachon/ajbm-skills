@@ -332,11 +332,11 @@ A well-written test suite is the best documentation of expected behavior. Write 
 
 ### P14: Investigate First-Run Passes
 
-**This is the most critical principle for AI agents.** Research shows 68% of AI-generated test suites validate bugs — they pass on buggy code and fail on correct code.
+**This is the most critical principle for AI agents.** When an LLM generates tests by reading implementation code, the tests can pass on buggy code and fail on correct code — a failure mode known as circular validation.
 
-**The circular oracle problem:** AI reads the current code → infers "expected" behavior from it → writes a test that matches the current output → test passes → but the current output is wrong.
+**The circular oracle problem:** AI reads the current code → infers "expected" behavior from it → writes a test that matches the current output → test passes → but the current output is wrong. See [Tsiokos — "Circular Validation: The Hidden Risk in AI-Generated Tests"](https://george.tsiokos.com/posts/2025/02/circular-validation-ai-testing/) for a worked example.
 
-**The fix:** Always state expected behavior from requirements BEFORE looking at implementation. Then follow the Oracle Guard protocol in the main skill file.
+**The fix:** State expected behavior from requirements BEFORE looking at implementation. Then follow the Oracle Guard protocol (inlined in anti-patterns.md #14).
 
 ### P15: Survive Refactoring
 

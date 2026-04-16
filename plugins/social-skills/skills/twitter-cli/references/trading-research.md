@@ -13,7 +13,7 @@ twitter -c search "$SPY $QQQ" -t latest --min-likes 50
 
 # Specific asset or strategy
 twitter -c search "$TSLA options" -t latest --has links
-twitter -c search "mean reversion" --min-likes 100 --since 2026-03-01
+twitter -c search "mean reversion" --min-likes 100 --since <recent-date-ISO>
 
 # Filter noise — skip retweets and replies to get original takes
 twitter -c search "momentum strategy" -t latest --exclude retweets --exclude replies
