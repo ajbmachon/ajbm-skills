@@ -2,6 +2,8 @@
 
 This collection contains tweets that achieved significant engagement (100,000+ views each). Use these examples to identify patterns in hook techniques, content structure, engagement triggers, topic selection, and voice/tone.
 
+> **Note:** These examples are illustrative of the pattern and voice that performs well in this genre. They are not linked to specific live tweets with handles, URLs, or dates — treat them as craft references rather than provenance claims about specific viral posts.
+
 ## How to Use This File
 
 When analyzing these examples, look for:
@@ -196,7 +198,7 @@ these formats are exploding across all platforms
 
 Comment "VIDEO" + repost this + follow me (MUST DO ALL) and I'll send you the complete JSON file plus setup guide
 
-a lot of people will ingore this and last yet another occasion to finally make it
+a lot of people will ignore this and last yet another occasion to finally make it
 
 don't sleep on it.
 ```

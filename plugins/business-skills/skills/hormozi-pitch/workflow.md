@@ -34,32 +34,14 @@ Guided process for creating irresistible offers using Alex Hormozi's methodology
 
 Present this overview to the user before beginning:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    GRAND SLAM OFFER FRAMEWORK                   │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Phase 1: FOUNDATION                                            │
-│  └─ Who is your ideal customer? What's their dream outcome?    │
-│                                                                 │
-│  Phase 2: VALUE EQUATION                                        │
-│  └─ Maximize: Dream Outcome × Perceived Likelihood              │
-│  └─ Minimize: Time Delay × Effort & Sacrifice                   │
-│                                                                 │
-│  Phase 3: RISK REVERSAL                                         │
-│  └─ What guarantee removes their fear of failure?               │
-│                                                                 │
-│  Phase 4: VALUE STACK                                           │
-│  └─ What bonuses solve adjacent problems?                       │
-│                                                                 │
-│  Phase 5: SCARCITY & URGENCY                                    │
-│  └─ Why is this limited? Why act now?                          │
-│                                                                 │
-│  Phase 6: NAMING & PRICING                                      │
-│  └─ MAGIC name formula + value-based pricing                    │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+**Grand Slam Offer Framework**
+
+1. **Foundation** — Who is your ideal customer? What's their dream outcome?
+2. **Value Equation** — Maximize Dream Outcome × Perceived Likelihood; minimize Time Delay × Effort & Sacrifice
+3. **Risk Reversal** — What guarantee removes their fear of failure?
+4. **Value Stack** — What bonuses solve adjacent problems?
+5. **Scarcity & Urgency** — Why is this limited? Why act now?
+6. **Naming & Pricing** — MAGIC name formula + value-based pricing
 
 **Tell the user:** "This is the complete framework. By default, we'll work through all six phases. However, if some sections aren't relevant to your offer, let me know which ones to skip."
 
