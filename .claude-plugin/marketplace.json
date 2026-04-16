@@ -9,8 +9,8 @@
   "plugins": [
     {
       "name": "ajbm-dev",
-      "description": "Skills and agents for software development: debugging, testing, spec writing, linting, prompt engineering, skill authoring, documentation research, and clean code review.",
-      "version": "1.2.0",
+      "description": "Skills and agents for software development, analytical thinking, and meta-skill authoring. Tuned for Opus 4.7. Includes 5-mode thinking, Verbalized Sampling creativity, PAI skill transfer methodology, and the full dev toolkit (debugging, TDD, linting, prompt-craft).",
+      "version": "1.3.0",
       "source": "./plugins/development-skills",
       "author": {
         "name": "Andre Machon"

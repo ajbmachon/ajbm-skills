@@ -2,24 +2,62 @@
 
 A collection of generally useful Claude Code skills that work across all Anthropic surfaces. These skills are not workflow-specific—they're universal productivity boosters for anyone using Claude Code.
 
+**Model compatibility:** All skills are tuned for **Opus 4.7** (current). They also work on Opus 4.6 and Sonnet 4.6. The 4.7 tuning means more literal instruction-following, fewer redundant tool calls, and reasoning nudges calibrated to the new effort parameter. See [CHANGELOG.md](CHANGELOG.md) for details.
+
 ## Skills Included
+
+### Development (`ajbm-dev`, v1.3.0)
 
 | Skill | Description |
 |-------|-------------|
-| **interview** | Transform rough ideas into implementation-ready specs through rigorous research and questioning. Evolves from Critical Challenger to Expert Partner. |
 | **systematic-debugging** | Four-phase debugging framework: root cause → pattern analysis → hypothesis → implementation. No fixes without understanding. |
 | **testing-best-practices** | Comprehensive testing quality: 15 evidence-based principles, Testing Trophy strategy, AI oracle prevention, disciplined mocking, and honest reporting. |
 | **test-driven-development** | Strict TDD enforcement: write failing test first, watch it fail, write minimal code to pass. No production code without a failing test. |
 | **setup-linter** | Auto-detect, install, and configure project-specific linting with a Stop hook. Supports JS/TS, Python, Rust, Go, Deno. |
-| **authoring-skills** | Complete guide for writing skills—covers SKILL.md best practices, plugin development, triggers, hooks, and Anthropic guidelines |
-| **prompt-craft** | 19 research-backed prompting techniques with model-specific guidance (Claude, GPT-4o, o1/o3, DeepSeek, Gemini, Kimi, Qwen, Grok). Modes: Analyze, Craft, Teach, Quick Fix |
-| **docs-research-specialist** | Agent that looks up current software documentation, API syntax, and library best practices. Prevents hallucinated or outdated implementations. |
-| **clean-code-reviewer** | Agent that analyzes code against Robert C. Martin's Clean Code principles. Produces tiered remediation reports (🟢/🟡/🔴). Activated via setup-linter. |
-| **hormozi-pitch** | Alex Hormozi's $100M Offers methodology for creating irresistible offers, pricing, guarantees, and value propositions |
+| **prompt-craft** | 19 research-backed prompting techniques with model-specific guidance (Claude 4.6/4.7, GPT-5, o1/o3, DeepSeek, Gemini 3, Kimi K2, Qwen). Modes: Analyze, Craft, Teach, Quick Fix. |
+| **authoring-skills** | Complete guide for writing skills—SKILL.md best practices, plugin development, triggers, hooks, Anthropic guidelines. |
+| **be-creative** | Applies Verbalized Sampling (Zhang et al. 2024) — generates multiple low-probability candidates before selecting output. Counteracts centroid bias from alignment training. Reports 1.6–2.1× diversity, ~25% quality gain. |
+| **thinking** | Router for five analytical modes: first-principles, iterative-depth (multi-lens), council (debate), red-team (adversarial), science (hypothesis-test cycles). Each mode has its own workflows. |
+| **pai-skill-transfer** | Methodology for porting PAI-embedded skills into standard Claude Code plugins. Strip/rewrite/keep/add checklist, decision heuristics for ambiguous cases, QC grep commands. |
+| **skill-distiller** | Extracts guidance patterns from conversations (corrections, questions, quality gates, analysis modes) and distills them into permanent replayable skills. |
+| **content-analysis** | Content-adaptive wisdom extraction from videos/podcasts/articles/YouTube. Detects which wisdom domains exist in the source and builds custom sections rather than forcing fixed headers. |
+| **docs-research-specialist** (agent) | Looks up current documentation, API syntax, library best practices. Prevents hallucinated or outdated implementations. Exa MCP > Context7 > WebFetch priority. |
+| **clean-code-reviewer** (agent) | Analyzes code against Robert C. Martin's Clean Code principles. Produces tiered remediation reports (🟢/🟡/🔴). Activated via setup-linter. |
+
+### Interview & Spec (`ajbm-interview`, v2.0.0)
+
+| Skill | Description |
+|-------|-------------|
+| **interview** | Transform rough ideas into implementation-ready specs. Seven workflows: DevSpec, BusinessIdea, DocumentDraft, DesignReview, Ideation, DevilsAdvocate, QuickClarify. Evolves from Critical Challenger to Expert Partner. |
+
+### Communication (`ajbm-communication`, v1.0.0)
+
+| Skill | Description |
+|-------|-------------|
+| **tactical-empathy** | Chris Voss negotiation methodology — situation analysis (produces dossier files) and sparring (roleplay with inline `[COACH:]` coaching). Salary, deals, difficult conversations, persuasion. |
+
+### Agent Alignment (`ajbm-agent-align`, v1.0.0)
+
+| Skill | Description |
+|-------|-------------|
+| **agent-align** | AI-to-AI delegation alignment — verifies context, constraints, and intent survive handoffs in multi-agent systems. Four levels (Inline, Quick, Full, Deep). |
+
+### Business (`ajbm-business`, v1.0.0)
+
+| Skill | Description |
+|-------|-------------|
+| **hormozi-pitch** | Alex Hormozi's $100M Offers methodology for creating irresistible offers, pricing, guarantees, and value propositions. |
+| **x-post-writer** | Twitter/X copywriting system for high-engagement social media content with viral frameworks and examples. |
+
+### Social (`ajbm-social`, v1.0.0)
+
+| Skill | Description |
+|-------|-------------|
 | **twitter-cli** | Read from and write to Twitter/X — fetch bookmarks, search tweets, read timelines, view profiles, post tweets. Cookie-based auth, no API key needed. |
-| **x-post-writer** | Twitter/X copywriting system for high-engagement social media content with viral frameworks and examples |
-| **tactical-empathy** | Chris Voss negotiation methodology — situation analysis (produces dossier files) and sparring (roleplay with inline coaching). Covers salary, deals, difficult conversations, persuasion. |
-| **agent-align** | AI-to-AI delegation alignment — verifies that context, constraints, and intent survive handoffs in multi-agent systems |
+
+### Security (`ajbm-security`, v1.0.0)
+
+Blocks dangerous bash commands and sensitive file access via the `smart-guard` PreToolUse hook. No skills — it's a guardrail plugin. Enable/disable via `/plugin`.
 
 ---
 
@@ -39,7 +77,9 @@ claude
 # Add the marketplace
 /plugin marketplace add ajbmachon/ajbm-skills
 
-# Install development skills (debugging, testing, specs, linting, prompts)
+# Install development skills (debugging, testing, linting, prompt-craft,
+# authoring-skills, be-creative, thinking, skill-distiller, pai-skill-transfer,
+# content-analysis + docs-research-specialist and clean-code-reviewer agents)
 /plugin install ajbm-dev@ajbm
 
 # Install business skills (offers, copywriting) - optional
@@ -484,7 +524,38 @@ Chain-of-Thought (+40%), Structured Output (99%+), Few-Shot Examples (+15-30%), 
 Decomposition, Compression, Sufficiency, Scope, Format-Spec, Uncertainty, Chaining, Self-Consistency, Tree-of-Thoughts
 
 **Model-specific guidance:**
-Includes tailored prompting strategies for Claude, OpenAI (GPT-4o, o1/o3), DeepSeek R1, Gemini 3, Kimi K2, Qwen 2.5, and Grok.
+Tailored prompting for Claude Opus 4.7 (new `xhigh` effort, adaptive thinking, prefill removal), Claude 4.6, OpenAI GPT-5/5.1/5.2 and o1/o3, DeepSeek R1, Gemini 3, Kimi K2, Qwen, and Grok.
+
+### be-creative
+
+Applies **Verbalized Sampling** (Zhang et al. 2024, arXiv:2510.01171) — generates multiple low-probability candidates internally, selects the strongest, and shows the rationale. Counteracts the "centroid bias" that comes from alignment training on human-preferred responses.
+
+**Three files:**
+- `SKILL.md` — the technique + inline worked example (product naming)
+- `ResearchFoundation.md` — mechanism, transfer conditions, activation signals
+- `Examples.md` — four worked examples including an anti-example (VS theater)
+
+Use for: naming, hooks, creative writing, exploring alternatives, breaking out of default framings.
+
+### thinking
+
+Router for five analytical modes. Each mode has its own SKILL.md and workflows:
+
+| Mode | For | Workflows |
+|------|-----|-----------|
+| **first-principles** | Root cause analysis, rebuilding from fundamentals | Deconstruct, Challenge, Reconstruct |
+| **iterative-depth** | Multi-lens exploration, surfacing hidden requirements | Explore (2–8 lens passes) |
+| **council** | Multi-agent debate, weighing options | Debate, Quick |
+| **red-team** | Adversarial critique, stress testing | Parallel Analysis, Adversarial Validation |
+| **science** | Hypothesis-test cycles, structured investigation | Define, Design, Generate, Measure, Analyze, Iterate, Full Cycle, Quick Diagnosis, Structured Investigation |
+
+Creativity/brainstorming triggers are owned by `be-creative` (sibling skill) — not this one.
+
+### pai-skill-transfer
+
+Methodology for porting skills from **PAI** (Personal AI Infrastructure) environments to standard Claude Code plugins. Covers what to strip (voice curls, `~/.claude/PAI/` paths, Algorithm phase vocabulary, Customization blocks), what to rewrite generically (ISC → acceptance criteria, MEMORY/WORK → skill-local), what to keep (behavioral content, worked examples, anti-patterns), and decision heuristics for ambiguous cases.
+
+Hardened after a real test: the ContentAnalysis transfer surfaced 4 gaps that are now fixed (template variables, canonical-doc references, router-parent collapse, kebab-case QC grep bug).
 
 ### tactical-empathy
 
