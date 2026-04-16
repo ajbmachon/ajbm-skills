@@ -34,6 +34,10 @@ PAI skills typically carry six categories of environment-specific content. Each 
 | `MEMORY/WORK/{slug}/PRD.md` | **Rewrite or strip** | Mention a working-log pattern without PAI specifics, or drop |
 | ISC (Ideal State Criteria) terminology | **Rewrite generically** | "verifiable criteria", "acceptance checks" |
 | `~/.claude/PAI/…` paths | **Rewrite skill-local** | Reference files inside the skill's own directory |
+| `{PRINCIPAL.NAME}` or other `{PRINCIPAL.*}` template vars | **Strip or rewrite** | Replace with generic nouns ("the user", "someone") or drop the sentence |
+| Canonical-doc references (`PAI/USER/WRITINGSTYLE.md`, `PAI/USER/WORLDVIEW.md`, etc.) | **Drop or inline** | If the referenced content is already present in the skill, drop the reference. If load-bearing, inline the relevant portion. |
+| Parent router `SKILL.md` (just a `Route To` table pointing to child skills) | **Often collapse** | One child → flatten. Multiple children → split into separate plugin skills. |
+| Hardcoded external CLI tools (`fabric -y`, specific unusual commands) | **Soften** | Rephrase as "if installed" or list alternatives; provide a fallback for users without it. |
 
 ## Transformation checklist
 
@@ -41,11 +45,14 @@ Apply this sequentially to each SKILL.md and every reference file in the transfe
 
 ### Strip
 
-- [ ] Remove the `## Customization` block if it references `SKILLCUSTOMIZATIONS`
+- [ ] Remove the `## Customization` block if it references `SKILLCUSTOMIZATIONS` (including the header itself, not just the path)
 - [ ] Remove any `curl … localhost:8888/notify` voice commands (and the prose around them)
 - [ ] Remove phase-transition voice announcements ("Entering the X phase")
 - [ ] Remove `PRDSync` hook references, `work.json` references
 - [ ] Remove `implied_sentiment` / `algorithm-reflections.jsonl` write instructions
+- [ ] Remove `{PRINCIPAL.NAME}` / `{PRINCIPAL.*}` template variables — replace with generic nouns or drop the sentence
+- [ ] Remove references to canonical PAI docs (`PAI/USER/WRITINGSTYLE.md`, `PAI/USER/WORLDVIEW.md`, etc.) unless load-bearing — in which case inline the relevant portion
+- [ ] Remove `(CRITICAL)` / `(REQUIRED)` / ALL-CAPS parenthetical suffixes on section headers — use softer language ("non-negotiable", "required") or drop
 
 ### Rewrite
 
@@ -96,6 +103,31 @@ Always strip. The voice is a PAI-user preference, not a skill feature. No curl c
 ### "The skill has customization directory references"
 
 Always strip. Customizations are out of band for plugin skills — if users want to customize, they fork the plugin.
+
+### "The skill is a router (parent `SKILL.md` only has a `Route To` table)"
+
+PAI uses a pattern where a container skill (`ContentAnalysis/`) routes to one or more child skills (`ContentAnalysis/ExtractWisdom/`). For plugin transfer:
+
+- **One child → flatten.** Drop the parent, promote the child's content to the new skill's `SKILL.md`, move child `Workflows/*.md` into `references/`.
+- **Multiple children serving distinct use cases → split.** Each child becomes its own plugin skill. Drop the parent router.
+- **Multiple children that share state or sequence → keep the router but rewrite it** as a `references/routing.md` or expand the parent `SKILL.md` to describe the whole flow inline.
+
+### "The skill references a canonical PAI doc (WRITINGSTYLE.md, WORLDVIEW.md, etc.)"
+
+These files exist only in PAI. Two options:
+
+- If the referenced content is already fully described inline in the SKILL.md, drop the cross-reference.
+- If the cross-reference is load-bearing (the skill assumes you'll read the canonical doc to follow it), extract the relevant portion and inline it, then drop the cross-reference.
+
+Never leave a dangling `PAI/USER/…` path in a plugin skill.
+
+### "The skill shells out to an unusual external CLI (fabric, yt-dlp, etc.)"
+
+Don't assume plugin users have PAI-user tooling installed. Soften:
+
+- "Use `fabric -y` on the URL" → "Use a transcript tool (e.g., `fabric -y` if installed, `yt-dlp --write-auto-sub`, or a captioning service). Fall back to asking the user for the transcript if none are available."
+
+Keep the tool name as a hint, but don't make it a hard dependency.
 
 ## Application of Anthropic skill best practices (after stripping)
 
@@ -161,6 +193,28 @@ Instead of analyzing a problem once, run 2-8 structured passes through the same 
 
 Changes: frontmatter name kebab-cased, customization block dropped, "ISC criteria" → "acceptance criteria" (twice). The substance is untouched.
 
+### Second worked example: collapsing a router parent
+
+Source tree:
+```
+ContentAnalysis/
+├── SKILL.md           (14 lines — just a routing table)
+└── ExtractWisdom/
+    ├── SKILL.md       (229 lines — the real skill)
+    └── Workflows/
+        └── Extract.md (60 lines — procedure reference)
+```
+
+Destination tree:
+```
+content-analysis/
+├── SKILL.md              (promoted from ExtractWisdom/SKILL.md)
+└── references/
+    └── extract-workflow.md (moved from Workflows/Extract.md)
+```
+
+Router parent dropped entirely — it had one child, so it was dead weight. The child's content becomes the new skill's root. Workflow files move into `references/` (the plugin convention for progressive disclosure).
+
 ## Common mistakes
 
 - **Silent-stripping without checking dependencies.** If a skill's Examples.md references the PAI Algorithm, stripping the header but leaving the examples creates a dangling reference. Grep the whole transferred tree for remaining PAI markers after you think you're done.
@@ -176,16 +230,16 @@ After the transfer, verify:
 ```bash
 DEST=plugins/<plugin>/skills/<skill>
 
-# No PAI markers remaining
-grep -rnE 'PAI/|SKILLCUSTOMIZATIONS|MEMORY/WORK|PRD\.md|ISC criteria|Algorithm phase|localhost:8888/notify' "$DEST/" || echo "clean"
+# No PAI markers remaining (includes template vars, canonical docs, Customization headers, voice_id tokens)
+grep -rnE 'PAI/|SKILLCUSTOMIZATIONS|MEMORY/WORK|PRD\.md|ISC criteria|Algorithm phase|localhost:8888/notify|\{PRINCIPAL|WRITINGSTYLE|WORLDVIEW|^## Customization|voice_id' "$DEST/" || echo "clean"
 
 # All SKILL.md have frontmatter
 for f in $(find "$DEST" -name SKILL.md); do
   head -1 "$f" | grep -q '^---$' || echo "missing frontmatter: $f"
 done
 
-# Directory names are kebab-case
-find "$DEST" -maxdepth 2 -type d | grep -E '[A-Z]' && echo "PascalCase/camelCase dirs found" || echo "naming clean"
+# Directory basenames are kebab-case (strips absolute path so uppercase in parent dirs doesn't false-positive)
+find "$DEST" -maxdepth 2 -type d | awk -F/ '{print $NF}' | grep -E '[A-Z]' && echo "PascalCase/camelCase dirs found" || echo "naming clean"
 ```
 
 ## Related skills
