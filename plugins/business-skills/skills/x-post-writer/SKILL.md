@@ -1,11 +1,11 @@
 ---
-name: twitter-copywriting-skill
-description: Expert Twitter/X copywriting system for creating high-engagement social media content. Use when the user needs help writing tweets, Twitter threads, LinkedIn posts, or analyzing social media copy. Includes viral post frameworks, copywriting principles, high-performing examples (100K+ views), and iterative editing guidance. Specialized for AI automation and n8n workflow content targeting automation professionals.
+name: x-post-writer
+description: USE WHEN write tweet, Twitter thread, LinkedIn post, viral hook, edit tweet, analyze tweet, improve engagement, social media copy. Applies hook fundamentals (direct reader targeting, benefit-first, avoid overused patterns), engagement triggers (social proof, scarcity, low-friction CTA), and format discipline (one idea per tweet, short paragraphs). Includes in-genre examples and iterative editing guidance.
 ---
 
-# Twitter Copywriting Skill
+# x-post-writer
 
-This skill provides comprehensive guidance for creating high-engagement social media content, particularly for Twitter/X, with a focus on the AI automation and n8n workflow space.
+Guidance for creating high-engagement social media content — primarily Twitter/X, secondarily LinkedIn posts written with Twitter-style hooks. Most applicable in the AI / automation / creator-economy niches where the reference examples originate, but the hook and structure principles generalize.
 
 ## When to Use This Skill
 

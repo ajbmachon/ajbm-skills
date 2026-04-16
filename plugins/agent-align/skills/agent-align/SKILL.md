@@ -1,5 +1,5 @@
 ---
-name: AgentAlign
+name: agent-align
 description: USE WHEN agent alignment, delegation alignment, agent handoff, multi-agent delegation, agent-to-agent task transfer. Structured AI-to-AI alignment protocol that prevents context compression loss, assumption stacking, and constraint evaporation during task delegation between agents.
 ---
 
