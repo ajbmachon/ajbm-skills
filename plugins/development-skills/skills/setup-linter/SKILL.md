@@ -1,6 +1,6 @@
 ---
 name: setup-linter
-description: Configure a Stop hook to run linters when Claude finishes. Use when user asks to set up automatic linting, add a linter hook, or configure code formatting on completion. (user)
+description: USE WHEN setup automatic linting, add linter hook, configure code formatting on completion, enable lint on save. Auto-detects project type (JS/Python/Rust/Go/Deno/Biome), installs linter if missing, creates config with sensible defaults, wires a Stop hook in .claude/settings.json.
 ---
 
 # Setup Linter Hook

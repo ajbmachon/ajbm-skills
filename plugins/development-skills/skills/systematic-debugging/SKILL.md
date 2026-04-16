@@ -235,9 +235,9 @@ If you catch yourself thinking:
 
 **If 3+ fixes failed:** Question the architecture (see Phase 4.5)
 
-## your human partner's Signals You're Doing It Wrong
+## Signals You're Off Track
 
-**Watch for these redirections:**
+**Common redirections from a collaborator:**
 - "Is that not happening?" - You assumed without verifying
 - "Will it show us...?" - You should have added evidence gathering
 - "Stop guessing" - You're proposing fixes without understanding
