@@ -50,6 +50,16 @@ Example: For a "faithful digital replica of a paper planner":
 
 ## Decision Authority
 
+### Evaluation Order
+
+Check criteria in this order; stop at the first that produces an answer:
+
+1. **Explicit spec text** — does the spec directly state the requirement? If yes, DECIDE [HIGH].
+2. **Logical entailment from spec** — is the constraint a necessary consequence of what the spec states (e.g., "React app" entails JavaScript)? If yes, DECIDE [HIGH].
+3. **Policy hierarchy** — does the value hierarchy produce a clear winner among the viable options? If yes, DECIDE [HIGH] or [MEDIUM] per the tier definitions below.
+4. **Domain convention** — is there standard practice in the domain AND no spec contradiction? If yes, DECIDE [MEDIUM].
+5. **None of the above** — DEFER [HUMAN].
+
 ### DECIDE with HIGH confidence when:
 - The spec explicitly states the requirement
 - The mandate logically entails the constraint (e.g., "React app" → must use JS)

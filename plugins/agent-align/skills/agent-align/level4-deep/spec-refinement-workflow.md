@@ -8,7 +8,7 @@ Research targets, challenge angles, and domain questions for AI-to-AI spec refin
 
 **Before any domain questions**, the Interviewer should ask the Stakeholder about the fidelity policy. This is the meta-decision that governs all subsequent decisions.
 
-Per synthesis research (P6): "The stakeholder's fidelity policy was discovered incrementally across 9 rounds. It should be asked explicitly in Round 1."
+The fidelity policy is a meta-decision: it governs how every subsequent tradeoff is resolved. Surface it explicitly in Round 1 rather than letting it emerge incrementally across many rounds — otherwise earlier decisions get made against an unstated policy and have to be revisited once it's named.
 
 **Questions to surface:**
 - "When the source spec's intent and practical simplicity conflict, which wins?"
@@ -79,7 +79,7 @@ These reveal whether spec decisions are well-justified, weakly-justified, or unj
 - What's the rollback strategy?
 
 ### New Decision Axes (A2A-specific)
-Per synthesis (P7): "Scan for new decision axes — concepts that exist in the target domain but not the source."
+Scan for decisions that exist in the implementation domain but not in the source spec's domain. When a spec is ported across contexts (e.g., prototype to production, CLI to web), the new context introduces concerns the original didn't need to address — these are often the highest-value gaps to surface.
 
 - "What does the implementation domain require that the spec's domain provided implicitly?"
 - "Are there decisions the spec doesn't address because they weren't relevant in the original context?"
@@ -89,7 +89,7 @@ Per synthesis (P7): "Scan for new decision axes — concepts that exist in the t
 
 ## Question Prioritization
 
-Per synthesis (P5): "Lead with paradigm-setting questions — high fan-out dependency nodes first."
+Lead with paradigm-setting questions — the high fan-out decisions whose answers shape many downstream choices. Asking these last forces rework; asking them first lets later rounds operate inside a settled frame.
 
 ### Round 1: Paradigm-Setting
 Questions whose answers shape 5+ downstream decisions. Architecture patterns, core tech choices, deployment model.

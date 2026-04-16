@@ -131,11 +131,7 @@ In A2A, the Devil's Advocate phase reveals spec quality, not idea viability:
 This classification feeds directly into the Stakeholder's confidence levels. Well-justified → DECIDED [HIGH]. Weakly-justified → DECIDED [MEDIUM]. Unjustified → DEFERRED [HUMAN].
 
 ### Challenge Angles for Specs
-- "Does this need to exist? Could a simpler approach work?"
-- "The spec says [X] but doesn't explain WHY. What's the reasoning?"
-- "This pattern tends to break at [threshold]. Has that been considered?"
-- "There's a contradiction between [section A] and [section B]."
-- "The spec assumes [X] without stating it. Is that assumption valid?"
+For the challenge-angle categories (Existence, Contradiction, Completeness, Scale/Failure), see `spec-refinement-workflow.md` → Challenge Angles. Apply those categories during probing; don't restrict yourself to one angle per round.
 
 ---
 

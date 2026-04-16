@@ -79,6 +79,9 @@ The invoking agent (session agent / team lead) runs the Deep level:
 - Read the DecisionPolicy (if provided; use defaults if not)
 
 ### 2. Spawn Team
+
+This workflow requires two separate agent contexts — not one agent role-switching. The Interviewer is briefed only with the spec and challenge targets; the Stakeholder is briefed only with the spec, decision policy, and meta-goals. Separating the constraint bases is the anti-sycophancy mechanism: each agent reasons from its own grounding, so the challenge is genuine rather than a single context arguing with itself. A single-context implementation invites drift and confirmation bias — the same reasoning chain cannot meaningfully challenge the decisions it just produced, and role labels erode within one context window.
+
 - Create team with `TeamCreate`
 - Spawn **Interviewer** agent with: spec path, working log path, Interview skill file paths
 - Spawn **Stakeholder** agent with: spec path, decision policy path, meta-goals
