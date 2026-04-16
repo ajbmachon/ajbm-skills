@@ -1,6 +1,6 @@
 # Chris Voss Negotiation Framework — Activation Reference
 
-Loaded on demand during Analyze or complex Spar. Activates precise recall — you already know these techniques from training. This file provides the specific cues, phrasing patterns, and failure modes that make the difference between generic recall and expert-level application.
+Load this file on demand during Analyze or complex Spar. Use it as the working reference for Voss techniques: apply the cues, phrasing patterns, and failure modes below directly in the dossier, roleplay, or coaching you produce.
 
 ---
 
