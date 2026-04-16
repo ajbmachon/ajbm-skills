@@ -27,7 +27,7 @@ Tags are the ground truth. Categories are a lossy compression for human navigati
 twitter bookmarks --json -n 200 -o /tmp/bookmarks_all.json
 
 # Also pull folder contents if folders exist
-twitter bookmarks folders                    # list folders
+twitter -c bookmarks folders                 # list folders
 twitter bookmarks folders <id> --json        # per folder
 ```
 

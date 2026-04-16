@@ -66,7 +66,7 @@ twitter -c tweet <id_or_url> -n 20
 twitter tweet <id_or_url> --json -o saved_tweet.json
 
 # For Twitter Articles (long-form analysis)
-twitter article <id_or_url> -m -o analysis.md
+twitter -c article <id_or_url> -m -o analysis.md
 ```
 
 After saving, summarize what was saved and why it might be valuable: the setup, the thesis, any specific levels or timeframes mentioned.
@@ -93,6 +93,8 @@ After pulling, analyze: What's the dominant sentiment? Are there contrarian voic
 ## Acting Fast
 
 When speed matters — the user sees something and wants to capture or share immediately:
+
+> **⚠️ Permission required for posting.** Any `twitter post`, `reply`, or `quote` command publishes to the user's Twitter account. Ask for explicit confirmation before running write commands — never infer permission from a prior read command. When in doubt, show the drafted tweet and wait for "yes, post it".
 
 ```bash
 # Quick save a tweet they just saw
