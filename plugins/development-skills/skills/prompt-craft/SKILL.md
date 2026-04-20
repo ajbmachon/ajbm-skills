@@ -252,7 +252,7 @@ See `reference/extended/context-engineering.md` and `reference/extended/multi-se
 - Use the `effort` parameter for reasoning depth (xhigh for agentic work, high for knowledge work) instead of prompt-level simulation
 - Drop explicit "think step by step" — adaptive thinking handles this; your prompt just competes with it
 - Soften tool-triggering: "use when helpful" lets the model calibrate; "MUST use when X" fires literally and burns tokens on unnecessary calls
-- At low/medium effort, 4.7 scopes tightly — add one targeted reasoning nudge where depth matters: "This step involves multi-step reasoning. Think carefully before responding."
+- At low/medium effort, 4.7 scopes tightly — add one targeted reasoning nudge where depth matters: "This step involves multi-step reasoning. Outline your logic before responding."
 
 ### Model-Specific Adjustments
 
