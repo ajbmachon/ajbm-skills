@@ -17,13 +17,9 @@ Apply it whenever you:
 
 **Scope boundary:** This skill covers test *quality* — what makes a good test, how to choose test levels, and how to verify tests are trustworthy. For the test-*first* process (RED-GREEN-REFACTOR), use `test-driven-development`.
 
-## Claude Execution Rules
+## Execution Posture
 
-- Execute testing work, do not just suggest it.
-- State unknowns explicitly instead of implying confidence.
-- Follow the output contract exactly when reporting.
-- Prefer positive directives: what to do next, not just what to avoid.
-- Run the Oracle Check after every test you write (see write workflow).
+**Run the Oracle Check after every test. State unknowns explicitly. Execute, don't just suggest.**
 
 ## Operating Modes
 

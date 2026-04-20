@@ -243,13 +243,16 @@ See `reference/extended/context-engineering.md` and `reference/extended/multi-se
 - Just-in-time loading over pre-loading
 - Compaction strategies: summarize, clear tool results, full reset
 
-### Anti-Overtriggering (Claude 4.6+)
+### Clarity over Compulsion (Claude 4.6 and 4.7)
 
-- Remove "CRITICAL: You MUST..." language -- causes overtriggering
-- Remove anti-laziness prompts ("be thorough", "don't be lazy") -- causes overthinking
-- Use effort parameter instead of prompt-level reasoning simulation
-- Remove explicit think tool instructions -- Claude 4.6 thinks adaptively
-- Soften tool-use language: "use when helpful" not "MUST use when..."
+4.6's failure mode was over-triggering on "CRITICAL: You MUST…" language. 4.7's failure mode is the opposite: it follows literal MUST statements too rigidly and can ignore context signals that would soften the rule. Same direction of fix, different reason.
+
+- Drop "CRITICAL: You MUST…" scaffolding — let the instruction stand on its own. Reserve CAPS imperatives for genuinely load-bearing rules (e.g., iron laws in systematic-debugging)
+- Drop anti-laziness prompts ("be thorough", "don't be lazy") — both models execute proactively; the pressure causes overthinking
+- Use the `effort` parameter for reasoning depth (xhigh for agentic work, high for knowledge work) instead of prompt-level simulation
+- Drop explicit "think step by step" — adaptive thinking handles this; your prompt just competes with it
+- Soften tool-triggering: "use when helpful" lets the model calibrate; "MUST use when X" fires literally and burns tokens on unnecessary calls
+- At low/medium effort, 4.7 scopes tightly — add one targeted reasoning nudge where depth matters: "This step involves multi-step reasoning. Outline your logic before responding."
 
 ### Model-Specific Adjustments
 

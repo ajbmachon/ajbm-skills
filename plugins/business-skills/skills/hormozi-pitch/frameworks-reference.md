@@ -647,47 +647,19 @@ Rate 1-10:
 
 ---
 
-## Quick Reference Card
+## Cheat Sheet
 
-### Value Equation
-```
-Value = (Dream Outcome × Likelihood) / (Time × Effort)
-```
+**Value formula:** `Value = (Dream Outcome × Likelihood) / (Time × Effort)` — maximize numerator, minimize denominator.
 
-### Guarantees
-1. Unconditional - No questions asked
-2. Conditional - Do X, get refund if no Y
-3. Outcome-based - Get result or money back
-4. Anti-guarantee - All sales final
+**Guarantee picker:** Unconditional (build trust) · Conditional (filter action-takers) · Outcome-based (premium positioning) · Anti-guarantee (scarcity play).
 
-### MAGIC Naming
-- **M**ake attention-worthy
-- **A**nnounce avatar
-- **G**ive goal
-- **I**ndicate interval
-- **C**omplete with container
+**MAGIC name:** Make attention · Announce avatar · Give goal · Indicate interval · Container word. Example: "6-Week Lean Body Challenge for Busy Moms."
 
-### Value Stack
-1. Identify obstacles to success
-2. Create solution for each
-3. Name and price each
-4. Show total value vs. price (10:1+)
+**Value stack target:** Total stack value ≥ 10× price. Bonuses solve obstacles the core offer leaves open.
 
-### Scarcity Types
-- Capacity (limited spots)
-- Quantity (limited stock)
-- Access (qualification required)
+**Pricing ceiling:** Price ≤ 10–20% of annual outcome value AND stack-to-price ratio ≥ 3:1 (10:1 ideal). Use the lower of the two.
 
-### Urgency Types
-- Deadline (offer ends)
-- Cohort (class starts)
-- Event (external timing)
-- Consequence (cost of waiting)
-
-### Pricing
-- Calculate outcome value
-- Price at 10-20% of value
-- Verify 10:1 stack ratio
+**Scarcity/urgency must be true** — fake limits destroy trust.
 
 ---
 

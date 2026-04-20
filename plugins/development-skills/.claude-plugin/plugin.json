@@ -1,7 +1,7 @@
 {
   "name": "ajbm-dev",
-  "description": "Claude Code skills and agents for software development: debugging, testing, linting, skill authoring, documentation research, and clean code review. Includes systematic-debugging, testing-best-practices, setup-linter, prompt-craft, authoring-skills, docs-research-specialist, and clean-code-reviewer.",
-  "version": "1.2.0",
+  "description": "Claude Code skills and agents for software development, thinking, and meta-skill authoring. Tuned for Opus 4.7. Skills: systematic-debugging, testing-best-practices, test-driven-development, setup-linter, prompt-craft, authoring-skills, be-creative (Verbalized Sampling), thinking (5 analytical modes), pai-skill-transfer, skill-distiller, content-analysis, plus docs-research-specialist and clean-code-reviewer agents.",
+  "version": "1.3.0",
   "author": {
     "name": "Andre Machon",
     "url": "https://github.com/ajbmachon"
@@ -20,6 +20,10 @@
     "clean-code",
     "code-review",
     "refactoring",
-    "agents"
+    "agents",
+    "thinking",
+    "creativity",
+    "verbalized-sampling",
+    "opus-4-7"
   ]
 }

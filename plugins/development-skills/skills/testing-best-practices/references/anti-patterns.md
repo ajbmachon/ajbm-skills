@@ -1,6 +1,6 @@
 # Anti-Pattern Catalog — Full Reference
 
-15 anti-patterns with detailed signals, corrections, and code examples. Patterns 13-15 are AI-specific.
+15 anti-patterns with signals and corrections. The 5 most subtle ones (1, 5, 13, 14, 15) include Good/Bad code examples — these are the ones where the pattern is hard to recognize without seeing it. The other 10 are clear enough from the signal description alone. Patterns 13-15 are AI-specific.
 
 ## Table of Contents
 
@@ -282,7 +282,14 @@ test("applies discount on eligible orders", () => {
 });
 ```
 
-**Prevention:** Follow the Oracle Guard protocol. State expected values from requirements before looking at implementation.
+**Prevention — the Oracle Guard protocol (applied in order):**
+
+1. **State the requirement first.** Write down what the output *should* be, derived from the spec, the user story, or the domain rule. Do this before opening the implementation file.
+2. **Write the expected value next.** If the spec says "20% discount on orders over $100," write `expect(...).toBe(120)` for a $150 order. If you can't derive the expected value from requirements, the test isn't ready to write — get the requirement first.
+3. **Then, and only then, read the implementation.** If the test fails, one of three things is true: (a) the implementation is wrong, (b) your requirement understanding is wrong, (c) the spec itself is ambiguous. Resolve which before changing either file.
+4. **Investigate first-run passes.** A test that passes on the first run without you watching it fail is a test you don't yet trust. Either you encoded current behavior (circular oracle) or you tested something trivially true. Break the implementation deliberately to confirm the test actually catches it.
+
+**Red flag:** You're typing expected values that feel "complicated to compute" while looking at the implementation to get them. Stop. Close the implementation. Derive from the requirement, or flag that you don't know what the correct output is.
 
 ---
 

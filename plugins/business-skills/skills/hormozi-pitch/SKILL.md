@@ -74,7 +74,3 @@ If your offer doesn't pass this test, revisit the Value Equation. Either:
 - They don't believe it will work for them
 - It takes too long to see results
 - It requires too much effort or sacrifice
-
----
-
-**Line count:** ~95 (well under 500-line budget)

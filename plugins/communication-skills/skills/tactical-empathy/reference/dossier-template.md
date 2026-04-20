@@ -2,9 +2,10 @@
 
 Use this template when producing the Analyze workflow output. Write the dossier to `./negotiation-dossier-{topic}.md`. Fill every section with specifics from the user's situation — no generic placeholders in the final output.
 
+The template below is the dossier content verbatim — copy from the `# Negotiation Dossier` heading through the final italicized line. Do NOT wrap the output in a code fence. Keep the inner fenced blocks (Accusation Audit example, Revision section) as fenced blocks in your output.
+
 ---
 
-```markdown
 # Negotiation Dossier: {Topic}
 
 **Prepared:** {date}
@@ -119,7 +120,6 @@ Take this into the conversation:
 ---
 
 *Say "practice" or "spar" to rehearse this scenario with me as the counterpart.*
-```
 
 ## Revision Section
 
