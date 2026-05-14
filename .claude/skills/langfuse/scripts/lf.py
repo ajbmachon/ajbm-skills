@@ -148,7 +148,9 @@ def _apply_runtime_tuning(args: argparse.Namespace) -> None:
     """Apply per-command runtime tuning before client initialization."""
     timeout_seconds = getattr(args, "timeout_seconds", None)
     if timeout_seconds is not None:
-        os.environ["LANGFUSE_TIMEOUT"] = str(max(1, timeout_seconds))
+        if timeout_seconds < 1:
+            timeout_seconds = 1
+        os.environ["LANGFUSE_TIMEOUT"] = str(timeout_seconds)
 
 
 def _canonical_user_id(value: str | None) -> str:
