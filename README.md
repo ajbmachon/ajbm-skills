@@ -18,7 +18,6 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 | **authoring-skills** | Complete guide for writing skills—SKILL.md best practices, plugin development, triggers, hooks, Anthropic guidelines. |
 | **be-creative** | Applies Verbalized Sampling (Zhang et al. 2024) — generates multiple low-probability candidates before selecting output. Counteracts centroid bias from alignment training. Reports 1.6–2.1× diversity, ~25% quality gain. |
 | **thinking** | Router for five analytical modes: first-principles, iterative-depth (multi-lens), council (debate), red-team (adversarial), science (hypothesis-test cycles). Each mode has its own workflows. |
-| **pai-skill-transfer** | Methodology for porting PAI-embedded skills into standard Claude Code plugins. Strip/rewrite/keep/add checklist, decision heuristics for ambiguous cases, QC grep commands. |
 | **skill-distiller** | Extracts guidance patterns from conversations (corrections, questions, quality gates, analysis modes) and distills them into permanent replayable skills. |
 | **content-analysis** | Content-adaptive wisdom extraction from videos/podcasts/articles/YouTube. Detects which wisdom domains exist in the source and builds custom sections rather than forcing fixed headers. |
 | **docs-research-specialist** (agent) | Looks up current documentation, API syntax, library best practices. Prevents hallucinated or outdated implementations. Exa MCP > Context7 > WebFetch priority. |
@@ -78,7 +77,7 @@ claude
 /plugin marketplace add ajbmachon/ajbm-skills
 
 # Install development skills (debugging, testing, linting, prompt-craft,
-# authoring-skills, be-creative, thinking, skill-distiller, pai-skill-transfer,
+# authoring-skills, be-creative, thinking, skill-distiller,
 # content-analysis + docs-research-specialist and clean-code-reviewer agents)
 /plugin install ajbm-dev@ajbm
 
@@ -550,12 +549,6 @@ Router for five analytical modes. Each mode has its own SKILL.md and workflows:
 | **science** | Hypothesis-test cycles, structured investigation | Define, Design, Generate, Measure, Analyze, Iterate, Full Cycle, Quick Diagnosis, Structured Investigation |
 
 Creativity/brainstorming triggers are owned by `be-creative` (sibling skill) — not this one.
-
-### pai-skill-transfer
-
-Methodology for porting skills from **PAI** (Personal AI Infrastructure) environments to standard Claude Code plugins. Covers what to strip (voice curls, `~/.claude/PAI/` paths, Algorithm phase vocabulary, Customization blocks), what to rewrite generically (ISC → acceptance criteria, MEMORY/WORK → skill-local), what to keep (behavioral content, worked examples, anti-patterns), and decision heuristics for ambiguous cases.
-
-Hardened after a real test: the ContentAnalysis transfer surfaced 4 gaps that are now fixed (template variables, canonical-doc references, router-parent collapse, kebab-case QC grep bug).
 
 ### tactical-empathy
 

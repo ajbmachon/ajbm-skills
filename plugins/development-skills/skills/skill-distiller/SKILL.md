@@ -1,9 +1,9 @@
 ---
-name: SkillDistiller
+name: skill-distiller
 description: USE WHEN distill, extract skill, capture patterns, teach from conversation, learn from session, skill from conversation. Analyzes conversations to extract user guidance patterns — corrections, questions, quality gates, analysis modes — and collaboratively distills them into permanent, replayable skills that teach Claude behavioral dispositions.
 ---
 
-# SkillDistiller
+# Skill Distiller
 
 Transform expert guidance buried in conversations into permanent, replayable skills.
 
@@ -26,9 +26,9 @@ Behavioral: "Practice defensive programming at resource boundaries"
 
 | Doc | When to Read | What It Contains |
 |-----|-------------|-----------------|
-| [PatternTaxonomy.md](PatternTaxonomy.md) | Step 2 (Analyze) | Four extraction categories with signals and examples |
-| [SkillTemplate.md](SkillTemplate.md) | Step 4 (Generate) | Template for generated skills using behavioral dispositions format |
-| [ToolGuide.md](ToolGuide.md) | Step 1 (when using stored transcripts) | How and when to use each tool in the toolbox |
+| [pattern-taxonomy.md](pattern-taxonomy.md) | Step 2 (Analyze) | Four extraction categories with signals and examples |
+| [skill-template.md](skill-template.md) | Step 4 (Generate) | Template for generated skills using behavioral dispositions format |
+| [tool-guide.md](tool-guide.md) | Step 1 (when using stored transcripts) | How and when to use each tool in the toolbox |
 
 ---
 
@@ -67,7 +67,7 @@ Determine the input source. Ask the user if not obvious from context.
 
 **For current session:** Proceed directly to Step 2 — no preprocessing needed.
 
-**For stored transcripts:** Use the toolbox to filter noise and extract clean turns. See [ToolGuide.md](ToolGuide.md) for which tools to use and when. Claude decides which tools are appropriate — they are an **on-demand toolbox, not a fixed pipeline**.
+**For stored transcripts:** Use the toolbox to filter noise and extract clean turns. See [tool-guide.md](tool-guide.md) for which tools to use and when. Claude decides which tools are appropriate — they are an **on-demand toolbox, not a fixed pipeline**.
 
 **Cross-conversation search:** If the user wants to find patterns across multiple sessions, use qmd:
 ```bash
@@ -79,7 +79,7 @@ qmd search "the pattern or behavior to find"
 ### Step 2: ANALYZE — Extract patterns across four categories
 
 <mandatory_read phase="analyze">
-Read [PatternTaxonomy.md](PatternTaxonomy.md) before starting analysis.
+Read [pattern-taxonomy.md](pattern-taxonomy.md) before starting analysis.
 </mandatory_read>
 
 Read the conversation with maximum intelligence. Look for moments where the user:
@@ -133,7 +133,7 @@ After reviewing all patterns individually, present the full approved set for fin
 ### Step 4: GENERATE — Write the skill
 
 <mandatory_read phase="generate">
-Read [SkillTemplate.md](SkillTemplate.md) before generating.
+Read [skill-template.md](skill-template.md) before generating.
 </mandatory_read>
 
 Generate a complete SKILL.md from approved patterns using the behavioral dispositions template.
@@ -147,7 +147,7 @@ Where should I save the generated skill?
 3. Custom path
 ```
 
-**Structure of generated skill:** See [SkillTemplate.md](SkillTemplate.md) for the full template. The generated skill:
+**Structure of generated skill:** See [skill-template.md](skill-template.md) for the full template. The generated skill:
 - Uses behavioral dispositions format (thinking patterns, attention cues, quality checkpoints)
 - Includes anti-patterns section (from Corrections category, may stay specific)
 - Includes annotated examples from source conversation(s)

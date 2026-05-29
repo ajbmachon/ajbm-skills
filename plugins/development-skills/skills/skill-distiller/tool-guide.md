@@ -1,6 +1,6 @@
 # Tool Guide
 
-How Claude uses the SkillDistiller toolbox. These tools are **on-demand utilities**, not a fixed pipeline. Claude decides which tools to use based on the situation.
+How Claude uses the skill-distiller toolbox. These tools are **on-demand utilities**, not a fixed pipeline. Claude decides which tools to use based on the situation.
 
 ---
 
