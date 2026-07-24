@@ -284,44 +284,6 @@
         "write.*?documentation",
         "create.*?docs"
       ]
-    },
-    "clean-code-reviewer": {
-      "type": "agent",
-      "enforcement": "suggest",
-      "priority": "medium",
-      "threshold": 12,
-      "strongPhrases": [
-        "clean code review",
-        "uncle bob",
-        "robert martin",
-        "code quality review",
-        "refactoring review",
-        "clean code check",
-        "make it clean"
-      ],
-      "exactKeywords": [
-        "refactor",
-        "refactoring",
-        "clean",
-        "SOLID",
-        "SRP"
-      ],
-      "containsKeywords": [
-        "code smell",
-        "code quality",
-        "maintainability",
-        "readability",
-        "technical debt"
-      ],
-      "intentPatterns": [
-        "(review|check|analyze).*?(code|implementation).*?(clean|quality|smell)",
-        "(clean|refactor|improve).*?(code|implementation)",
-        "is.*?code.*?(clean|good|maintainable)"
-      ],
-      "excludePatterns": [
-        "clean.*?(install|build|cache|directory)",
-        "\\b(cleanup|clean up)\\s+(files|directory|folder)\\b"
-      ]
     }
   }
 }

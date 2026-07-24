@@ -22,7 +22,6 @@ A collection of generally useful Claude Code skills that work across all Anthrop
 | **skill-distiller** | Extracts guidance patterns from conversations (corrections, questions, quality gates, analysis modes) and distills them into permanent replayable skills. |
 | **content-analysis** | Content-adaptive wisdom extraction from videos/podcasts/articles/YouTube. Detects which wisdom domains exist in the source and builds custom sections rather than forcing fixed headers. |
 | **docs-research-specialist** (agent) | Looks up current documentation, API syntax, library best practices. Prevents hallucinated or outdated implementations. Exa MCP > Context7 > WebFetch priority. |
-| **clean-code-reviewer** (agent) | Analyzes code against Robert C. Martin's Clean Code principles. Produces tiered remediation reports (🟢/🟡/🔴). Activated via setup-linter. |
 
 ### Interview & Spec (`ajbm-interview`, v2.0.0)
 
@@ -79,7 +78,7 @@ claude
 
 # Install development skills (debugging, testing, linting, prompt-craft,
 # authoring-skills, be-creative, thinking, skill-distiller, pai-skill-transfer,
-# content-analysis + docs-research-specialist and clean-code-reviewer agents)
+# content-analysis + docs-research-specialist agent)
 /plugin install ajbm-dev@ajbm
 
 # Install business skills (offers, copywriting) - optional
@@ -265,7 +264,6 @@ Or invoke directly:
 2. Installs the appropriate linter if not present
 3. Creates config files with sensible defaults
 4. Sets up a Stop hook so linting runs automatically after every Claude response
-5. Adds a clean-code-reviewer instruction to your project's `CLAUDE.md`
 
 **Supported projects:**
 - JavaScript/TypeScript → ESLint (with React detection)
